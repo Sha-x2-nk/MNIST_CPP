@@ -25,11 +25,11 @@ NeuralNet::NeuralNet(float reg, float p_keep)
     this->affine_layers.push_back(AffineLayer(784, 2048));
     this->affine_layers.push_back(AffineLayer(2048, 10));
 
-    this->adam_configs.push_back(AdamOptimiser(0.001f, 0.9f, 0.999f, 1e-6f));
-    this->adam_configs.push_back(AdamOptimiser(0.001f, 0.9f, 0.999f, 1e-6f));
+    this->adam_configs.push_back(AdamOptimiser(0.001f, 0.9f, 0.999f, 1e-8f));
+    this->adam_configs.push_back(AdamOptimiser(0.001f, 0.9f, 0.999f, 1e-8f));
 
-    this->adam_configs.push_back(AdamOptimiser(0.001f, 0.9f, 0.999f, 1e-6f));
-    this->adam_configs.push_back(AdamOptimiser(0.001f, 0.9f, 0.999f, 1e-6f));
+    this->adam_configs.push_back(AdamOptimiser(0.001f, 0.9f, 0.999f, 1e-8f));
+    this->adam_configs.push_back(AdamOptimiser(0.001f, 0.9f, 0.999f, 1e-8f));
 
     this->mode = std::string("test");
 }
@@ -40,28 +40,24 @@ NeuralNet::NeuralNet(const NeuralNet &N)
     this->reg = N.reg;
     this->relu_layers = N.relu_layers;
     this->dropout_layers = N.dropout_layers;
-    this->affine_layers = N.affine_layers;
+    this->adam_configs = N.adam_configs;
     this->mode = N.mode;
 }
 
-NeuralNet NeuralNet::operator=(const NeuralNet &N)
+void NeuralNet::operator=(const NeuralNet &N)
 {
-    NeuralNet N_new;
-    N_new.affine_layers = N.affine_layers;
-    N_new.reg = N.reg;
-    N_new.relu_layers = N.relu_layers;
-    N_new.dropout_layers = N.dropout_layers;
-    N_new.affine_layers = N.affine_layers;
-    N_new.mode = N.mode;
-
-    return N_new;
+    this->affine_layers = N.affine_layers;
+    this->reg = N.reg;
+    this->relu_layers = N.relu_layers;
+    this->dropout_layers = N.dropout_layers;
+    this->mode = N.mode;
 }
 
 void NeuralNet::train()
 {
     this->mode = std::string("train");
 }
-void NeuralNet::test()
+void NeuralNet::eval()
 {
     this->mode = std::string("eval");
 }
@@ -86,9 +82,12 @@ np::ArrayGPU<float> NeuralNet::forward(const np::ArrayGPU<float> &X)
     // last layer no activations or dropouts
     out = affine_layers.back()(out);
 
+
     return out;
 }
-std::vector<np::ArrayGPU<float>> NeuralNet::forward(const np::ArrayGPU<float> &X, const np::ArrayGPU<int> &y)
+
+// return outNloss vector 
+std::pair<np::ArrayGPU<float>, np::ArrayGPU<float>> NeuralNet::forward(const np::ArrayGPU<float> &X, const np::ArrayGPU<int> &y)
 {
     if (this->mode == "eval")
     {
@@ -134,7 +133,7 @@ np::ArrayGPU<float> NeuralNet::operator()(const np::ArrayGPU<float> &X)
 {
     return this->forward(X);
 }
-std::vector<np::ArrayGPU<float>> NeuralNet::operator()(const np::ArrayGPU<float> &X, const np::ArrayGPU<int> &y)
+std::pair<np::ArrayGPU<float>, np::ArrayGPU<float>> NeuralNet::operator()(const np::ArrayGPU<float> &X, const np::ArrayGPU<int> &y)
 {
     return this->forward(X, y);
 }

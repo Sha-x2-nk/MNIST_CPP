@@ -30,17 +30,15 @@ AdamOptimiser::AdamOptimiser(AdamOptimiser &A)
     this->t = A.t;
 }
 
-AdamOptimiser AdamOptimiser::operator=(AdamOptimiser &A)
+void AdamOptimiser::operator=(AdamOptimiser &A)
 {
-    AdamOptimiser A_new;
-    A_new.learning_rate = A.learning_rate;
-    A_new.beta1 = A.beta1;
-    A_new.beta2 = A.beta2;
-    A_new.epsilon = A.epsilon;
-    A_new.m = A.m;
-    A_new.v = A.v;
-    A_new.t = A.t;
-    return A_new;
+    this->learning_rate = A.learning_rate;
+    this->beta1 = A.beta1;
+    this->beta2 = A.beta2;
+    this->epsilon = A.epsilon;
+    this->m = A.m;
+    this->v = A.v;
+    this->t = A.t;
 }
 
 void AdamOptimiser::step(np::ArrayGPU<float> &param, np::ArrayGPU<float> &grad)

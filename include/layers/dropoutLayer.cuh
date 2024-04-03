@@ -15,7 +15,6 @@ class DropoutLayer : public Layer
 {
 public:
     float p_keep;
-    np::ArrayGPU<float> mask_cache;
 
     // default and parameter constructor
     DropoutLayer(const float p_keep = 1.0f);
@@ -23,7 +22,7 @@ public:
     DropoutLayer(const DropoutLayer &L);
 
     // assignment operator
-    DropoutLayer operator=(const DropoutLayer &L);
+    void operator=(const DropoutLayer &L);
 
     // ################################# forward pass #############################################
     np::ArrayGPU<float> forward(const np::ArrayGPU<float> &X, const std::string &mode) override;

@@ -27,12 +27,10 @@ DropoutLayer::DropoutLayer(const DropoutLayer &L)
 }
 
 // assignment operator
-DropoutLayer DropoutLayer::operator=(const DropoutLayer &L)
+void DropoutLayer::operator=(const DropoutLayer &L)
 {
-    DropoutLayer L_new;
-    L_new.cache = L.cache;
-    L_new.p_keep = L.p_keep;
-    return L_new;
+    this->cache = L.cache;
+    this->p_keep = L.p_keep;
 }
 
 // ################################# forward pass #############################################

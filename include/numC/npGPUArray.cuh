@@ -162,8 +162,8 @@ namespace np
 		this->rows = rows;
 		this->cols = cols;
 
-		CUDA_CALL(cudaMalloc((void **)&this->mat, this->rows * this->cols * sizeof(const TP)));
-		CUDA_CALL(cudaMemset(this->mat, 0, this->rows * this->cols * sizeof(const TP)));
+		CUDA_CALL(cudaMalloc((void **)&this->mat, this->rows * this->cols * sizeof(TP)));
+		CUDA_CALL(cudaMemset(this->mat, 0, this->rows * this->cols * sizeof(TP)));
 	}
 
 	// initialise all values with same value (broadcast)
@@ -173,7 +173,7 @@ namespace np
 		this->rows = rows;
 		this->cols = cols;
 
-		CUDA_CALL(cudaMalloc((void **)&this->mat, this->rows * this->cols * sizeof(const TP)));
+		CUDA_CALL(cudaMalloc((void **)&this->mat, this->rows * this->cols * sizeof(TP)));
 
 		const int BLOCK_SIZE = GPU_NUM_CUDA_CORE;
 		dim3 block(BLOCK_SIZE);
@@ -188,7 +188,7 @@ namespace np
 	{
 		this->rows = A.rows;
 		this->cols = A.cols;
-		CUDA_CALL(cudaMalloc((void **)&this->mat, this->rows * this->cols * sizeof(const TP)));
+		CUDA_CALL(cudaMalloc((void **)&this->mat, this->rows * this->cols * sizeof(TP)));
 
 		this->copyFromGPU(A.mat);
 	}
@@ -217,14 +217,14 @@ namespace np
 	template <typename TP>
 	void ArrayGPU<TP>::copyFromCPU(TP *h_array)
 	{
-		CUDA_CALL(cudaMemcpy(mat, h_array, this->rows * this->cols * sizeof(const TP), cudaMemcpyHostToDevice));
+		CUDA_CALL(cudaMemcpy(mat, h_array, this->rows * this->cols * sizeof(TP), cudaMemcpyHostToDevice));
 	}
 
 	// pointer to device memory.
 	template <typename TP>
 	void ArrayGPU<TP>::copyFromGPU(TP *d_array)
 	{
-		CUDA_CALL(cudaMemcpy(this->mat, d_array, this->rows * this->cols * sizeof(const TP), cudaMemcpyDeviceToDevice));
+		CUDA_CALL(cudaMemcpy(this->mat, d_array, this->rows * this->cols * sizeof(TP), cudaMemcpyDeviceToDevice));
 	}
 
 	template <typename TP>
@@ -273,7 +273,7 @@ namespace np
 	TP ArrayGPU<TP>::at(const int idx) const
 	{
 		TP val;
-		CUDA_CALL(cudaMemcpy(&val, mat + idx, sizeof(const TP), cudaMemcpyDeviceToHost));
+		CUDA_CALL(cudaMemcpy(&val, mat + idx, sizeof(TP), cudaMemcpyDeviceToHost));
 		return val;
 	}
 
@@ -325,7 +325,7 @@ namespace np
 	template <typename TP>
 	void ArrayGPU<TP>::set(const int idx, const TP val)
 	{
-		CUDA_CALL(cudaMemcpy(mat + idx, &val, sizeof(const TP), cudaMemcpyHostToDevice));
+		CUDA_CALL(cudaMemcpy(mat + idx, &val, sizeof(TP), cudaMemcpyHostToDevice));
 	}
 
 	// set value at r, c
@@ -409,7 +409,7 @@ namespace np
 		}
 		else
 		{
-			std::cerr << "\nError! Check arguments";
+			std::cerr << "\nError in dot! Check arguments";
 			return np::ArrayGPU<TP>(1, 1, 0);
 		}
 	}
@@ -449,7 +449,7 @@ namespace np
 		}
 		else
 		{
-			std::cerr << "\nError! Check arguments";
+			std::cerr << "\nError in Tdot! Check arguments";
 			return np::ArrayGPU<TP>(1, 1, 0);
 		}
 	}
@@ -488,7 +488,7 @@ namespace np
 		}
 		else
 		{
-			std::cerr << "\nError! Check arguments";
+			std::cerr << "\nError in dotT ! Check arguments";
 			return np::ArrayGPU<TP>(1, 1, 0);
 		}
 	}
@@ -503,7 +503,7 @@ namespace np
 		// allocate memory
 		this->rows = A.rows;
 		this->cols = A.cols;
-		CUDA_CALL(cudaMalloc((void **)&this->mat, this->rows * this->cols * sizeof(const TP)));
+		CUDA_CALL(cudaMalloc((void **)&this->mat, this->rows * this->cols * sizeof(TP)));
 
 		this->copyFromGPU(A.mat);
 	}
@@ -607,7 +607,7 @@ namespace np
 		}
 		else
 		{
-			std::cerr << "\nError! Check arguments";
+			std::cerr << "\nError in +! Check arguments";
 			return np::ArrayGPU<TP>(1, 1, 0);
 		}
 	}
@@ -729,7 +729,7 @@ namespace np
 		}
 		else
 		{
-			std::cerr << "\nError! Check arguments";
+			std::cerr << "\nError - ! Check arguments";
 			return np::ArrayGPU<TP>(1, 1, 0);
 		}
 	}
@@ -859,7 +859,7 @@ namespace np
 		}
 		else
 		{
-			std::cerr << "\nError! Check arguments";
+			std::cerr << "\nError in *! Check arguments";
 			return np::ArrayGPU<TP>(1, 1, 0);
 		}
 	}
@@ -981,7 +981,7 @@ namespace np
 		}
 		else
 		{
-			std::cerr << "\nError! Check arguments";
+			std::cerr << "\nError in /! Check arguments";
 			return np::ArrayGPU<TP>(1, 1, 0);
 		}
 	}
@@ -1127,7 +1127,7 @@ namespace np
 		}
 		else
 		{
-			std::cerr << "\nError! Check arguments";
+			std::cerr << "\nError in > ! Check arguments";
 			return np::ArrayGPU<TP>(1, 1, 0);
 		}
 	}
@@ -1382,7 +1382,7 @@ namespace np
 		}
 		else
 		{
-			std::cerr << "\nError! Check arguments";
+			std::cerr << "\nError in < ! Check arguments";
 			return np::ArrayGPU<TP>(1, 1, 0);
 		}
 	}
@@ -1512,7 +1512,7 @@ namespace np
 		}
 		else
 		{
-			std::cerr << "\nError! Check arguments";
+			std::cerr << "\nError in <= ! Check arguments";
 			return np::ArrayGPU<TP>(1, 1, 0);
 		}
 	}
@@ -1642,7 +1642,7 @@ namespace np
 		}
 		else
 		{
-			std::cerr << "\nError! Check arguments";
+			std::cerr << "\nError in ==! Check arguments";
 			return np::ArrayGPU<TP>(1, 1, 0);
 		}
 	}
@@ -1772,7 +1772,7 @@ namespace np
 		}
 		else
 		{
-			std::cerr << "\nError! Check arguments";
+			std::cerr << "\nError in != ! Check arguments";
 			return np::ArrayGPU<TP>(1, 1, 0);
 		}
 	}
@@ -1818,7 +1818,7 @@ namespace np
 
 			// device pointer tmp
 			TP *tmp_d;
-			CUDA_CALL(cudaMalloc((void **)&tmp_d, sizeof(const TP) * grid.x));
+			CUDA_CALL(cudaMalloc((void **)&tmp_d, sizeof(TP) * grid.x));
 			switch (GPU_NUM_CUDA_CORE)
 			{
 			case 64:
@@ -1854,7 +1854,7 @@ namespace np
 			dim3 grid(std::min<int>(ceil(this->cols, block.x), GPU_NUM_SM * 2));
 
 			TP *tmp_d;
-			CUDA_CALL(cudaMalloc((void **)&tmp_d, sizeof(const TP) * this->rows * grid.x));
+			CUDA_CALL(cudaMalloc((void **)&tmp_d, sizeof(TP) * this->rows * grid.x));
 
 			switch (GPU_NUM_CUDA_CORE)
 			{
@@ -1892,7 +1892,7 @@ namespace np
 		}
 		else
 		{
-			std::cerr << "\nError! Check arguments";
+			std::cerr << "\nError in sum! Check arguments";
 			return np::ArrayGPU<TP>(1, 1, 0);
 		}
 	}
@@ -1910,7 +1910,7 @@ namespace np
 			ArrayGPU<TP> res(1);
 			// device pointer tmp
 			TP *tmp_d;
-			CUDA_CALL(cudaMalloc((void **)&tmp_d, sizeof(const TP) * grid.x));
+			CUDA_CALL(cudaMalloc((void **)&tmp_d, sizeof(TP) * grid.x));
 			switch (GPU_NUM_CUDA_CORE)
 			{
 			case 64:
@@ -1948,7 +1948,7 @@ namespace np
 			dim3 grid(std::min<int>(ceil(this->cols, block.x), GPU_NUM_SM * 2));
 
 			TP *tmp_d;
-			CUDA_CALL(cudaMalloc((void **)&tmp_d, sizeof(const TP) * this->rows * grid.x));
+			CUDA_CALL(cudaMalloc((void **)&tmp_d, sizeof(TP) * this->rows * grid.x));
 			switch (GPU_NUM_CUDA_CORE)
 			{
 			case 64:
@@ -1985,7 +1985,7 @@ namespace np
 		}
 		else
 		{
-			std::cerr << "\nError! Check arguments";
+			std::cerr << "\nError in max! Check arguments";
 			return np::ArrayGPU<TP>(1, 1, 0);
 		}
 	}
@@ -2004,7 +2004,7 @@ namespace np
 			ArrayGPU<TP> res(1, 1);
 			// device pointer tmp
 			TP *tmp_d;
-			CUDA_CALL(cudaMalloc((void **)&tmp_d, sizeof(const TP) * grid.x));
+			CUDA_CALL(cudaMalloc((void **)&tmp_d, sizeof(TP) * grid.x));
 			switch (GPU_NUM_CUDA_CORE)
 			{
 			case 64:
@@ -2042,7 +2042,7 @@ namespace np
 			dim3 grid(std::min<int>(ceil(this->cols, block.x), GPU_NUM_SM * 2));
 
 			TP *tmp_d;
-			CUDA_CALL(cudaMalloc((void **)&tmp_d, sizeof(const TP) * this->rows * grid.x));
+			CUDA_CALL(cudaMalloc((void **)&tmp_d, sizeof(TP) * this->rows * grid.x));
 			switch (GPU_NUM_CUDA_CORE)
 			{
 			case 64:
@@ -2079,7 +2079,7 @@ namespace np
 		}
 		else
 		{
-			std::cerr << "\nError! Check arguments";
+			std::cerr << "\nError in min! Check arguments";
 			return np::ArrayGPU<TP>(1, 1, 0);
 		}
 	}
@@ -2099,7 +2099,7 @@ namespace np
 			ArrayGPU<int> resIdx(1);
 			// device pointer tmp
 			TP *tmp_A_d;
-			CUDA_CALL(cudaMalloc((void **)&tmp_A_d, sizeof(const TP) * grid.x));
+			CUDA_CALL(cudaMalloc((void **)&tmp_A_d, sizeof(TP) * grid.x));
 			int *tmp_A_Idx_d;
 			CUDA_CALL(cudaMalloc((void **)&tmp_A_Idx_d, sizeof(const int) * grid.x));
 
@@ -2140,7 +2140,7 @@ namespace np
 			dim3 grid(std::min<int>(ceil(this->cols, block.x), GPU_NUM_SM * 2));
 
 			TP *tmp_A_d;
-			CUDA_CALL(cudaMalloc((void **)&tmp_A_d, sizeof(const TP) * this->rows * grid.x));
+			CUDA_CALL(cudaMalloc((void **)&tmp_A_d, sizeof(TP) * this->rows * grid.x));
 			int *tmp_A_Idx_d;
 			CUDA_CALL(cudaMalloc((void **)&tmp_A_Idx_d, sizeof(const int) * this->rows * grid.x));
 
@@ -2181,8 +2181,8 @@ namespace np
 		}
 		else
 		{
-			std::cerr << "\nError! Check arguments";
-			return np::ArrayGPU<TP>(1, 1, 0);
+			std::cerr << "\nError in argmax! Check arguments";
+			return np::ArrayGPU<int>(1, 1, 0);
 		}
 	}
 
@@ -2201,7 +2201,7 @@ namespace np
 			ArrayGPU<int> resIdx(1);
 			// device pointer tmp
 			TP *tmp_A_d;
-			CUDA_CALL(cudaMalloc((void **)&tmp_A_d, sizeof(const TP) * grid.x));
+			CUDA_CALL(cudaMalloc((void **)&tmp_A_d, sizeof(TP) * grid.x));
 			int *tmp_A_Idx_d;
 			CUDA_CALL(cudaMalloc((void **)&tmp_A_Idx_d, sizeof(const int) * grid.x));
 
@@ -2242,7 +2242,7 @@ namespace np
 			dim3 grid(std::min<int>(ceil(this->cols, block.x), GPU_NUM_SM * 2));
 
 			TP *tmp_A_d;
-			CUDA_CALL(cudaMalloc((void **)&tmp_A_d, sizeof(const TP) * this->rows * grid.x));
+			CUDA_CALL(cudaMalloc((void **)&tmp_A_d, sizeof(TP) * this->rows * grid.x));
 			int *tmp_A_Idx_d;
 			CUDA_CALL(cudaMalloc((void **)&tmp_A_Idx_d, sizeof(const int) * this->rows * grid.x));
 
@@ -2283,8 +2283,8 @@ namespace np
 		}
 		else
 		{
-			std::cerr << "\nError! Check arguments";
-			return np::ArrayGPU<TP>(1, 1, 0);
+			std::cerr << "\nError in argmin! Check arguments.";
+			return np::ArrayGPU<int>(1, 1, 0);
 		}
 	}
 

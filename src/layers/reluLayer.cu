@@ -27,11 +27,9 @@ ReLULayer::ReLULayer(const ReLULayer &L)
 }
 
 // assignment operator
-ReLULayer ReLULayer::operator=(const ReLULayer &L)
+void ReLULayer::operator=(const ReLULayer &L)
 {
-    ReLULayer L_new;
-    L_new.cache = L.cache;
-    return L_new;
+    this->cache = L.cache;
 }
 
 // ################################# forward pass ##############################################

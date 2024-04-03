@@ -9,7 +9,7 @@
 #include <cuda_runtime.h>
 
 #include <iostream>
-
+#include <vector>
 namespace np
 {
 	template <typename TP>
@@ -51,6 +51,10 @@ namespace np
 	// np.shuffle
 	template <typename TP>
 	void shuffle(ArrayGPU<TP> &A, unsigned long long seed = static_cast<unsigned long long>(time(NULL)));
+
+	// np.array_split
+	template<typename TP>
+	std::vector<np::ArrayGPU<TP>> array_split(const np::ArrayGPU<TP> &A, const int num_parts, int axis = 0);
 
 	template <typename TP>
 	ArrayGPU<TP> ones(const int rows, const int cols)
@@ -273,6 +277,35 @@ namespace np
 
 		kernelMatShuffle<TP><<<grid, block>>>(A.mat, A.size(), seed); 
 		cudaDeviceSynchronize();
+	}
+
+	template<typename TP>
+	std::vector<np::ArrayGPU<TP>> array_split(const np::ArrayGPU<TP> &A, const int num_parts, int axis){
+		// returns length % n sub-arrays of size length/n + 1 and the rest of size length/n.
+		if(axis == 0){
+			std::vector<np::ArrayGPU<TP>> splitted_arrays;
+
+			int tot_size = A.rows;
+			int part_size = tot_size / num_parts;
+			int remainder = tot_size % num_parts;
+
+			int st_idx = 0;
+			for(int i= 0; i< num_parts; ++i){
+				int this_part_size = part_size + (i< remainder ? 1: 0);
+
+				np::ArrayGPU<TP> tmp(this_part_size, A.cols);
+				tmp.copyFromGPU(A.mat + st_idx);
+
+				splitted_arrays.push_back(tmp);
+
+				st_idx += tmp.size();
+			}
+			return splitted_arrays;
+		}
+		else{
+			std::cerr<<"INVALID AXIS ARGUMENT!\n";
+			return {};
+		}
 	}
 }
 #endif

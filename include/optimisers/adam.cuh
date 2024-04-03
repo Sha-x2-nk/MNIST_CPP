@@ -15,7 +15,7 @@ public:
 
     AdamOptimiser(AdamOptimiser &A);
 
-    AdamOptimiser operator=(AdamOptimiser &A);
+    void operator=(AdamOptimiser &A);
 
     void step(np::ArrayGPU<float> &param, np::ArrayGPU<float> &grad);
 };

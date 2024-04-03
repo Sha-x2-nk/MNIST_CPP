@@ -33,16 +33,16 @@ public:
 
     NeuralNet(const NeuralNet &N);
 
-    NeuralNet operator=(const NeuralNet &N);
+    void operator=(const NeuralNet &N);
 
     void train();
-    void test();
+    void eval();
 
     np::ArrayGPU<float> forward(const np::ArrayGPU<float> &X);
-    std::vector<np::ArrayGPU<float>> forward(const np::ArrayGPU<float> &X, const np::ArrayGPU<int> &y);
+    std::pair<np::ArrayGPU<float>, np::ArrayGPU<float>> forward(const np::ArrayGPU<float> &X, const np::ArrayGPU<int> &y);
 
     np::ArrayGPU<float> operator()(const np::ArrayGPU<float> &X);
-    std::vector<np::ArrayGPU<float>> operator()(const np::ArrayGPU<float> &X, const np::ArrayGPU<int> &y);
+    std::pair<np::ArrayGPU<float>, np::ArrayGPU<float>> operator()(const np::ArrayGPU<float> &X, const np::ArrayGPU<int> &y);
 
     np::ArrayGPU<float> backward(np::ArrayGPU<float> &dout);
 

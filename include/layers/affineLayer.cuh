@@ -26,7 +26,7 @@ public:
     AffineLayer(const AffineLayer &L);
 
     // assignment operator
-    AffineLayer operator=(const AffineLayer &L);
+    void operator=(const AffineLayer &L);
 
     // ################################# forward pass ##############################################
     np::ArrayGPU<float> forward(const np::ArrayGPU<float> &X, const std::string &mode) override;

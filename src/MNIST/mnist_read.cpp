@@ -22,7 +22,7 @@ uchar *read_mnist_images(std::string &path, int &num_images, int &img_size)
     {
         int magic_number = 0, n_rows = 0, n_cols = 0;
 
-        file.read((char *)&magic_number, sizeof(magic_number));
+        file.read((char *)&magic_number, sizeof(magic_number)); 
         magic_number = reverseInt(magic_number);
 
         if (magic_number != 2051)

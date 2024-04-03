@@ -20,7 +20,7 @@
 AffineLayer::AffineLayer(int in_features, int out_features)
 {
     this->W = np::Random::randn<float>(in_features, out_features) * sqrtf(2.0 / in_features);
-    this->b = np::zeros<float>(out_features);
+    this->b = np::zeros<float>(1, out_features);
 }
 
 // copy constructor
@@ -34,15 +34,13 @@ AffineLayer::AffineLayer(const AffineLayer &L)
 }
 
 // assignment operator
-AffineLayer AffineLayer::operator=(const AffineLayer &L)
+void AffineLayer::operator=(const AffineLayer &L)
 {
-    AffineLayer L_new;
-    L_new.W = L.W;
-    L_new.b = L.b;
-    L_new.dW = L.dW;
-    L_new.db = L.db;
-    L_new.cache = L.cache;
-    return L_new;
+    this->W = L.W;
+    this->b = L.b;
+    this->dW = L.dW;
+    this->db = L.db;
+    this->cache = L.cache;
 };
 
 // ################################# forward pass ##############################################

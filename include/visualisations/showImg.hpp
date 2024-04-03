@@ -6,6 +6,8 @@
 
 typedef unsigned char uchar;
 
-void showImage(uchar* img, std::string &winName);
+void showImage(uchar* img, int img_height, int img_width, std::string &winName);
+void showImage(float* img, int img_height, int img_width, std::string &winName);
+
 
 #endif
