@@ -180,6 +180,46 @@ __global__ void kernelMatMaximumMat(TP *A, TP *B, TP *C, int size);
 template <typename TP>
 __global__ void kernelMatMaximumScalar(TP *A, TP B, TP *C, int size);
 
+// maximum of matrix elements and a vector. vec.dim = mat.rows
+//  Ci = max(Ai, Vr) (broadcasting)
+//  shapeA = M x N matrix
+template<typename TP>
+__global__ void kernelMatMaximumVecAlongCols(TP *A, TP *V, TP *C, int size, int N);
+
+// maximum of matrix elements and a vector. vec.dim = mat.cols
+//  Ci = max(Ai, Vc) (broadcasting)
+//  shapeA = M x N matrix
+template<typename TP>
+__global__ void kernelMatMaximumVecAlongRows(TP *A, TP *V, TP *C, int size, int N);
+
+// compare 2 matrix ( element wise ) and put min value in result matrix.
+// A = MxN
+// B = MxN
+// Ci = max(Ai, Bi). (elementwise)
+template <typename TP>
+__global__ void kernelMatMinimumMat(TP *A, TP *B, TP *C, int size);
+
+// compare a matrix and a scalar and put min of them in result matrix.
+// A = MxN
+// B = scalar
+// Ci = max(Ai, B). (elementwise)
+template <typename TP>
+__global__ void kernelMatMinimumScalar(TP *A, TP B, TP *C, int size);
+
+// minimum of matrix elements and a vector. vec.dim = mat.rows
+//  Ci = min(Ai, Vr) (broadcasting)
+//  shapeA = M x N matrix
+template<typename TP>
+__global__ void kernelMatMinimumVecAlongCols(TP *A, TP *V, TP *C, int size, int N);
+
+// maximum of matrix elements and a vector. vec.dim = mat.cols
+//  Ci = min(Ai, Vc) (broadcasting)
+//  shapeA = M x N matrix
+template<typename TP>
+__global__ void kernelMatMinimumVecAlongRows(TP *A, TP *V, TP *C, int size, int N);
+
+
+
 // comparison operators
 
 // >
@@ -896,9 +936,10 @@ __global__ void kernelMatDivVecAlongRows(TP *A, TP *V, TP *C, int size, int N)
 	}
 }
 
-// A = MxN
-// B = MxN
-// Ci = max(Ai, Bi). (elementwise)
+// np.maximum
+
+// maximum corrosponding elements of 2 matrices
+//  Ci = max(Ai, Bi)
 template <typename TP>
 __global__ void kernelMatMaximumMat(TP *A, TP *B, TP *C, int size)
 {
@@ -906,33 +947,58 @@ __global__ void kernelMatMaximumMat(TP *A, TP *B, TP *C, int size)
 
 	if (idx < size)
 	{
-		if (A[idx] > B[idx])
-			C[idx] = A[idx];
-		else
-			C[idx] = B[idx];
+		C[idx] = (A[idx] > B[idx])?A[idx]:B[idx];
 	}
 }
 
-// A = MxN
-// B = scalar
-// Ci = max(Ai, B). (elementwise)
+// maximum of matrix elements and a scalar.
+//  Ci = max(Ai, Scal) (broadcasting)
 template <typename TP>
-__global__ void kernelMatMaximumScalar(TP *A, TP B, TP *C, int size)
+__global__ void kernelMatMaximumScalar(TP *A, TP Scal, TP *C, int size)
 {
 	int idx = blockIdx.x * blockDim.x + threadIdx.x;
 
 	if (idx < size)
 	{
-		if (A[idx] > B)
-			C[idx] = A[idx];
-		else
-			C[idx] = B;
+		C[idx] = (A[idx] > Scal)?A[idx]:Scal;
+
+	}
+}
+// maximum of matrix elements and a vector. vec.dim = mat.rows
+//  Ci = max(Ai, Vr) (broadcasting)
+//  shapeA = M x N matrix
+template <typename TP>
+__global__ void kernelMatMaximumVecAlongCols(TP *A, TP *V, TP *C, int size, int N)
+{
+	int idx = blockIdx.x * blockDim.x + threadIdx.x;
+	int r = idx / N;
+	// int c = idx % N;
+
+	if (idx < size)
+	{
+		C[idx] = (A[idx] > V[r])?A[idx]:V[r];
 	}
 }
 
-// A = MxN
-// B = MxN
-// Ci = min(Ai, Bi). (elementwise)
+// maximum of matrix elements and a vector. vec.dim = mat.cols
+//  Ci = max(Ai, Vc) (broadcasting)
+//  shapeA = M x N matrix
+template <typename TP>
+__global__ void kernelMatMaximumVecAlongRows(TP *A, TP *V, TP *C, int size, int N)
+{
+	int idx = blockIdx.x * blockDim.x + threadIdx.x;
+	// int r = idx / N;
+	int c = idx % N;
+
+	if (idx < size)
+	{
+		C[idx] = (A[idx] > V[c])?A[idx]:V[c];
+	}
+}
+
+
+// minimum corrosponding elements of 2 matrices
+//  Ci = min(Ai, Bi)
 template <typename TP>
 __global__ void kernelMatMinimumMat(TP *A, TP *B, TP *C, int size)
 {
@@ -940,29 +1006,55 @@ __global__ void kernelMatMinimumMat(TP *A, TP *B, TP *C, int size)
 
 	if (idx < size)
 	{
-		if (A[idx] < B[idx])
-			C[idx] = A[idx];
-		else
-			C[idx] = B[idx];
+		C[idx] = (A[idx] < B[idx])?A[idx]:B[idx];
 	}
 }
 
-// A = MxN
-// B = scalar
-// Ci = max(Ai, B). (elementwise)
+// minimum of matrix elements and a scalar.
+//  Ci = min(Ai, Scal) (broadcasting)
 template <typename TP>
-__global__ void kernelMatMinimumScalar(TP *A, TP B, TP *C, int size)
+__global__ void kernelMatMinimumScalar(TP *A, TP Scal, TP *C, int size)
 {
 	int idx = blockIdx.x * blockDim.x + threadIdx.x;
 
 	if (idx < size)
 	{
-		if (A[idx] < B)
-			C[idx] = A[idx];
-		else
-			C[idx] = B;
+		C[idx] = (A[idx] < Scal)?A[idx]:Scal;
+
 	}
 }
+// minimum of matrix elements and a vector. vec.dim = mat.rows
+//  Ci = min(Ai, Vr) (broadcasting)
+//  shapeA = M x N matrix
+template <typename TP>
+__global__ void kernelMatMinimumVecAlongCols(TP *A, TP *V, TP *C, int size, int N)
+{
+	int idx = blockIdx.x * blockDim.x + threadIdx.x;
+	int r = idx / N;
+	// int c = idx % N;
+
+	if (idx < size)
+	{
+		C[idx] = (A[idx] < V[r])?A[idx]:V[r];
+	}
+}
+
+// minimum of matrix elements and a vector. vec.dim = mat.cols
+//  Ci = min(Ai, Vc) (broadcasting)
+//  shapeA = M x N matrix
+template <typename TP>
+__global__ void kernelMatMinimumVecAlongRows(TP *A, TP *V, TP *C, int size, int N)
+{
+	int idx = blockIdx.x * blockDim.x + threadIdx.x;
+	// int r = idx / N;
+	int c = idx % N;
+
+	if (idx < size)
+	{
+		C[idx] = (A[idx] < V[c])?A[idx]:V[c];
+	}
+}
+
 
 // comparison operators
 

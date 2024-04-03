@@ -28,6 +28,14 @@ namespace np
 	template <typename TP>
 	ArrayGPU<TP> maximum(const ArrayGPU<TP> &A, const TP Scalar);
 
+	// min(a, b). element wise minimum
+	template <typename TP>
+	ArrayGPU<TP> minimum(const ArrayGPU<TP> &A, const ArrayGPU<TP> &B);
+
+	template <typename TP>
+	ArrayGPU<TP> minimum(const ArrayGPU<TP> &A, const TP Scalar);
+
+
 	// np.exp
 	template <typename TP>
 	ArrayGPU<TP> exp(const ArrayGPU<TP> &A);
@@ -83,47 +91,107 @@ namespace np
 		return ans;
 	}
 
+	// np.maximum
 	template <typename TP>
-	// max(a, b). element wise maximum
 	ArrayGPU<TP> maximum(const ArrayGPU<TP> &A, const ArrayGPU<TP> &B)
 	{
-		if (A.rows == 1 || A.cols == 1)
+		if (this->rows == 1 && this->cols == 1)
 		{
-			// A is a scalar
+			// A is scalar
 			ArrayGPU<TP> res(B.rows, B.cols);
 
 			const int BLOCK_SIZE = GPU_NUM_CUDA_CORE;
 			dim3 block(BLOCK_SIZE);
 			dim3 grid(ceil(res.size(), block.x));
-			kernelMatMaximumScalar<TP><<<grid, block>>>(B.mat, A.at(0), res.mat, res.size());
+
+			kernelMatMaximumScalar<TP><<<grid, block>>>(B.mat, this->at(0), res.mat, res.size());
 			cudaDeviceSynchronize();
 			return res;
 		}
-		else if (B.rows == 1 || B.cols == 1)
+		else if (B.rows == 1 && B.cols == 1)
 		{
-			// B is a scalar
-			ArrayGPU<TP> res(A.rows, A.cols);
-
-			const int BLOCK_SIZE = GPU_NUM_CUDA_CORE;
-			dim3 block(BLOCK_SIZE);
-			dim3 grid(ceil(res.size(), block.x));
-			kernelMatMaximumScalar<TP><<<grid, block>>>(A.mat, B.at(0), res.mat, res.size());
-			cudaDeviceSynchronize();
-			return res;
-		}
-		else if (A.rows == B.rows && A.cols == B.cols)
-		{
-			// same dimension. element wise comparison
-
-			ArrayGPU<TP> res(A.rows, A.cols);
+			// B is scalar
+			ArrayGPU<TP> res(this->rows, this->cols);
 
 			const int BLOCK_SIZE = GPU_NUM_CUDA_CORE;
 			dim3 block(BLOCK_SIZE);
 			dim3 grid(ceil(res.size(), block.x));
 
-			kernelMatMaximumMat<TP><<<grid, block>>>(A.mat, B.mat, res.mat, res.size());
+			kernelMatMaximumScalar<TP><<<grid, block>>>(this->mat, B.at(0), res.mat, res.size());
 			cudaDeviceSynchronize();
 			return res;
+		}
+		// A is vector
+		// A vector ki dim, is equal to either col or row of B
+		// row vector. will extend along cols if possible. (prioritising in case of square matrix)
+		// vice versa for cols
+
+		else if ((this->cols == 1 && this->rows == B.rows) || (this->rows == 1 && this->cols == B.rows))
+		{
+			// along rows add kr
+			ArrayGPU<TP> res(B.rows, B.cols);
+			const int BLOCK_SIZE = GPU_NUM_CUDA_CORE;
+			dim3 block(BLOCK_SIZE);
+			dim3 grid(ceil(res.size(), block.x));
+			kernelMatMaximumVecAlongCols<TP><<<grid, block>>>(this->mat, B.mat, res.mat, res.size(), B.cols);
+			cudaDeviceSynchronize();
+
+			return res;
+		}
+		else if ((this->cols == 1 && this->rows == B.cols) || (this->rows == 1 && this->cols == B.cols))
+		{
+			// along cols add kr
+			ArrayGPU<TP> res(B.rows, B.cols);
+			const int BLOCK_SIZE = GPU_NUM_CUDA_CORE;
+			dim3 block(BLOCK_SIZE);
+			dim3 grid(ceil(res.size(), block.x));
+			kernelMatMaximumVecAlongRows<TP><<<grid, block>>>(this->mat, B.mat, res.mat, res.size(), B.cols);
+			cudaDeviceSynchronize();
+
+			return res;
+		}
+		// B is vetor
+		// B vector ki dim, is eq to either col or row of B
+		// row vector. will extend along cols if possible. (prioritising in case of square matrix)
+		else if ((B.cols == 1 && this->rows == B.rows) || (B.rows == 1 && this->rows == B.cols))
+		{
+			// along rows add kr
+			ArrayGPU<TP> res(this->rows, this->cols);
+			const int BLOCK_SIZE = GPU_NUM_CUDA_CORE;
+			dim3 block(BLOCK_SIZE);
+			dim3 grid(ceil(res.size(), block.x));
+			kernelMatMaximumVecAlongCols<TP><<<grid, block>>>(this->mat, B.mat, res.mat, res.size(), this->cols);
+			cudaDeviceSynchronize();
+
+			return res;
+		}
+		else if ((B.cols == 1 && this->cols == B.rows) || (B.rows == 1 && this->cols == B.cols))
+		{
+			// along cols add kr
+			ArrayGPU<TP> res(this->rows, this->cols);
+			const int BLOCK_SIZE = GPU_NUM_CUDA_CORE;
+			dim3 block(BLOCK_SIZE);
+			dim3 grid(ceil(res.size(), block.x));
+			kernelMatMaximumVecAlongRows<TP><<<grid, block>>>(this->mat, B.mat, res.mat, res.size(), this->cols);
+			cudaDeviceSynchronize();
+
+			return res;
+		}
+		else if (this->rows == B.rows && this->cols == B.cols)
+		{
+			// A and B both are matrices of same dimensions
+			ArrayGPU<TP> res(this->rows, this->cols);
+			const int BLOCK_SIZE = GPU_NUM_CUDA_CORE;
+			dim3 block(BLOCK_SIZE);
+			dim3 grid(ceil(res.size(), block.x));
+			kernelMatMaximumMat<TP><<<grid, block>>>(this->mat, B.mat, res.mat, res.size());
+			cudaDeviceSynchronize();
+			return res;
+		}
+		else
+		{
+			std::cerr << "\nError in maximum! Check arguments";
+			return np::ArrayGPU<TP>(1, 1, 0);
 		}
 	}
 
@@ -140,49 +208,111 @@ namespace np
 		return res;
 	}
 
+	
+	// np.minimum
 	template <typename TP>
-	// max(a, b). element wise maximum
 	ArrayGPU<TP> minimum(const ArrayGPU<TP> &A, const ArrayGPU<TP> &B)
 	{
-		if (A.rows == 1 || A.cols == 1)
+		if (this->rows == 1 && this->cols == 1)
 		{
-			// A is a scalar
+			// A is scalar
 			ArrayGPU<TP> res(B.rows, B.cols);
 
 			const int BLOCK_SIZE = GPU_NUM_CUDA_CORE;
 			dim3 block(BLOCK_SIZE);
 			dim3 grid(ceil(res.size(), block.x));
-			kernelMatMinimumScalar<TP><<<grid, block>>>(B.mat, A.at(0), res.mat, res.size());
+
+			kernelMatMinimumScalar<TP><<<grid, block>>>(B.mat, this->at(0), res.mat, res.size());
 			cudaDeviceSynchronize();
 			return res;
 		}
-		else if (B.rows == 1 || B.cols == 1)
+		else if (B.rows == 1 && B.cols == 1)
 		{
-			// B is a scalar
-			ArrayGPU<TP> res(A.rows, A.cols);
-
-			const int BLOCK_SIZE = GPU_NUM_CUDA_CORE;
-			dim3 block(BLOCK_SIZE);
-			dim3 grid(ceil(res.size(), block.x));
-			kernelMatMinimumScalar<TP><<<grid, block>>>(A.mat, B.at(0), res.mat, res.size());
-			cudaDeviceSynchronize();
-			return res;
-		}
-		else if (A.rows == B.rows && A.cols == B.cols)
-		{
-			// same dimension. element wise comparison
-
-			ArrayGPU<TP> res(A.rows, A.cols);
+			// B is scalar
+			ArrayGPU<TP> res(this->rows, this->cols);
 
 			const int BLOCK_SIZE = GPU_NUM_CUDA_CORE;
 			dim3 block(BLOCK_SIZE);
 			dim3 grid(ceil(res.size(), block.x));
 
-			kernelMatMinimumMat<TP><<<grid, block>>>(A.mat, B.mat, res.mat, res.size());
+			kernelMatMinimumScalar<TP><<<grid, block>>>(this->mat, B.at(0), res.mat, res.size());
 			cudaDeviceSynchronize();
 			return res;
+		}
+		// A is vector
+		// A vector ki dim, is equal to either col or row of B
+		// row vector. will extend along cols if possible. (prioritising in case of square matrix)
+		// vice versa for cols
+
+		else if ((this->cols == 1 && this->rows == B.rows) || (this->rows == 1 && this->cols == B.rows))
+		{
+			// along rows add kr
+			ArrayGPU<TP> res(B.rows, B.cols);
+			const int BLOCK_SIZE = GPU_NUM_CUDA_CORE;
+			dim3 block(BLOCK_SIZE);
+			dim3 grid(ceil(res.size(), block.x));
+			kernelMatMinimumVecAlongCols<TP><<<grid, block>>>(this->mat, B.mat, res.mat, res.size(), B.cols);
+			cudaDeviceSynchronize();
+
+			return res;
+		}
+		else if ((this->cols == 1 && this->rows == B.cols) || (this->rows == 1 && this->cols == B.cols))
+		{
+			// along cols add kr
+			ArrayGPU<TP> res(B.rows, B.cols);
+			const int BLOCK_SIZE = GPU_NUM_CUDA_CORE;
+			dim3 block(BLOCK_SIZE);
+			dim3 grid(ceil(res.size(), block.x));
+			kernelMatMinimumVecAlongRows<TP><<<grid, block>>>(this->mat, B.mat, res.mat, res.size(), B.cols);
+			cudaDeviceSynchronize();
+
+			return res;
+		}
+		// B is vetor
+		// B vector ki dim, is eq to either col or row of B
+		// row vector. will extend along cols if possible. (prioritising in case of square matrix)
+		else if ((B.cols == 1 && this->rows == B.rows) || (B.rows == 1 && this->rows == B.cols))
+		{
+			// along rows add kr
+			ArrayGPU<TP> res(this->rows, this->cols);
+			const int BLOCK_SIZE = GPU_NUM_CUDA_CORE;
+			dim3 block(BLOCK_SIZE);
+			dim3 grid(ceil(res.size(), block.x));
+			kernelMatMinimumVecAlongCols<TP><<<grid, block>>>(this->mat, B.mat, res.mat, res.size(), this->cols);
+			cudaDeviceSynchronize();
+
+			return res;
+		}
+		else if ((B.cols == 1 && this->cols == B.rows) || (B.rows == 1 && this->cols == B.cols))
+		{
+			// along cols add kr
+			ArrayGPU<TP> res(this->rows, this->cols);
+			const int BLOCK_SIZE = GPU_NUM_CUDA_CORE;
+			dim3 block(BLOCK_SIZE);
+			dim3 grid(ceil(res.size(), block.x));
+			kernelMatMinimumVecAlongRows<TP><<<grid, block>>>(this->mat, B.mat, res.mat, res.size(), this->cols);
+			cudaDeviceSynchronize();
+
+			return res;
+		}
+		else if (this->rows == B.rows && this->cols == B.cols)
+		{
+			// A and B both are matrices of same dimensions
+			ArrayGPU<TP> res(this->rows, this->cols);
+			const int BLOCK_SIZE = GPU_NUM_CUDA_CORE;
+			dim3 block(BLOCK_SIZE);
+			dim3 grid(ceil(res.size(), block.x));
+			kernelMatMinimumMat<TP><<<grid, block>>>(this->mat, B.mat, res.mat, res.size());
+			cudaDeviceSynchronize();
+			return res;
+		}
+		else
+		{
+			std::cerr << "\nError in maximum! Check arguments";
+			return np::ArrayGPU<TP>(1, 1, 0);
 		}
 	}
+
 
 	template <typename TP>
 	ArrayGPU<TP> minimum(const ArrayGPU<TP> &A, const TP Scalar)
@@ -197,7 +327,7 @@ namespace np
 		return res;
 	}
 
-	// np.exp
+		// np.exp
 	template <typename TP>
 	ArrayGPU<TP> exp(const ArrayGPU<TP> &A)
 	{
