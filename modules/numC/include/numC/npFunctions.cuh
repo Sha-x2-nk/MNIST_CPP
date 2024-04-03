@@ -386,7 +386,7 @@ namespace np
 
 	// np.pow
 	template <typename TP>
-	ArrayGPU<TP> pow(const ArrayGPU<TP> &A, const int pow)
+	ArrayGPU<TP> pow(const ArrayGPU<TP> &A, const float pow)
 	{
 		ArrayGPU<TP> res(A.rows, A.cols);
 

@@ -159,9 +159,61 @@ auto C = np::maximum(A, B);
 C = np::maximum(A, 0);
 C = np::maximum(A, np::ArrayGPU<float>(10, 1));  
 C = np::maximum(A, np::ArrayGPU<float>(1, 5));
+
+// works
 ```
-* exp, log, square, sqrt
+* exp, log, square, sqrt, pow
 ```cpp
+#include "numC/npFunctions.cuh"
 
+// call gpuConfig
+auto A = np::ArrayGPU<float>(10, 5, 7); // 10x5 array, fill with 7
 
+auto C = np::sqrt(A); // returns an array after applying function element wise.
+// similar syntax for square, log, exp.
+
+C = np::pow(A, 15); // returns an array after raising all elements by a power of pow. (pow is float) 
+```
+* shuffle
+```cpp
+#include "numC/npFunctions.cuh"
+
+// call gpuConfig
+auto A = np::arange<float>(1000); // array with numbers from 0 - 999
+
+auto C = np::shuffle(A); // shuffles array randomly. (permutes)
+```
+* array_split
+```cpp
+#include "numC/npFunctions.cuh"
+
+// call gpuConfig
+auto A = np::arange<float>(1000); // array with numbers from 0 - 999
+
+auto batches = np::array_split(A, 5, 0); // array, num_parts, axis. //currently only axis = 0 is supported. 
+// returns a std::vector of arrays. 
+// will split even if arrays formed will be unequal.
+// will create i%n arrays of size i/n + 1 and rest of size i/n
+```
+### Random Class
 Random array generation (uniform and normal distributions)
+* Uniform distribution
+```cpp
+#include "numC/npFunctions.cuh"
+
+// call gpuConfig
+
+auto A = np::Random::rand<float>(1, 100); // filled with numbers from uniform distribution between 0 and 1
+// third argument can also be given - seed.
+auto A = np::Random::rand<float>(1, 100, 20, 50); // filled with numbers from uniform distribution between 20 and 50
+// fifth argument can also be given - seed.
+```
+* Normal distribution
+```cpp
+#include "numC/npFunctions.cuh"
+
+// call gpuConfig
+
+auto A = np::Random::randn<float>(1, 100); // filled with numbers from normal distribution between 0 and 1
+// third argument can also be given - seed.
+```

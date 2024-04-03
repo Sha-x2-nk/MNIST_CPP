@@ -417,7 +417,7 @@ __global__ void kernelSqrtMat(TP *A, TP *C, int size);
 // C = MxN
 // Ci = square(Ai)
 template <typename TP>
-__global__ void kernelPowMat(TP *A, int pow, TP *C, int size);
+__global__ void kernelPowMat(TP *A, TP pow, TP *C, int size);
 
 // REDUCTION
 
@@ -1565,7 +1565,7 @@ __global__ void kernelSqrtMat(TP *A, TP *C, int size)
 // C = MxN
 // Ci = square(Ai)
 template <typename TP>
-__global__ void kernelPowMat(TP *A, int power, TP *C, int size)
+__global__ void kernelPowMat(TP *A, float power, TP *C, int size)
 {
 	int idx = blockIdx.x * blockDim.x + threadIdx.x;
 
@@ -1573,11 +1573,11 @@ __global__ void kernelPowMat(TP *A, int power, TP *C, int size)
 	{
 		if constexpr (std::is_same<TP, int>::value)
 		{
-			C[idx] = static_cast<int>(powf(A[idx], static_cast<float>(power)));
+			C[idx] = static_cast<int>(powf(A[idx], power));
 		}
 		else if constexpr (std::is_same<TP, float>::value)
 		{
-			C[idx] = powf(A[idx], static_cast<float>(power));
+			C[idx] = powf(A[idx], power);
 		}
 		else if constexpr (std::is_same<TP, double>::value)
 		{
