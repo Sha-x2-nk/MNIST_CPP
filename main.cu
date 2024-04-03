@@ -131,7 +131,7 @@ std::pair<std::vector<float*>, std::vector<int*>> prepareDataset(){
     free(train_labels);
 
     std::cout<<"[+] Done. "<<std::endl;
-    std::cout<<"------Validation set size: "<<num_val_images<<" Train set size: "<<num_train_images<<"-----"<<std::endl;
+    std::cout<<"------Validation set size: "<<num_val_images<<" Train set size: "<<(num_train_images - num_val_images)<<"-----"<<std::endl;
     
     int num_test_images;
     uchar* test_imgs = readMNISTImages(std::string("C:/Users/shash/Documents/MNIST_NUMC/modules/MNIST/dataset/t10k-images.idx3-ubyte"), num_test_images, img_size);
@@ -210,7 +210,7 @@ NeuralNet trainModel(float *x_train, int *y_train, int train_size, float *x_val,
     float best_val_acc= 0, best_train_acc = 0;
 
     std::cout<<std::endl<<"############### Train Parameters: ###############"<<std::endl;
-    std::cout<<"## Network Architecture: ["<<model.affine_layers[0].W.rows<<", "<<model.affine_layers[1].W.cols<<"], ["<<model.affine_layers[1].W.rows<<", "<<model.affine_layers[1].W.cols<<"] ##"<<std::endl;
+    std::cout<<"## Network Architecture: ["<<model.affine_layers[0].W.rows<<", "<<model.affine_layers[0].W.cols<<"], ["<<model.affine_layers[1].W.rows<<", "<<model.affine_layers[1].W.cols<<"] ##"<<std::endl;
     std::cout<<"## Initialisation: Xavier Init                 ##"<<std::endl;
     std::cout<<"## Dropout Probablity: "<<model.dropout_layers[0].p_keep<<"                  ##"<<std::endl;
     std::cout<<"## Batch Size: "<<batch_size<<"                             ##"<<std::endl;
@@ -237,7 +237,7 @@ NeuralNet trainModel(float *x_train, int *y_train, int train_size, float *x_val,
 
             if( (iter + 1)%100 == 0){
                 auto predicted_gpu = outNloss.first.argmax(1);
-                auto train_acc = static_cast<float>(((predicted_gpu == y_train_batches[iter]).sum()).at(0))/y_train_batches[iter].rows;
+                train_acc = static_cast<float>(((predicted_gpu == y_train_batches[iter]).sum()).at(0))/y_train_batches[iter].rows;
 
                 // evaluating on validation set
                 model.eval();

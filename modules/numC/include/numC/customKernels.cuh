@@ -56,115 +56,51 @@ __global__ void kernelSetMatValues(TP *in, int rdin, TP *val, int *rows, int *co
 template <typename TP>
 __global__ void kernelSetMatValues(TP *in, TP *val, int *idxs, int size);
 
-// ARITHMATIC FUNCTIONs
+/* Operator functions
+1 for +
+2 for -
+3 for * 
+4 for /
+5 for <
+6 for <=
+7 for >
+8 for >=
+9 for ==
+10 for !=
+*/
 
-// addition functions
+// operator functions
 
-// add corrosponding elements of 2 matrices
-//  C = A + B
-template <typename TP>
-__global__ void kernelMatAddMat(TP *A, TP *B, TP *C, int size);
+// perform operator on corrosponding elements of 2 matrices
+//  C = A op B
+template <typename TP, int OP>
+__global__ void kernelMatOpMat(TP *A, TP *B, TP *C, int size);
 
-// add matrix and a scalar.
-//  C = A + Scal (broadcasting)
-// add scalar to all values of the matrix
-template <typename TP>
-__global__ void kernelMatAddScalar(TP *A, TP Scal, TP *C, int size);
-template <typename TP>
-__global__ void kernelScalarAddMat(TP Scal, TP *A, TP *C, int size);
+// operator on matrix and a scalar.
+//  C = A op Scal (broadcasting)
+// op scalar to all values of the matrix
+template <typename TP, int OP>
+__global__ void kernelMatOpScalar(TP *A, TP Scal, TP *C, int size);
+template <typename TP, int OP>
+__global__ void kernelScalarOpMat(TP Scal, TP *A, TP *C, int size);
 
-// add matrix  and vector, mat.rows = vec.dim
-// C = A + V (broadcasting)
+// op on matrix and vector, mat.rows = vec.dim
+// C = A op V (broadcasting)
 //  shapeA = M x N matrix
-template <typename TP>
-__global__ void kernelMatAddVecAlongCols(TP *A, TP *V, TP *C, int size, int N);
+template <typename TP, int OP>
+__global__ void kernelMatOpVecAlongCols(TP *A, TP *V, TP *C, int size, int N);
+template <typename TP, int OP>
+__global__ void kernelVecOpMatAlongCols(TP *V, TP *A, TP *C, int size, int N);
 
-// add matrix  and vector, mat.cols = vec.dim
-// C = A + V (broadcasting)
-//  shapeA = M x N matrix
-template <typename TP>
-__global__ void kernelMatAddVecAlongRows(TP *A, TP *V, TP *C, int size, int N);
+// operator on matrix and vector, mat.cols = vec.dim
+// C = A op V (broadcasting)
+// shapeA = M x N matrix
+template <typename TP, int OP>
+__global__ void kernelMatOpVecAlongRows(TP *A, TP *V, TP *C, int size, int N);
+template <typename TP, int OP>
+__global__ void kernelVecOpMatAlongRows(TP *V, TP *A, TP *C, int size, int N);
 
-// subtraction functions
 
-// subtract corrosponding elements of 2 matrices
-//  C = A - B
-template <typename TP>
-__global__ void kernelMatSubMat(TP *A, TP *B, TP *C, int size);
-
-// subtract matrix and a scalar.
-//  C = A - Scal (broadcasting)
-// subtract scalar from all values of the matrix
-template <typename TP>
-__global__ void kernelMatSubScalar(TP *A, TP Scal, TP *C, int size);
-template <typename TP>
-__global__ void kernelScalarSubMat(TP Scal, TP *A, TP *C, int size);
-
-// sub matrix  and vector, mat.rows = vec.dim
-// C = A - V (broadcasting)
-//  shapeA = M x N matrix
-template <typename TP>
-__global__ void kernelMatSubVecAlongCols(TP *A, TP *V, TP *C, int size, int N);
-
-// sub matrix and vector, mat.cols = vec.dim
-// C = A - V (broadcasting)
-//  shapeA = M x N matrix
-template <typename TP>
-__global__ void kernelMatSubVecAlongRows(TP *A, TP *V, TP *C, int size, int N);
-
-// multiplication functions
-
-// mul corrosponding elements of 2 matrices
-//  C = A * B
-template <typename TP>
-__global__ void kernelMatMulMat(TP *A, TP *B, TP *C, int size);
-
-// mul matrix and a scalar.
-//  C = A * Scal (broadcasting)
-// mul scalar to all values of the matrix
-template <typename TP>
-__global__ void kernelMatMulScalar(TP *A, TP Scal, TP *C, int size);
-template <typename TP>
-__global__ void kernelScalarMulMat(TP Scal, TP *A, TP *C, int size);
-
-// mul matrix  and vector, mat.rows = vec.dim
-// C = A * V (broadcasting)
-//  shapeA = M x N matrix
-template <typename TP>
-__global__ void kernelMatMulVecAlongCols(TP *A, TP *V, TP *C, int size, int N);
-
-// mul matrix  and vector, mat.cols = vec.dim
-// C = A * V (broadcasting)
-//  shapeA = M x N matrix
-template <typename TP>
-__global__ void kernelMatMulVecAlongRows(TP *A, TP *V, TP *C, int size, int N);
-
-// division functions
-
-// div corrosponding elements of 2 matrices
-//  C = A / B
-template <typename TP>
-__global__ void kernelMatDivMat(TP *A, TP *B, TP *C, int size);
-
-// div matrix and a scalar.
-//  C = A / Scal (broadcasting)
-// div scalar to all values of the matrix
-template <typename TP>
-__global__ void kernelMatDivScalar(TP *A, TP Scal, TP *C, int size);
-template <typename TP>
-__global__ void kernelScalarDivMat(TP Scal, TP *A, TP *C, int size);
-
-// div matrix  and vector, mat.rows = vec.dim
-// C = A / V (broadcasting)
-//  shapeA = M x N matrix
-template <typename TP>
-__global__ void kernelMatDivVecAlongCols(TP *A, TP *V, TP *C, int size, int N);
-
-// div matrix  and vector, mat.cols = vec.dim
-// C = A / V (broadcasting)
-//  shapeA = M x N matrix
-template <typename TP>
-__global__ void kernelMatDivVecAlongRows(TP *A, TP *V, TP *C, int size, int N);
 
 // compare 2 matrix ( element wise ) and put max value in result matrix.
 // A = MxN
@@ -217,172 +153,6 @@ __global__ void kernelMatMinimumVecAlongCols(TP *A, TP *V, TP *C, int size, int 
 //  shapeA = M x N matrix
 template<typename TP>
 __global__ void kernelMatMinimumVecAlongRows(TP *A, TP *V, TP *C, int size, int N);
-
-
-
-// comparison operators
-
-// >
-
-// compare corrosponding elements of 2 matrices
-//  C = A > B
-template <typename TP>
-__global__ void kernelMatIsGreaterThanMat(TP *A, TP *B, TP *C, int size);
-
-// compare matrix and a scalar.
-//  C = A > Scal (broadcasting)
-// compare scalar with all values of the matrix
-template <typename TP>
-__global__ void kernelMatIsGreaterThanScalar(TP *A, TP Scal, TP *C, int size);
-template <typename TP>
-__global__ void kernelScalarIsGreaterThanMat(TP Scal, TP *A, TP *C, int size);
-
-// compare matrix and vector, mat.rows = vec.dim
-// C = A > V (broadcasting)
-//  shapeA = M x N matrix
-template <typename TP>
-__global__ void kernelMatIsGreaterThanVecAlongCols(TP *A, TP *V, TP *C, int size, int N);
-
-// compare matrix  and vector, mat.cols = vec.dim
-// C = A > V (broadcasting)
-//  shapeA = M x N matrix
-template <typename TP>
-__global__ void kernelMatIsGreaterThanVecAlongRows(TP *A, TP *V, TP *C, int size, int N);
-
-// >=
-
-// compare corrosponding elements of 2 matrices
-//  C = A >= B
-template <typename TP>
-__global__ void kernelMatIsGreaterThanEqMat(TP *A, TP *B, TP *C, int size);
-
-// compare matrix and a scalar.
-//  C = A >= Scal (broadcasting)
-// compare scalar with all values of the matrix
-template <typename TP>
-__global__ void kernelMatIsGreaterThanEqScalar(TP *A, TP Scal, TP *C, int size);
-template <typename TP>
-__global__ void kernelScalarIsGreaterThanEqMat(TP Scal, TP *A, TP *C, int size);
-
-// compare matrix and vector, mat.rows = vec.dim
-// C = A >= V (broadcasting)
-//  shapeA = M x N matrix
-template <typename TP>
-__global__ void kernelMatIsGreaterThanEqVecAlongCols(TP *A, TP *V, TP *C, int size, int N);
-
-// compare matrix  and vector, mat.cols = vec.dim
-// C = A >= V (broadcasting)
-//  shapeA = M x N matrix
-template <typename TP>
-__global__ void kernelMatIsGreaterThanEqVecAlongRows(TP *A, TP *V, TP *C, int size, int N);
-
-// <
-
-// compare corrosponding elements of 2 matrices
-//  C = A < B
-template <typename TP>
-__global__ void kernelMatIsLessThanMat(TP *A, TP *B, TP *C, int size);
-
-// compare matrix and a scalar.
-//  C = A < Scal (broadcasting)
-// compare scalar with all values of the matrix
-template <typename TP>
-__global__ void kernelMatIsLessThanScalar(TP *A, TP Scal, TP *C, int size);
-template <typename TP>
-__global__ void kernelScalarIsLessThanMat(TP Scal, TP *A, TP *C, int size);
-
-// compare matrix and vector, mat.rows = vec.dim
-// C = A < V (broadcasting)
-//  shapeA = M x N matrix
-template <typename TP>
-__global__ void kernelMatIsLessThanVecAlongCols(TP *A, TP *V, TP *C, int size, int N);
-
-// compare matrix  and vector, mat.cols = vec.dim
-// C = A < V (broadcasting)
-//  shapeA = M x N matrix
-template <typename TP>
-__global__ void kernelMatIsLessThanVecAlongRows(TP *A, TP *V, TP *C, int size, int N);
-
-// <=
-
-// compare corrosponding elements of 2 matrices
-//  C = A <= B
-template <typename TP>
-__global__ void kernelMatIsLessThanEqMat(TP *A, TP *B, TP *C, int size);
-
-// compare matrix and a scalar.
-//  C = A <= Scal (broadcasting)
-// compare scalar with all values of the matrix
-template <typename TP>
-__global__ void kernelMatIsLessThanEqScalar(TP *A, TP Scal, TP *C, int size);
-template <typename TP>
-__global__ void kernelScalarIsLessThanEqMat(TP Scal, TP *A, TP *C, int size);
-
-// compare matrix and vector, mat.rows = vec.dim
-// C = A <= V (broadcasting)
-//  shapeA = M x N matrix
-template <typename TP>
-__global__ void kernelMatIsLessThanEqVecAlongCols(TP *A, TP *V, TP *C, int size, int N);
-
-// compare matrix  and vector, mat.cols = vec.dim
-// C = A <= V (broadcasting)
-//  shapeA = M x N matrix
-template <typename TP>
-__global__ void kernelMatIsLessThanEqVecAlongRows(TP *A, TP *V, TP *C, int size, int N);
-
-// ==
-
-// compare corrosponding elements of 2 matrices
-//  C = A == B
-template <typename TP>
-__global__ void kernelMatIsEqMat(TP *A, TP *B, TP *C, int size);
-
-// compare matrix and a scalar.
-//  C = A == Scal (broadcasting)
-// compare scalar with all values of the matrix
-template <typename TP>
-__global__ void kernelMatIsEqScalar(TP *A, TP Scal, TP *C, int size);
-template <typename TP>
-__global__ void kernelScalarIsEqMat(TP Scal, TP *A, TP *C, int size);
-
-// compare matrix and vector, mat.rows = vec.dim
-// C = A == V (broadcasting)
-//  shapeA = M x N matrix
-template <typename TP>
-__global__ void kernelMatIsEqVecAlongCols(TP *A, TP *V, TP *C, int size, int N);
-
-// compare matrix  and vector, mat.cols = vec.dim
-// C = A == V (broadcasting)
-//  shapeA = M x N matrix
-template <typename TP>
-__global__ void kernelMatIsEqVecAlongRows(TP *A, TP *V, TP *C, int size, int N);
-
-// !=
-
-// compare corrosponding elements of 2 matrices
-//  C = A == B
-template <typename TP>
-__global__ void kernelMatIsNotEqMat(TP *A, TP *B, TP *C, int size);
-
-// compare matrix and a scalar.
-//  C = A != Scal (broadcasting)
-// compare scalar with all values of the matrix
-template <typename TP>
-__global__ void kernelMatIsNotEqScalar(TP *A, TP Scal, TP *C, int size);
-template <typename TP>
-__global__ void kernelScalarIsNotEqMat(TP Scal, TP *A, TP *C, int size);
-
-// compare matrix and vector, mat.rows = vec.dim
-// C = A != V (broadcasting)
-//  shapeA = M x N matrix
-template <typename TP>
-__global__ void kernelMatIsNotEqVecAlongCols(TP *A, TP *V, TP *C, int size, int N);
-
-// compare matrix  and vector, mat.cols = vec.dim
-// C = A != V (broadcasting)
-//  shapeA = M x N matrix
-template <typename TP>
-__global__ void kernelMatIsNotEqVecAlongRows(TP *A, TP *V, TP *C, int size, int N);
 
 // np.exp
 // A = MxN
@@ -650,52 +420,127 @@ __global__ void kernelSetMatValues(TP *in, TP *val, int *idxs, int size)
 	}
 }
 
-// ARITHMATIC FUNCTIONs
+/* Operator functions
+1 for +
+2 for -
+3 for * 
+4 for /
+5 for <
+6 for <=
+7 for >
+8 for >=
+9 for ==
+10 for !=
+*/
 
-// addition functions
+// operator functions
 
-// add corrosponding elements of 2 matrices
-//  C = A + B
-template <typename TP>
-__global__ void kernelMatAddMat(TP *A, TP *B, TP *C, int size)
+// perform operator on corrosponding elements of 2 matrices
+//  C = A op B
+template <typename TP, int OP>
+__global__ void kernelMatOpMat(TP *A, TP *B, TP *C, int size)
 {
 	int idx = blockIdx.x * blockDim.x + threadIdx.x;
 
 	if (idx < size)
 	{
-		C[idx] = A[idx] + B[idx];
+		if constexpr (OP == 1)
+			C[idx] = A[idx] + B[idx];
+		else if constexpr (OP == 2)
+			C[idx] = A[idx] - B[idx];
+		else if constexpr (OP == 3)
+			C[idx] = A[idx] * B[idx];
+		else if constexpr (OP == 4)
+			C[idx] = A[idx] / B[idx];
+		else if constexpr (OP == 5)
+			C[idx] = A[idx] < B[idx];
+		else if constexpr (OP == 6)
+			C[idx] = A[idx] <= B[idx];
+		else if constexpr (OP == 7)
+			C[idx] = A[idx] > B[idx];
+		else if constexpr (OP == 8)
+			C[idx] = A[idx] >= B[idx];
+		else if constexpr (OP == 9)
+			C[idx] = A[idx] == B[idx];
+		else if constexpr (OP == 10)
+			C[idx] = A[idx] != B[idx];
+		else
+			printf("ERROR! INVALID OPERATOR IN kernelMatOPMat.\n");
+
 	}
 }
 
-// add matrix and a scalar.
-//  C = A + Scal (broadcasting)
-// add scalar to all values of the matrix
-template <typename TP>
-__global__ void kernelMatAddScalar(TP *A, TP Scal, TP *C, int size)
+// operator on matrix and a scalar.
+//  C = A op Scal (broadcasting)
+// op scalar to all values of the matrix
+template <typename TP, int OP>
+__global__ void kernelMatOpScalar(TP *A, TP Scal, TP *C, int size)
 {
 	int idx = blockIdx.x * blockDim.x + threadIdx.x;
 
 	if (idx < size)
 	{
-		C[idx] = A[idx] + Scal;
+		if constexpr (OP == 1)
+			C[idx] = A[idx] + Scal;
+		else if constexpr (OP == 2)
+			C[idx] = A[idx] - Scal;
+		else if constexpr (OP == 3)
+			C[idx] = A[idx] * Scal;
+		else if constexpr (OP == 4)
+			C[idx] = A[idx] / Scal;
+		else if constexpr (OP == 5)
+			C[idx] = A[idx] < Scal;
+		else if constexpr (OP == 6)
+			C[idx] = A[idx] <= Scal;
+		else if constexpr (OP == 7)
+			C[idx] = A[idx] > Scal;
+		else if constexpr (OP == 8)
+			C[idx] = A[idx] >= Scal;
+		else if constexpr (OP == 9)
+			C[idx] = A[idx] == Scal;
+		else if constexpr (OP == 10)
+			C[idx] = A[idx] != Scal;
+		else
+			printf("ERROR! INVALID OPERATOR IN kernelMatOPScalar.\n");
 	}
 }
-template <typename TP>
-__global__ void kernelScalarAddMat(TP Scal, TP *A, TP *C, int size)
+template <typename TP, int OP>
+__global__ void kernelScalarOpMat(TP Scal, TP *A, TP *C, int size)
 {
 	int idx = blockIdx.x * blockDim.x + threadIdx.x;
 
 	if (idx < size)
 	{
-		C[idx] = Scal + A[idx];
+		if constexpr (OP == 1)
+			C[idx] = Scal + A[idx];
+		else if constexpr (OP == 2)
+			C[idx] = Scal - A[idx];
+		else if constexpr (OP == 3)
+			C[idx] = Scal * A[idx];
+		else if constexpr (OP == 4)
+			C[idx] = Scal / A[idx];
+		else if constexpr (OP == 5)
+			C[idx] = Scal < A[idx];
+		else if constexpr (OP == 6)
+			C[idx] = Scal <= A[idx];
+		else if constexpr (OP == 7)
+			C[idx] = Scal > A[idx];
+		else if constexpr (OP == 8)
+			C[idx] = Scal >= A[idx];
+		else if constexpr (OP == 9)
+			C[idx] = Scal == A[idx];
+		else if constexpr (OP == 10)
+			C[idx] = Scal != A[idx];
+		else
+			printf("ERROR! INVALID OPERATOR IN kernelScalarOpMat.\n");
 	}
 }
 
-// add matrix  and vector, mat.rows = vec.dim
-// C = A + V (broadcasting)
+// op on matrix and vector, mat.rows = vec.dim
+// C = A op V (broadcasting)
 //  shapeA = M x N matrix
-template <typename TP>
-__global__ void kernelMatAddVecAlongCols(TP *A, TP *V, TP *C, int size, int N)
+template <typename TP, int OP>
+__global__ void kernelMatOpVecAlongCols(TP *A, TP *V, TP *C, int size, int N)
 {
 	int idx = blockIdx.x * blockDim.x + threadIdx.x;
 	int r = idx / N;
@@ -703,86 +548,68 @@ __global__ void kernelMatAddVecAlongCols(TP *A, TP *V, TP *C, int size, int N)
 
 	if (idx < size)
 	{
-		C[idx] = A[idx] + V[r];
+		if constexpr (OP == 1)
+			C[idx] = A[idx] + V[r];
+		else if constexpr (OP == 2)
+			C[idx] = A[idx] - V[r];
+		else if constexpr (OP == 3)
+			C[idx] = A[idx] * V[r];
+		else if constexpr (OP == 4)
+			C[idx] = A[idx] / V[r];
+		else if constexpr (OP == 5)
+			C[idx] = A[idx] < V[r];
+		else if constexpr (OP == 6)
+			C[idx] = A[idx] <= V[r];
+		else if constexpr (OP == 7)
+			C[idx] = A[idx] > V[r];
+		else if constexpr (OP == 8)
+			C[idx] = A[idx] >= V[r];
+		else if constexpr (OP == 9)
+			C[idx] = A[idx] == V[r];
+		else if constexpr (OP == 10)
+			C[idx] = A[idx] != V[r];
+		else
+			printf("ERROR! INVALID OPERATOR IN kernelScalarOpMat.\n");
 	}
 }
-
-// add matrix  and vector, mat.cols = vec.dim
-// C = A + V (broadcasting)
-//  shapeA = M x N matrix
-template <typename TP>
-__global__ void kernelMatAddVecAlongRows(TP *A, TP *V, TP *C, int size, int N)
-{
-	int idx = blockIdx.x * blockDim.x + threadIdx.x;
-	// int r = idx / N;
-	int c = idx % N;
-
-	if (idx < size)
-	{
-		C[idx] = A[idx] + V[c];
-	}
-}
-
-// subtraction functions
-
-// subtract corrosponding elements of 2 matrices
-//  C = A - B
-template <typename TP>
-__global__ void kernelMatSubMat(TP *A, TP *B, TP *C, int size)
-{
-	int idx = blockIdx.x * blockDim.x + threadIdx.x;
-
-	if (idx < size)
-	{
-		C[idx] = A[idx] - B[idx];
-	}
-}
-
-// subtract matrix and a scalar.
-//  C = A - Scal (broadcasting)
-// subtract scalar from all values of the matrix
-template <typename TP>
-__global__ void kernelMatSubScalar(TP *A, TP Scal, TP *C, int size)
-{
-	int idx = blockIdx.x * blockDim.x + threadIdx.x;
-
-	if (idx < size)
-	{
-		C[idx] = A[idx] - Scal;
-	}
-}
-template <typename TP>
-__global__ void kernelScalarSubMat(TP Scal, TP *A, TP *C, int size)
-{
-	int idx = blockIdx.x * blockDim.x + threadIdx.x;
-
-	if (idx < size)
-	{
-		C[idx] = Scal - A[idx];
-	}
-}
-
-// sub matrix  and vector, mat.rows = vec.dim
-// C = A - V (broadcasting)
-//  shapeA = M x N matrix
-template <typename TP>
-__global__ void kernelMatSubVecAlongCols(TP *A, TP *V, TP *C, int size, int N)
-{
+template <typename TP, int OP>
+__global__ void kernelVecOpMatAlongCols(TP *V, TP *A, TP *C, int size, int N){
 	int idx = blockIdx.x * blockDim.x + threadIdx.x;
 	int r = idx / N;
 	// int c = idx % N;
 
 	if (idx < size)
 	{
-		C[idx] = A[idx] - V[r];
+		if constexpr (OP == 1)
+			C[idx] = V[r] + A[idx];
+		else if constexpr (OP == 2)
+			C[idx] = V[r] - A[idx];
+		else if constexpr (OP == 3)
+			C[idx] = V[r] * A[idx];
+		else if constexpr (OP == 4)
+			C[idx] = V[r] / A[idx];
+		else if constexpr (OP == 5)
+			C[idx] = V[r] < A[idx];
+		else if constexpr (OP == 6)
+			C[idx] = V[r] <= A[idx];
+		else if constexpr (OP == 7)
+			C[idx] = V[r] > A[idx];
+		else if constexpr (OP == 8)
+			C[idx] = V[r] >= A[idx];
+		else if constexpr (OP == 9)
+			C[idx] = V[r] == A[idx];
+		else if constexpr (OP == 10)
+			C[idx] = V[r] != A[idx];
+		else
+			printf("ERROR! INVALID OPERATOR IN kernelScalarOpMat.\n");
 	}
 }
 
-// sub matrix and vector, mat.cols = vec.dim
-// C = A - V (broadcasting)
-//  shapeA = M x N matrix
-template <typename TP>
-__global__ void kernelMatSubVecAlongRows(TP *A, TP *V, TP *C, int size, int N)
+// operator on matrix and vector, mat.cols = vec.dim
+// C = A op V (broadcasting)
+// shapeA = M x N matrix
+template <typename TP, int OP>
+__global__ void kernelMatOpVecAlongRows(TP *A, TP *V, TP *C, int size, int N)
 {
 	int idx = blockIdx.x * blockDim.x + threadIdx.x;
 	// int r = idx / N;
@@ -790,149 +617,60 @@ __global__ void kernelMatSubVecAlongRows(TP *A, TP *V, TP *C, int size, int N)
 
 	if (idx < size)
 	{
-		C[idx] = A[idx] - V[c];
+		if constexpr (OP == 1)
+			C[idx] = A[idx] + V[c];
+		else if constexpr (OP == 2)
+			C[idx] = A[idx] - V[c];
+		else if constexpr (OP == 3)
+			C[idx] = A[idx] * V[c];
+		else if constexpr (OP == 4)
+			C[idx] = A[idx] / V[c];
+		else if constexpr (OP == 5)
+			C[idx] = A[idx] < V[c];
+		else if constexpr (OP == 6)
+			C[idx] = A[idx] <= V[c];
+		else if constexpr (OP == 7)
+			C[idx] = A[idx] > V[c];
+		else if constexpr (OP == 8)
+			C[idx] = A[idx] >= V[c];
+		else if constexpr (OP == 9)
+			C[idx] = A[idx] == V[c];
+		else if constexpr (OP == 10)
+			C[idx] = A[idx] != V[c];
+		else
+			printf("ERROR! INVALID OPERATOR IN kernelScalarOpMat.\n");
 	}
 }
-
-// multiplication functions
-
-// mul corrosponding elements of 2 matrices
-//  C = A * B
-template <typename TP>
-__global__ void kernelMatMulMat(TP *A, TP *B, TP *C, int size)
-{
-	int idx = blockIdx.x * blockDim.x + threadIdx.x;
-
-	if (idx < size)
-	{
-		C[idx] = A[idx] * B[idx];
-	}
-}
-
-// mul matrix and a scalar.
-//  C = A * Scal (broadcasting)
-// mul scalar to all values of the matrix
-template <typename TP>
-__global__ void kernelMatMulScalar(TP *A, TP Scal, TP *C, int size)
-{
-	int idx = blockIdx.x * blockDim.x + threadIdx.x;
-
-	if (idx < size)
-	{
-		C[idx] = Scal * A[idx];
-	}
-}
-template <typename TP>
-__global__ void kernelScalarMulMat(TP Scal, TP *A, TP *C, int size)
-{
-	int idx = blockIdx.x * blockDim.x + threadIdx.x;
-
-	if (idx < size)
-	{
-		C[idx] = Scal * A[idx];
-	}
-}
-
-// mul matrix  and vector, mat.rows = vec.dim
-// C = A * V (broadcasting)
-//  shapeA = M x N matrix
-template <typename TP>
-__global__ void kernelMatMulVecAlongCols(TP *A, TP *V, TP *C, int size, int N)
-{
-	int idx = blockIdx.x * blockDim.x + threadIdx.x;
-	int r = idx / N;
-	// int c = idx % N;
-
-	if (idx < size)
-	{
-		C[idx] = A[idx] * V[r];
-	}
-}
-
-// mul matrix  and vector, mat.cols = vec.dim
-// C = A * V (broadcasting)
-//  shapeA = M x N matrix
-template <typename TP>
-__global__ void kernelMatMulVecAlongRows(TP *A, TP *V, TP *C, int size, int N)
-{
+template <typename TP, int OP>
+__global__ void kernelVecOpMatAlongRows(TP *V, TP *A, TP *C, int size, int N){
 	int idx = blockIdx.x * blockDim.x + threadIdx.x;
 	// int r = idx / N;
 	int c = idx % N;
 
 	if (idx < size)
 	{
-		C[idx] = A[idx] * V[c];
-	}
-}
-
-// division functions
-
-// div corrosponding elements of 2 matrices
-//  C = A / B
-template <typename TP>
-__global__ void kernelMatDivMat(TP *A, TP *B, TP *C, int size)
-{
-	int idx = blockIdx.x * blockDim.x + threadIdx.x;
-
-	if (idx < size)
-	{
-		C[idx] = A[idx] / B[idx];
-	}
-}
-
-// div matrix and a scalar.
-//  C = A / Scal (broadcasting)
-// div scalar to all values of the matrix
-template <typename TP>
-__global__ void kernelMatDivScalar(TP *A, TP Scal, TP *C, int size)
-{
-	int idx = blockIdx.x * blockDim.x + threadIdx.x;
-
-	if (idx < size)
-	{
-		C[idx] = A[idx] / Scal;
-	}
-}
-template <typename TP>
-__global__ void kernelScalarDivMat(TP Scal, TP *A, TP *C, int size)
-{
-	int idx = blockIdx.x * blockDim.x + threadIdx.x;
-
-	if (idx < size)
-	{
-		C[idx] = Scal / A[idx];
-	}
-}
-
-// div matrix  and vector, mat.rows = vec.dim
-// C = A / V (broadcasting)
-//  shapeA = M x N matrix
-template <typename TP>
-__global__ void kernelMatDivVecAlongCols(TP *A, TP *V, TP *C, int size, int N)
-{
-	int idx = blockIdx.x * blockDim.x + threadIdx.x;
-	int r = idx / N;
-	// int c = idx % N;
-
-	if (idx < size)
-	{
-		C[idx] = A[idx] / V[r];
-	}
-}
-
-// div matrix  and vector, mat.cols = vec.dim
-// C = A / V (broadcasting)
-//  shapeA = M x N matrix
-template <typename TP>
-__global__ void kernelMatDivVecAlongRows(TP *A, TP *V, TP *C, int size, int N)
-{
-	int idx = blockIdx.x * blockDim.x + threadIdx.x;
-	// int r = idx / N;
-	int c = idx % N;
-
-	if (idx < size)
-	{
-		C[idx] = A[idx] / V[c];
+		if constexpr (OP == 1)
+			C[idx] = V[c] + A[idx];
+		else if constexpr (OP == 2)
+			C[idx] = V[c] - A[idx];
+		else if constexpr (OP == 3)
+			C[idx] = V[c] * A[idx];
+		else if constexpr (OP == 4)
+			C[idx] = V[c] / A[idx];
+		else if constexpr (OP == 5)
+			C[idx] = V[c] < A[idx];
+		else if constexpr (OP == 6)
+			C[idx] = V[c] <= A[idx];
+		else if constexpr (OP == 7)
+			C[idx] = V[c] > A[idx];
+		else if constexpr (OP == 8)
+			C[idx] = V[c] >= A[idx];
+		else if constexpr (OP == 9)
+			C[idx] = V[c] == A[idx];
+		else if constexpr (OP == 10)
+			C[idx] = V[c] != A[idx];
+		else
+			printf("ERROR! INVALID OPERATOR IN kernelScalarOpMat.\n");
 	}
 }
 
@@ -1055,434 +793,6 @@ __global__ void kernelMatMinimumVecAlongRows(TP *A, TP *V, TP *C, int size, int 
 	}
 }
 
-
-// comparison operators
-
-// >
-
-// compare corrosponding elements of 2 matrices
-//  C = A > B
-template <typename TP>
-__global__ void kernelMatIsGreaterThanMat(TP *A, TP *B, TP *C, int size)
-{
-	int idx = blockIdx.x * blockDim.x + threadIdx.x;
-
-	if (idx < size)
-	{
-		C[idx] = A[idx] > B[idx];
-	}
-}
-
-// compare matrix and a scalar.
-//  C = A > Scal (broadcasting)
-// comapre scalar to all values of the matrix
-template <typename TP>
-__global__ void kernelMatIsGreaterThanScalar(TP *A, TP Scal, TP *C, int size)
-{
-	int idx = blockIdx.x * blockDim.x + threadIdx.x;
-
-	if (idx < size)
-	{
-		C[idx] = A[idx] > Scal;
-	}
-}
-template <typename TP>
-__global__ void kernelScalarIsGreaterThanMat(TP Scal, TP *A, TP *C, int size)
-{
-	int idx = blockIdx.x * blockDim.x + threadIdx.x;
-
-	if (idx < size)
-	{
-		C[idx] = Scal > A[idx];
-	}
-}
-
-// compare matrix  and vector, mat.rows = vec.dim
-// C = A > V (broadcasting)
-//  shapeA = M x N matrix
-template <typename TP>
-__global__ void kernelMatIsGreaterThanVecAlongCols(TP *A, TP *V, TP *C, int size, int N)
-{
-	int idx = blockIdx.x * blockDim.x + threadIdx.x;
-	int r = idx / N;
-	// int c = idx % N;
-
-	if (idx < size)
-	{
-		C[idx] = A[idx] > V[r];
-	}
-}
-
-// compare matrix  and vector, mat.cols = vec.dim
-// C = A > V (broadcasting)
-//  shapeA = M x N matrix
-template <typename TP>
-__global__ void kernelMatIsGreaterThanVecAlongRows(TP *A, TP *V, TP *C, int size, int N)
-{
-	int idx = blockIdx.x * blockDim.x + threadIdx.x;
-	// int r = idx / N;
-	int c = idx % N;
-
-	if (idx < size)
-	{
-		C[idx] = A[idx] > V[c];
-	}
-}
-
-// >=
-
-// compare corrosponding elements of 2 matrices
-//  C = A >= B
-template <typename TP>
-__global__ void kernelMatIsGreaterThanEqMat(TP *A, TP *B, TP *C, int size)
-{
-	int idx = blockIdx.x * blockDim.x + threadIdx.x;
-
-	if (idx < size)
-	{
-		C[idx] = A[idx] >= B[idx];
-	}
-}
-
-// compare matrix and a scalar.
-//  C = A >= Scal (broadcasting)
-// comapre scalar to all values of the matrix
-template <typename TP>
-__global__ void kernelMatIsGreaterThanEqScalar(TP *A, TP Scal, TP *C, int size)
-{
-	int idx = blockIdx.x * blockDim.x + threadIdx.x;
-
-	if (idx < size)
-	{
-		C[idx] = A[idx] >= Scal;
-	}
-}
-template <typename TP>
-__global__ void kernelScalarIsGreaterThanEqMat(TP Scal, TP *A, TP *C, int size)
-{
-	int idx = blockIdx.x * blockDim.x + threadIdx.x;
-
-	if (idx < size)
-	{
-		C[idx] = Scal >= A[idx];
-	}
-}
-
-// compare matrix  and vector, mat.rows = vec.dim
-// C = A >= V (broadcasting)
-//  shapeA = M x N matrix
-template <typename TP>
-__global__ void kernelMatIsGreaterThanEqVecAlongCols(TP *A, TP *V, TP *C, int size, int N)
-{
-	int idx = blockIdx.x * blockDim.x + threadIdx.x;
-	int r = idx / N;
-	// int c = idx % N;
-
-	if (idx < size)
-	{
-		C[idx] = A[idx] >= V[r];
-	}
-}
-
-// compare matrix  and vector, mat.cols = vec.dim
-// C = A >= V (broadcasting)
-//  shapeA = M x N matrix
-template <typename TP>
-__global__ void kernelMatIsGreaterThanEqVecAlongRows(TP *A, TP *V, TP *C, int size, int N)
-{
-	int idx = blockIdx.x * blockDim.x + threadIdx.x;
-	// int r = idx / N;
-	int c = idx % N;
-
-	if (idx < size)
-	{
-		C[idx] = A[idx] >= V[c];
-	}
-}
-
-// <
-
-// compare corrosponding elements of 2 matrices
-//  C = A < B
-template <typename TP>
-__global__ void kernelMatIsLessThanMat(TP *A, TP *B, TP *C, int size)
-{
-	int idx = blockIdx.x * blockDim.x + threadIdx.x;
-
-	if (idx < size)
-	{
-		C[idx] = A[idx] < B[idx];
-	}
-}
-
-// compare matrix and a scalar.
-//  C = A < Scal (broadcasting)
-// comapre scalar to all values of the matrix
-template <typename TP>
-__global__ void kernelMatIsLessThanScalar(TP *A, TP Scal, TP *C, int size)
-{
-	int idx = blockIdx.x * blockDim.x + threadIdx.x;
-
-	if (idx < size)
-	{
-		C[idx] = A[idx] < Scal;
-	}
-}
-template <typename TP>
-__global__ void kernelScalarIsLessThanMat(TP Scal, TP *A, TP *C, int size)
-{
-	int idx = blockIdx.x * blockDim.x + threadIdx.x;
-
-	if (idx < size)
-	{
-		C[idx] = Scal < A[idx];
-	}
-}
-
-// compare matrix  and vector, mat.rows = vec.dim
-// C = A < V (broadcasting)
-//  shapeA = M x N matrix
-template <typename TP>
-__global__ void kernelMatIsLessThanVecAlongCols(TP *A, TP *V, TP *C, int size, int N)
-{
-	int idx = blockIdx.x * blockDim.x + threadIdx.x;
-	int r = idx / N;
-	// int c = idx % N;
-
-	if (idx < size)
-	{
-		C[idx] = A[idx] < V[r];
-	}
-}
-
-// compare matrix  and vector, mat.cols = vec.dim
-// C = A < V (broadcasting)
-//  shapeA = M x N matrix
-template <typename TP>
-__global__ void kernelMatIsLessThanVecAlongRows(TP *A, TP *V, TP *C, int size, int N)
-{
-	int idx = blockIdx.x * blockDim.x + threadIdx.x;
-	// int r = idx / N;
-	int c = idx % N;
-
-	if (idx < size)
-	{
-		C[idx] = A[idx] < V[c];
-	}
-}
-
-// <=
-
-// compare corrosponding elements of 2 matrices
-//  C = A <= B
-template <typename TP>
-__global__ void kernelMatIsLessThanEqMat(TP *A, TP *B, TP *C, int size)
-{
-	int idx = blockIdx.x * blockDim.x + threadIdx.x;
-
-	if (idx < size)
-	{
-		C[idx] = A[idx] <= B[idx];
-	}
-}
-
-// compare matrix and a scalar.
-//  C = A <= Scal (broadcasting)
-// comapre scalar to all values of the matrix
-template <typename TP>
-__global__ void kernelMatIsLessThanEqScalar(TP *A, TP Scal, TP *C, int size)
-{
-	int idx = blockIdx.x * blockDim.x + threadIdx.x;
-
-	if (idx < size)
-	{
-		C[idx] = A[idx] <= Scal;
-	}
-}
-template <typename TP>
-__global__ void kernelScalarIsLessThanEqMat(TP Scal, TP *A, TP *C, int size)
-{
-	int idx = blockIdx.x * blockDim.x + threadIdx.x;
-
-	if (idx < size)
-	{
-		C[idx] = Scal <= A[idx];
-	}
-}
-
-// compare matrix  and vector, mat.rows = vec.dim
-// C = A <= V (broadcasting)
-//  shapeA = M x N matrix
-template <typename TP>
-__global__ void kernelMatIsLessThanEqVecAlongCols(TP *A, TP *V, TP *C, int size, int N)
-{
-	int idx = blockIdx.x * blockDim.x + threadIdx.x;
-	int r = idx / N;
-	// int c = idx % N;
-
-	if (idx < size)
-	{
-		C[idx] = A[idx] <= V[r];
-	}
-}
-
-// compare matrix  and vector, mat.cols = vec.dim
-// C = A <= V (broadcasting)
-//  shapeA = M x N matrix
-template <typename TP>
-__global__ void kernelMatIsLessThanEqVecAlongRows(TP *A, TP *V, TP *C, int size, int N)
-{
-	int idx = blockIdx.x * blockDim.x + threadIdx.x;
-	// int r = idx / N;
-	int c = idx % N;
-
-	if (idx < size)
-	{
-		C[idx] = A[idx] <= V[c];
-	}
-}
-
-// ==
-
-// compare corrosponding elements of 2 matrices
-//  C = A == B
-template <typename TP>
-__global__ void kernelMatIsEqMat(TP *A, TP *B, TP *C, int size)
-{
-	int idx = blockIdx.x * blockDim.x + threadIdx.x;
-
-	if (idx < size)
-	{
-		C[idx] = A[idx] == B[idx];
-	}
-}
-
-// compare matrix and a scalar.
-//  C = A == Scal (broadcasting)
-// comapre scalar to all values of the matrix
-template <typename TP>
-__global__ void kernelMatIsEqScalar(TP *A, TP Scal, TP *C, int size)
-{
-	int idx = blockIdx.x * blockDim.x + threadIdx.x;
-
-	if (idx < size)
-	{
-		C[idx] = A[idx] == Scal;
-	}
-}
-template <typename TP>
-__global__ void kernelScalarIsEqMat(TP Scal, TP *A, TP *C, int size)
-{
-	int idx = blockIdx.x * blockDim.x + threadIdx.x;
-
-	if (idx < size)
-	{
-		C[idx] = Scal == A[idx];
-	}
-}
-
-// compare matrix  and vector, mat.rows = vec.dim
-// C = A == V (broadcasting)
-//  shapeA = M x N matrix
-template <typename TP>
-__global__ void kernelMatIsEqVecAlongCols(TP *A, TP *V, TP *C, int size, int N)
-{
-	int idx = blockIdx.x * blockDim.x + threadIdx.x;
-	int r = idx / N;
-	// int c = idx % N;
-
-	if (idx < size)
-	{
-		C[idx] = A[idx] == V[r];
-	}
-}
-
-// compare matrix  and vector, mat.cols = vec.dim
-// C = A == V (broadcasting)
-//  shapeA = M x N matrix
-template <typename TP>
-__global__ void kernelMatIsEqVecAlongRows(TP *A, TP *V, TP *C, int size, int N)
-{
-	int idx = blockIdx.x * blockDim.x + threadIdx.x;
-	// int r = idx / N;
-	int c = idx % N;
-
-	if (idx < size)
-	{
-		C[idx] = A[idx] == V[c];
-	}
-}
-
-// !=
-
-// compare corrosponding elements of 2 matrices
-//  C = A != B
-template <typename TP>
-__global__ void kernelMatIsNotEqMat(TP *A, TP *B, TP *C, int size)
-{
-	int idx = blockIdx.x * blockDim.x + threadIdx.x;
-
-	if (idx < size)
-	{
-		C[idx] = A[idx] != B[idx];
-	}
-}
-
-// compare matrix and a scalar.
-//  C = A != Scal (broadcasting)
-// comapre scalar to all values of the matrix
-template <typename TP>
-__global__ void kernelMatIsNotEqScalar(TP *A, TP Scal, TP *C, int size)
-{
-	int idx = blockIdx.x * blockDim.x + threadIdx.x;
-
-	if (idx < size)
-	{
-		C[idx] = A[idx] != Scal;
-	}
-}
-template <typename TP>
-__global__ void kernelScalarIsNotEqMat(TP Scal, TP *A, TP *C, int size)
-{
-	int idx = blockIdx.x * blockDim.x + threadIdx.x;
-
-	if (idx < size)
-	{
-		C[idx] = Scal != A[idx];
-	}
-}
-
-// compare matrix  and vector, mat.rows = vec.dim
-// C = A != V (broadcasting)
-//  shapeA = M x N matrix
-template <typename TP>
-__global__ void kernelMatIsNotEqVecAlongCols(TP *A, TP *V, TP *C, int size, int N)
-{
-	int idx = blockIdx.x * blockDim.x + threadIdx.x;
-	int r = idx / N;
-	// int c = idx % N;
-
-	if (idx < size)
-	{
-		C[idx] = A[idx] != V[r];
-	}
-}
-
-// compare matrix  and vector, mat.cols = vec.dim
-// C = A != V (broadcasting)
-//  shapeA = M x N matrix
-template <typename TP>
-__global__ void kernelMatIsNotEqVecAlongRows(TP *A, TP *V, TP *C, int size, int N)
-{
-	int idx = blockIdx.x * blockDim.x + threadIdx.x;
-	// int r = idx / N;
-	int c = idx % N;
-
-	if (idx < size)
-	{
-		C[idx] = A[idx] != V[c];
-	}
-}
 
 // np.exp
 // A = MxN
