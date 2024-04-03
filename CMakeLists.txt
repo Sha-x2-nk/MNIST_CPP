@@ -30,5 +30,4 @@ set_target_properties( main PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY_RELEASE ${CMAKE_BINARY_DIR}/../bin
 )
 
-target_link_libraries(main cublas)
 target_link_libraries(main cublas ${OpenCV_LIBS})
