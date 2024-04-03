@@ -59,9 +59,8 @@ For more details about the optimisers module, refer to the [Optimisers README](.
 
 To use the modules and functionalities provided in this folder, include the necessary header files in your C++ projects. Ensure that you follow the specific usage instructions and guidelines mentioned in each module's README file.
 
-## License
-
-The modules and functionalities in this folder are generally licensed under the MIT License unless specified otherwise. Please refer to the individual module's README file or the LICENSE file within each module for more details.
+## Acknowledgements
+Acknowledgements for each project have been specified in their respective readme.
 
 ---
 

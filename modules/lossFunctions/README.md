@@ -65,16 +65,13 @@ int main() {
     auto x = np::Random::randn<float>(2, 3); // normal distribution
     auto y = np::arange<int>(2); // array = {0, 1}
 
-    // Create SoftmaxLoss object
-    SoftmaxLoss softmax;
-
     // Compute loss and gradient
-    auto loss_grad = softmax.computeLossAndGrad(x, y);
+    auto loss_grad = SoftmaxLoss::computeLossAndGrad(x, y);
     std::cout << "Loss: " << loss_grad.first << std::endl;
     std::cout << "Gradient: " << loss_grad.second << std::endl;
 
     // Compute loss only
-    auto loss = softmax.computeLoss(x, y);
+    auto loss = SoftmaxLoss::computeLoss(x, y);
     std::cout << "Loss: " << loss << std::endl;
 
     return 0;
