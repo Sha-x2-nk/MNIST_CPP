@@ -3,8 +3,6 @@
 #include <opencv2/core.hpp>
 #include <opencv2/highgui.hpp>
 
-#include <iostream>
-
 typedef unsigned char uchar;
 
 // display MNIST images

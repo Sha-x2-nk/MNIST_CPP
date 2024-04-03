@@ -9,9 +9,6 @@
 // cuda runtime
 #include <cuda_runtime.h>
 
-// std headers
-#include <iostream>
-
 // dropout class definiton
 // default and parameter constructor
 DropoutLayer::DropoutLayer(const float p_keep)

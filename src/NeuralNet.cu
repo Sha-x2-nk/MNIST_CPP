@@ -10,8 +10,6 @@
 
 #include <numC/npGPUArray.cuh>
 
-#include <cuda_runtime.h>
-
 #include <iostream>
 #include <string>
 #include <vector>
@@ -89,12 +87,6 @@ np::ArrayGPU<float> NeuralNet::forward(const np::ArrayGPU<float> &X)
 // return outNloss vector 
 std::pair<np::ArrayGPU<float>, np::ArrayGPU<float>> NeuralNet::forward(const np::ArrayGPU<float> &X, const np::ArrayGPU<int> &y)
 {
-    if (this->mode == "eval")
-    {
-        std::cerr << "\nMode eval but y given";
-        exit(1);
-    }
-
     auto out = X;
 
     // except last_layer, all layers have activation functions and dropout
@@ -111,22 +103,26 @@ std::pair<np::ArrayGPU<float>, np::ArrayGPU<float>> NeuralNet::forward(const np:
     // last layer no activations or dropouts
     out = affine_layers.back()(out);
 
+    // if model is in eval mode, return out and loss only. No need for backprop
+    if(this->mode == "eval"){
+        return {out, SoftmaxLoss::computeLoss(out, y)};
+    }
 
     // vector of loss, dout
-    auto lossNgrad = softmax.computeLossAndGrad(out, y);
+    auto lossNgrad = SoftmaxLoss::computeLossAndGrad(out, y);
 
     if (this->reg > 0)
         for (auto &al : affine_layers)
-            lossNgrad[0] = lossNgrad[0] + (al.W * al.W).sum() * 0.5 * this->reg;
+            lossNgrad.first = lossNgrad.second + (al.W * al.W).sum() * 0.5 * this->reg;
 
-    this->backward(lossNgrad[1]);
+    this->backward(lossNgrad.second);
 
     if (this->reg > 0)
         for (auto &al : affine_layers)
             al.dW = al.dW + al.W * this->reg;
 
     // output vector = out, loss
-    return {out, lossNgrad[0]};
+    return {out, lossNgrad.first};
 }
 
 np::ArrayGPU<float> NeuralNet::operator()(const np::ArrayGPU<float> &X)

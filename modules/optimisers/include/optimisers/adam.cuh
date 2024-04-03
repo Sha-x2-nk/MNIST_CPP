@@ -1,8 +1,7 @@
-#ifndef ADAM_H
-#define ADAM_H
-#include <numC/npGPUArray.cuh>
+#ifndef ADAM_CUH
+#define ADAM_CUH
 
-#include <iostream>
+#include <numC/npGPUArray.cuh>
 
 class AdamOptimiser
 {

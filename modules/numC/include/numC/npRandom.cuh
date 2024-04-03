@@ -1,5 +1,5 @@
-#ifndef NPRANDOM_H
-#define NPRANDOM_H
+#ifndef NPRANDOM_CUH
+#define NPRANDOM_CUH
 
 #include <numC/npRandom.cuh>
 #include <numC/customKernels.cuh>
@@ -8,10 +8,7 @@
 #include <numC/gpuConfig.cuh>
 
 #include <cuda_runtime.h>
-#include <curand.h>
-#include <curand_kernel.h>
 
-#include <iostream>
 #include <time.h>
 
 namespace np

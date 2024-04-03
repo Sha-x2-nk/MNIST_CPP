@@ -1,14 +1,11 @@
-#ifndef AFFINELAYER_H
-#define AFFINELAYER_H
+#ifndef AFFINELAYER_CUH
+#define AFFINELAYER_CUH
 
 // layers
 #include <layers/layer.cuh>
 
 // numC
 #include <numC/npGPUArray.cuh>
-
-// std headers
-#include <iostream>
 
 // inherit from Layer class
 class AffineLayer : public Layer

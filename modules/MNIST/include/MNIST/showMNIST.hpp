@@ -1,7 +1,6 @@
-#ifndef showMNIST_H
-#define showMNIST_H
+#ifndef SHOWMNIST_HPP
+#define SHOWMNIST_HPP
 
-#include <iostream>
 #include <string>
 
 typedef unsigned char uchar;

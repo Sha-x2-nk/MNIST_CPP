@@ -7,11 +7,7 @@
 #include <numC/npRandom.cuh>
 #include <numC/npFunctions.cuh>
 
-// cuda runtime
-#include <cuda_runtime.h>
-
 // std headers
-#include <iostream>
 #include <cmath>
 
 // definition for AffineLayer class

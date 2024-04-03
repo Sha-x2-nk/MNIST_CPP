@@ -8,7 +8,7 @@ find_package(OpenCV REQUIRED)
 
 set(SOURCES 
     main.cu
-    src/NeuralNet.cu
+    src/neuralNet.cu
     modules/numC/src/gpuConfig.cu
     modules/layers/src/affineLayer.cu
     modules/layers/src/dropoutLayer.cu

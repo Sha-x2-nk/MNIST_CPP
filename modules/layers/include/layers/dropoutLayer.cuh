@@ -1,14 +1,11 @@
-#ifndef DROPOUTLAYER_H
-#define DROPOUTLAYER_H
+#ifndef DROPOUTLAYER_CUH
+#define DROPOUTLAYER_CUH
 
 // layers
 #include <layers/layer.cuh>
 
 // numC
 #include <numC/npGPUArray.cuh>
-
-// std headers
-#include <iostream>
 
 // inherit from Layer class
 class DropoutLayer : public Layer

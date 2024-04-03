@@ -1,10 +1,8 @@
-#ifndef LAYER_H
-#define LAYER_H
+#ifndef LAYER_CUH
+#define LAYER_CUH
 
 // for numC array definitions
 #include <numC/npGPUArray.cuh>
-
-#include <iostream>
 
 // this is the fixed layer prototype, all layers will inherit from this
 class Layer

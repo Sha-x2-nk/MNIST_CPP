@@ -1,7 +1,6 @@
-#ifndef MNISTREAD_H
-#define MNISTREAD_H
+#ifndef MNISTREAD_HPP
+#define MNISTREAD_HPP
 
-#include <iostream>
 #include <string>
 
 typedef unsigned char uchar;

@@ -1,9 +1,7 @@
-#ifndef CUDA_CONFIG_H
-#define CUDA_CONFIG_H
+#ifndef CUDA_CONFIG_CUH
+#define CUDA_CONFIG_CUH
 
-#include <cuda_runtime.h>
 #include <cublas_v2.h>
-#include <iostream>
 
 namespace np
 {

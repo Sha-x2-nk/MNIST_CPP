@@ -1,14 +1,11 @@
-#ifndef RELULAYER_H
-#define RELULAYER_H
+#ifndef RELULAYER_CUH
+#define RELULAYER_CUH
 
 // layers
 #include <layers/layer.cuh>
 
 // numC
 #include <numC/npGPUArray.cuh>
-
-// std headers
-#include <iostream>
 
 // inherit from Layer class
 class ReLULayer : public Layer

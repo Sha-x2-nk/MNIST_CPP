@@ -4,12 +4,6 @@
 // numC files
 #include <numC/npGPUArray.cuh>
 
-// cuda runtime
-#include <cuda_runtime.h>
-
-// std headers
-#include <iostream>
-
 // ################################# forward pass ##############################################
 // virtual because our child classes will override it.
 // mode = "train" or "eval". "train" by default

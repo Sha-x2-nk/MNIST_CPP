@@ -1,9 +1,12 @@
-#ifndef ERRCHECKUTILS_H
-#define ERRCHECKUTILS_H
+#ifndef ERRCHECKUTILS_CUH
+#define ERRCHECKUTILS_CUH
 
+// cuda includes
+#include <cuda_runtime.h>
 #include <curand.h>
 
-#include <iostream>
+// std includes
+#include <stdio.h>
 
 // cuda error checking macro
 #define CUDA_CALL(x)                                                                     \

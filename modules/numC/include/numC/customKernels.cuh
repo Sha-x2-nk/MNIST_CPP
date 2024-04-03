@@ -1,12 +1,12 @@
-#ifndef CUSTOMKERNELS_H
-#define CUSTOMKERNELS_H
+#ifndef CUSTOMKERNELS_CUH
+#define CUSTOMKERNELS_CUH
 
 #include <cuda_runtime.h>
 #include <curand.h>
 #include <curand_kernel.h>
 #include <cmath>
 
-#include <iostream>
+#include <stdio.h> // printf
 #include <type_traits> // for std::is_same
 
 // curand kernels

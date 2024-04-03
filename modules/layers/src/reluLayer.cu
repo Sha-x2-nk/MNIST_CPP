@@ -6,12 +6,6 @@
 #include <numC/npGPUArray.cuh>
 #include <numC/npFunctions.cuh>
 
-// cuda runtime
-#include <cuda_runtime.h>
-
-// std headers
-#include <iostream>
-
 // relu layer definiton
 
 // default constructor

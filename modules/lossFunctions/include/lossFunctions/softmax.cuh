@@ -1,17 +1,16 @@
-#ifndef SOFTMAX_H
-#define SOFTMAX_H
+#ifndef SOFTMAX_CUH
+#define SOFTMAX_CUH
 
 // numC
 #include <numC/npGPUArray.cuh>
 
 // std
-#include <iostream>
 #include <vector>
 
 class SoftmaxLoss
 {
 public:
-    std::vector<np::ArrayGPU<float>> computeLossAndGrad(const np::ArrayGPU<float> &x, const np::ArrayGPU<int> &y);
+    static std::pair<np::ArrayGPU<float>, np::ArrayGPU<float>> computeLossAndGrad(const np::ArrayGPU<float> &x, const np::ArrayGPU<int> &y);
     /*Computes the loss and gradient for softmax classification.
 
         Inputs:
@@ -25,7 +24,7 @@ public:
         - dx: Gradient of the loss with respect to x
     */
 
-    np::ArrayGPU<float> computeLoss(const np::ArrayGPU<float> &x, const np::ArrayGPU<int> &y);
+    static np::ArrayGPU<float> computeLoss(const np::ArrayGPU<float> &x, const np::ArrayGPU<int> &y);
     /*Computes the loss and gradient for softmax classification.
 
          Inputs:

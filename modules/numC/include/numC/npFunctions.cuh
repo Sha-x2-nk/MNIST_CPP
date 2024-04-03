@@ -1,5 +1,5 @@
-#ifndef NPFUNCTIONS_H
-#define NPFUNCTIONS_H
+#ifndef NPFUNCTIONS_CUH
+#define NPFUNCTIONS_CUH
 
 #include <numC/npGPUArray.cuh>
 #include <numC/customKernels.cuh>

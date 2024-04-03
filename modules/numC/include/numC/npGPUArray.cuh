@@ -1,5 +1,5 @@
-#ifndef NPGPUARRAY_H
-#define NPGPUARRAY_H
+#ifndef NPGPUARRAY_CUH
+#define NPGPUARRAY_CUH
 
 #include <numC/npGPUArray.cuh>
 #include <numC/customKernels.cuh>

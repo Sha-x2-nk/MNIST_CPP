@@ -1,5 +1,5 @@
-#ifndef NEURALNET_H
-#define NEURALNET_H
+#ifndef NEURALNET_CUH
+#define NEURALNET_CUH
 
 // layers
 #include <layers/affineLayer.cuh>
@@ -16,7 +16,6 @@
 #include <numC/npGPUArray.cuh>
 
 // std headers
-#include <iostream>
 #include <string>
 #include <vector>
 
@@ -29,9 +28,6 @@ public:
     std::vector<ReLULayer> relu_layers;
     // vector of affine layers.
     std::vector<DropoutLayer> dropout_layers;
-
-    // softmax loss.
-    SoftmaxLoss softmax;
 
     // vector of adam configs. every parameter will have their own adam config. (m, v arrays)
     std::vector<AdamOptimiser> adam_configs;

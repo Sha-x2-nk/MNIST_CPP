@@ -5,15 +5,10 @@
 // loss function
 #include <lossFunctions/softmax.cuh>
 
-// cuda runtime
-#include <cuda_runtime.h>
-#include <cublas_v2.h>
-
 // std
-#include <iostream>
 #include <vector>
 
-std::vector<np::ArrayGPU<float>> SoftmaxLoss::computeLossAndGrad(const np::ArrayGPU<float> &x, const np::ArrayGPU<int> &y)
+std::pair<np::ArrayGPU<float>, np::ArrayGPU<float>> SoftmaxLoss::computeLossAndGrad(const np::ArrayGPU<float> &x, const np::ArrayGPU<int> &y)
 {
     /*Computes the loss and gradient for softmax classification.
 
