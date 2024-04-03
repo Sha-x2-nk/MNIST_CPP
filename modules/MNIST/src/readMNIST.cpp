@@ -14,7 +14,7 @@ int reverseInt(int i)
 }
 
 // reading mnist images from file.
-uchar *readMNIST_images(std::string &path, int &num_images, int &img_size)
+uchar *readMNISTImages(std::string &path, int &num_images, int &img_size)
 {
     std::ifstream file(path, std::ios::binary);
 
@@ -53,7 +53,7 @@ uchar *readMNIST_images(std::string &path, int &num_images, int &img_size)
 }
 
 // reading mnist labels from file.
-uchar *readMNIST_labels(std::string &path, int &num_labels)
+uchar *readMNISTLabels(std::string &path, int &num_labels)
 {
 
     std::ifstream file(path, std::ios::binary);

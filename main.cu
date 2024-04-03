@@ -27,8 +27,6 @@ std::pair<std::vector<float*>, std::vector<int*>> prepareDataset();
 // function to train neural net
 NeuralNet trainModel(float *x_train, int *y_train, int train_size, float *x_val, int *y_val, int val_size, float *x_test, int *y_test, int test_size, int img_size);
 
-
-
 int main(){
     np::getGPUConfig(0);
     std::cout<<std::endl<<"----------------------------------------------------"<<std::endl;
@@ -79,13 +77,13 @@ int main(){
 std::pair<std::vector<float*>, std::vector<int*>> prepareDataset(){
     
     int num_train_images, img_size;
-    uchar* train_imgs = readMNISTImages(std::string("C:/Users/shash/Documents/MNIST_NUMC/dataset_mnist/train-images.idx3-ubyte"), num_train_images, img_size);
+    uchar* train_imgs = readMNISTImages(std::string("C:/Users/shash/Documents/MNIST_NUMC/modules/MNIST/dataset/train-images.idx3-ubyte"), num_train_images, img_size);
 
     std::cout<<std::endl<<"[+] Train images fetched!"<<std::endl;
     std::cout<<"----------Num Images: "<<num_train_images<<" img size: "<<img_size<<"-----------"<<std::endl; 
 
     int num_train_labels;
-    uchar* train_labels = readMNISTLabels(std::string("C:/Users/shash/Documents/MNIST_NUMC/dataset_mnist/train-labels.idx1-ubyte"), num_train_labels);
+    uchar* train_labels = readMNISTLabels(std::string("C:/Users/shash/Documents/MNIST_NUMC/modules/MNIST/dataset/train-labels.idx1-ubyte"), num_train_labels);
     std::cout<<std::endl<<"[+] Train labels fetched!"<<std::endl;
     std::cout<<"-----------Num Labels: "<<num_train_labels<<"------------------------"<<std::endl;
 
@@ -136,13 +134,13 @@ std::pair<std::vector<float*>, std::vector<int*>> prepareDataset(){
     std::cout<<"------Validation set size: "<<num_val_images<<" Train set size: "<<num_train_images<<"-----"<<std::endl;
     
     int num_test_images;
-    uchar* test_imgs = readMNISTImages(std::string("C:/Users/shash/Documents/MNIST_NUMC/dataset_mnist/t10k-images.idx3-ubyte"), num_test_images, img_size);
+    uchar* test_imgs = readMNISTImages(std::string("C:/Users/shash/Documents/MNIST_NUMC/modules/MNIST/dataset/t10k-images.idx3-ubyte"), num_test_images, img_size);
 
     std::cout<<std::endl<<"[+] Test images fetched!"<<std::endl;
     std::cout<<"-----------Num Images: "<<num_test_images<<" img size: "<<img_size<<"------------"<<std::endl; 
 
     int num_test_labels;
-    uchar* test_labels = readMNISTLabels(std::string("C:/Users/shash/Documents/MNIST_NUMC/dataset_mnist/t10k-labels.idx1-ubyte"), num_test_labels);
+    uchar* test_labels = readMNISTLabels(std::string("C:/Users/shash/Documents/MNIST_NUMC/modules/MNIST/dataset/t10k-labels.idx1-ubyte"), num_test_labels);
     std::cout<<"\n[+] Test labels fetched!"<<std::endl;
     std::cout<<"-----------Num Labels: "<<num_test_labels<<"------------------------"<<std::endl;
 
@@ -227,7 +225,7 @@ NeuralNet trainModel(float *x_train, int *y_train, int train_size, float *x_val,
 
 
 
-
+    float val_acc = 0, train_acc = 0;
     for(int epoch = 0; epoch< num_epochs; ++epoch){
         for(int iter = 0; iter< num_iters; ++iter){
             // converting to train mode
@@ -246,22 +244,20 @@ NeuralNet trainModel(float *x_train, int *y_train, int train_size, float *x_val,
                 auto y_pred_gpu = model(x_val_gpu);
                 predicted_gpu = y_pred_gpu.argmax(1);
 
-                auto val_acc = static_cast<float>(((predicted_gpu == y_val_gpu).sum()).at(0))/val_size;
+                val_acc = static_cast<float>(((predicted_gpu == y_val_gpu).sum()).at(0))/val_size;
 
                 std::cout<<"Epoch: "<<epoch+1<<" iter: "<<iter+1<<" loss: "<<outNloss.second<<" train_acc: "<<train_acc<<" val_acc: "<<val_acc<<std::endl;
 
-                if( (best_val_acc < val_acc) || (best_val_acc == val_acc && best_train_acc < train_acc) ){
-                    best_val_acc = val_acc;
-                    best_train_acc = train_acc;
-                    best_model = model;
-                    std::cout<<std::endl<<"##################### NEW BEST FOUND! ###########################"<<std::endl;
-                    std::cout<<"##################### VAL ACC: "<<std::fixed<<std::setprecision(3)<<best_val_acc<<"                           ##"<<std::endl;
-                    std::cout<<"##################### TRAIN ACC: "<<std::fixed<<std::setprecision(3)<<train_acc<<"                         ##"<<std::endl;
-                    std::cout<<"#################################################################"<<std::endl<<std::endl;
-
-                }
             }
-
+        }
+        if( (best_val_acc < val_acc) || (best_val_acc == val_acc && best_train_acc < train_acc) ){
+            best_val_acc = val_acc;
+            best_train_acc = train_acc;
+            best_model = model;
+            std::cout<<std::endl<<"##################### NEW BEST FOUND! ###########################"<<std::endl;
+            std::cout<<"##################### VAL ACC: "<<std::fixed<<std::setprecision(3)<<best_val_acc<<"                           ##"<<std::endl;
+            std::cout<<"##################### TRAIN ACC: "<<std::fixed<<std::setprecision(3)<<train_acc<<"                         ##"<<std::endl;
+            std::cout<<"#################################################################"<<std::endl<<std::endl;
         }
     }
 
@@ -278,7 +274,8 @@ NeuralNet trainModel(float *x_train, int *y_train, int train_size, float *x_val,
     std::cout<<std::endl<<"[.] Performing analysis on test set"<<std::endl;
     best_model.eval();
     auto y_pred_gpu = best_model(x_test_gpu);
-    auto predicted_gpu = y_pred_gpu.argmax(1);
+    auto predicted_gpu = y_pred_gpu.argmax(1); 
+    
     auto test_acc = static_cast<float>(((predicted_gpu == y_test_gpu).sum()).at(0)) / y_pred_gpu.rows;
     std::cout<<"[+] Done."<<std::endl;
 

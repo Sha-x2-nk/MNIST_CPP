@@ -59,5 +59,16 @@ void AdamOptimiser::step(np::ArrayGPU<float> &param, np::ArrayGPU<float> &grad)
     auto vt = this->v / (1 - powf(this->beta2, static_cast<float>(this->t)));
 
     param = param - ( (mt * this->learning_rate) / (np::sqrt(vt) + this->epsilon) );
-
 }
+
+/*
+    SGD + momentum:
+        x = v * rho - lr * dx
+    
+    Nesterov
+        dx;
+        nextX = v * rho - lr*dx
+        x = v * rho - lr * d(nextX)
+    
+        
+*/

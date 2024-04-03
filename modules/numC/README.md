@@ -110,7 +110,7 @@ std::cout<<A; // numC has overloaded << operator with cout, so cout also prints 
     auto A = np::ArrayGPU<float>(10, 2); 
     auto AT = A.T();
 ```
-* dot product
+* dot product - only supported for float32 dtype.
 ```cpp
 auto A = np::ArrayGPU<float>(128, 1024);
 auto B = np::ArrayGPU<float>(1024, 128);
@@ -232,3 +232,17 @@ auto A = np::Random::randn<float>(1, 100); // filled with numbers from normal di
                                            //  between 0 and 1
                                            // third argument can also be given - seed.
 ```
+
+### GPU Config header
+Initialises variables of NUM_CUDA_CORES and NUM_SMS to launch gpu functions effectively. Also Initialises cublas_handle to do dot products using cubals sgemm API.
+
+### Custom Kernels header
+This has definitions of kernels of all functions we have used in numC which runs on GPU (except dot, dot is from cublas).
+
+## Contribution and Future Development
+While NumPy offers a vast array of commonly used functions such as sort, argsort, and more, this project currently focuses on a specific set of functionalities. For my immediate needs, I've implemented the necessary functions; however, I may revisit this project in the future to expand its capabilities.
+
+Contributions to enhance and add new functionalities are welcome! If you find areas where additional features could benefit the project or have ideas for improvements, feel free to contribute by opening an issue or submitting a pull request on GitHub.
+
+## Acknowledgements
+The kernels used here have been a result of lots of code browsing and book - programming massively parallel processors. Acknowledgement for most signification resources has been done in my cuda-projects repository.
