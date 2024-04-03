@@ -28,7 +28,8 @@ The ArrayGPU class provides functionalities for creating, manipulating, and perf
 
 int main(){
     np::getGPUConfig(0); 
-    /* mandatory call, once in main function. this function gets gpu config, i.e. number of cuda cores and number of SMs to efficiently schedule algorithms on GPU. */
+    /* mandatory call, once in main function. this function gets gpu config, i.e. number
+    of cuda cores and number of SMs to efficiently schedule algorithms on GPU. */
 
     auto A = np::ArrayGPU<float>(10, 2); // creates a 10x2 array filled with 0s
     A = np::ArrayGPU<float>(10, 2, 5); // 10x2 array with all elements as 5.
@@ -41,18 +42,23 @@ int main(){
 ```
 * Reshaping arrays
 ```cpp
-    A.reshape(5, 4); // reshapes it to 5x4 array. reshape fails when new size does not match old size
+    A.reshape(5, 4); // reshapes it to 5x4 array. 
+    // reshape fails when new size does not match old size
 ```
 * Getter, setter
 ```cpp
 auto A = np::ArrayGPU<float>(10, 5);
 float v = A.at(0); // assumes array as linear and gives number at position. 
 v = A.at(5, 4); // gives number at 5, 4 position.
-// above functions return the value as typename(float in this case), and the variable is transferred to CPU RAM. Hence printing by direct for loop will take time - each variable will be moved to CPU RAM from GPU RAM, numC has print and cout for that..
+/* above functions return the value as typename(float in this case), and the variable is
+transferred to CPU RAM. Hence printing by direct for loop will take time - each variable 
+will be moved to CPU RAM from GPU RAM, numC has print and cout for that..*/
 
-// numC also has support for indexing multiple elements at once, like numpy. This will become better when we introduce np::arange function
+/* numC also has support for indexing multiple elements at once, like numpy. This will 
+become helpful, when we introduce np::arange function*/
 
-auto C = A.at(np::ArrayGPU<int> idxs); // will return a 1D ArrayGPU with all the elements from idxs given as parameter. order maintained.
+auto C = A.at(np::ArrayGPU<int> idxs); // will return a 1D ArrayGPU with all the elements
+                                       // from idxs given as parameter. order maintained.
 // Ci = Ai where i is from idxs.
 
 auto C = A.at(np::ArrayGPU<int> row, np::ArrayGPU<int> col); // Ci = A(rowi, coli).
@@ -66,7 +72,8 @@ C.set(np::ArrayGPU<int> rows, np::ArrayGPU<int> cols, np::ArrayGPU<float> val);
 ```cpp
 auto A = np::ArrayGPU<float>(1024, 1024);
 A.print(); // prints whole array
-std::cout<<A; // numC has overloaded << operator with cout, so cout also prints the full array.
+std::cout<<A; // numC has overloaded << operator with cout, so cout also prints the full
+              // array.
 ```
 * Element-wise operations (addition, subtraction, multiplication, division). Returns a new array. (Supports broadcasting)
 ```cpp
@@ -125,8 +132,9 @@ auto C = A.sum(); // returns 1x1 array
 C = A.sum(0); // column wise sum. returns array of dimension 1x1024
 C = A.sum(1); // row wise sum. returns array of dimension 128x1
 
-// works similarly with sum, max, min, argmax, argmin.
-// argmax, argmin return indexes of element instead of elements. return type is mandatorily np::ArrayGPU<int> for these functions.
+/* works similarly with sum, max, min, argmax, argmin.
+argmax, argmin return indexes of element instead of elements. return type is mandatorily 
+np::ArrayGPU<int> for these functions.*/
 ```
 
 ### npFunctions header
@@ -142,7 +150,9 @@ C = np::ones<float>(10, 10); // 2d array of 1s
 C = np::zeros<float>(10, 10); // 1d array of 0s 
 C = np::zeros<float>(10, 10); // 2d array of 0s
 
-C = np::arange<float>(10); // 1d array with numbers from 0 to 9, all at their respective indexes. Immensely powerful for collective indexing, as shown earlier
+C = np::arange<float>(10); // 1d array with numbers from 0 to 9, all at their respective
+                           //  indexes. Immensely powerful for collective indexing, as 
+                           //  shown earlier
 ```
 
 * maximum, minimum
@@ -172,7 +182,8 @@ auto A = np::ArrayGPU<float>(10, 5, 7); // 10x5 array, fill with 7
 auto C = np::sqrt(A); // returns an array after applying function element wise.
 // similar syntax for square, log, exp.
 
-C = np::pow(A, 15); // returns an array after raising all elements by a power of pow. (pow is float) 
+C = np::pow(A, 15); // returns an array after raising all elements by a power of pow. 
+                    // (pow is float) 
 ```
 * shuffle
 ```cpp
@@ -190,7 +201,8 @@ auto C = np::shuffle(A); // shuffles array randomly. (permutes)
 // call gpuConfig
 auto A = np::arange<float>(1000); // array with numbers from 0 - 999
 
-auto batches = np::array_split(A, 5, 0); // array, num_parts, axis. //currently only axis = 0 is supported. 
+auto batches = np::array_split(A, 5, 0); // array, num_parts, axis. 
+                                        // currently only axis = 0 is supported. 
 // returns a std::vector of arrays. 
 // will split even if arrays formed will be unequal.
 // will create i%n arrays of size i/n + 1 and rest of size i/n
@@ -203,10 +215,12 @@ Random array generation (uniform and normal distributions)
 
 // call gpuConfig
 
-auto A = np::Random::rand<float>(1, 100); // filled with numbers from uniform distribution between 0 and 1
-// third argument can also be given - seed.
-auto A = np::Random::rand<float>(1, 100, 20, 50); // filled with numbers from uniform distribution between 20 and 50
-// fifth argument can also be given - seed.
+auto A = np::Random::rand<float>(1, 100); // filled with numbers from uniform distribution
+                                          // between 0 and 1
+                                          // third argument can also be given - seed.
+auto A = np::Random::rand<float>(1, 100, 20, 50); // filled with numbers from uniform 
+                                                  // distribution between 20 and 50
+                                             // fifth argument can also be given - seed.
 ```
 * Normal distribution
 ```cpp
@@ -214,6 +228,7 @@ auto A = np::Random::rand<float>(1, 100, 20, 50); // filled with numbers from un
 
 // call gpuConfig
 
-auto A = np::Random::randn<float>(1, 100); // filled with numbers from normal distribution between 0 and 1
-// third argument can also be given - seed.
+auto A = np::Random::randn<float>(1, 100); // filled with numbers from normal distribution
+                                           //  between 0 and 1
+                                           // third argument can also be given - seed.
 ```
