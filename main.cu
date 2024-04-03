@@ -1,13 +1,13 @@
 #include <neuralNet.cuh>
 
-#include <MNIST/mnist_read.hpp>
+#include <MNIST/readMNIST.hpp>
+#include <MNIST/showMNIST.hpp>
 
 #include <numC/gpuConfig.cuh>
 #include <numC/npFunctions.cuh>
 #include <numC/npGPUArray.cuh>
 #include <numC/npRandom.cuh>
 
-#include <visualisations/showImg.hpp>
 
 #include <iostream>
 #include <iomanip>
@@ -59,7 +59,7 @@ int main(){
         auto y_pred = nn(x).argmax(1).at(0);
 
         if(y_pred != y_label){
-            showImage(imgsNlabels.first[2] + i * 784, 28, 28, std::string(std::string("Test Img. actual: ") + std::to_string(y_label) + std::string(" predicted: ") + std::to_string(y_pred)));
+            showMNIST(imgsNlabels.first[2] + i * 784, 28, 28, std::string(std::string("Test Img. actual: ") + std::to_string(y_label) + std::string(" predicted: ") + std::to_string(y_pred)));
         }
         
 
@@ -79,20 +79,20 @@ int main(){
 std::pair<std::vector<float*>, std::vector<int*>> prepareDataset(){
     
     int num_train_images, img_size;
-    uchar* train_imgs = read_mnist_images(std::string("C:/Users/shash/Documents/MNIST_NUMC/dataset_mnist/train-images.idx3-ubyte"), num_train_images, img_size);
+    uchar* train_imgs = readMNISTImages(std::string("C:/Users/shash/Documents/MNIST_NUMC/dataset_mnist/train-images.idx3-ubyte"), num_train_images, img_size);
 
     std::cout<<std::endl<<"[+] Train images fetched!"<<std::endl;
     std::cout<<"----------Num Images: "<<num_train_images<<" img size: "<<img_size<<"-----------"<<std::endl; 
 
     int num_train_labels;
-    uchar* train_labels = read_mnist_labels(std::string("C:/Users/shash/Documents/MNIST_NUMC/dataset_mnist/train-labels.idx1-ubyte"), num_train_labels);
+    uchar* train_labels = readMNISTLabels(std::string("C:/Users/shash/Documents/MNIST_NUMC/dataset_mnist/train-labels.idx1-ubyte"), num_train_labels);
     std::cout<<std::endl<<"[+] Train labels fetched!"<<std::endl;
     std::cout<<"-----------Num Labels: "<<num_train_labels<<"------------------------"<<std::endl;
 
     // displaying random image out of train set.
     int random_idx = (rand() % num_train_images); 
     // since it is a 2d array, need to skip 784 elements per row.
-    showImage(train_imgs + random_idx * 784, 28, 28, std::string(std::string("Ex. train img: ") + std::to_string(train_labels[random_idx])));
+    showMNIST(train_imgs + random_idx * 784, 28, 28, std::string(std::string("Ex. train img: ") + std::to_string(train_labels[random_idx])));
 
     std::cout<<std::endl<<"[.] Starting conversion to float and random train-val split"<<std::endl;
 
@@ -136,13 +136,13 @@ std::pair<std::vector<float*>, std::vector<int*>> prepareDataset(){
     std::cout<<"------Validation set size: "<<num_val_images<<" Train set size: "<<num_train_images<<"-----"<<std::endl;
     
     int num_test_images;
-    uchar* test_imgs = read_mnist_images(std::string("C:/Users/shash/Documents/MNIST_NUMC/dataset_mnist/t10k-images.idx3-ubyte"), num_test_images, img_size);
+    uchar* test_imgs = readMNISTImages(std::string("C:/Users/shash/Documents/MNIST_NUMC/dataset_mnist/t10k-images.idx3-ubyte"), num_test_images, img_size);
 
     std::cout<<std::endl<<"[+] Test images fetched!"<<std::endl;
     std::cout<<"-----------Num Images: "<<num_test_images<<" img size: "<<img_size<<"------------"<<std::endl; 
 
     int num_test_labels;
-    uchar* test_labels = read_mnist_labels(std::string("C:/Users/shash/Documents/MNIST_NUMC/dataset_mnist/t10k-labels.idx1-ubyte"), num_test_labels);
+    uchar* test_labels = readMNISTLabels(std::string("C:/Users/shash/Documents/MNIST_NUMC/dataset_mnist/t10k-labels.idx1-ubyte"), num_test_labels);
     std::cout<<"\n[+] Test labels fetched!"<<std::endl;
     std::cout<<"-----------Num Labels: "<<num_test_labels<<"------------------------"<<std::endl;
 
@@ -150,7 +150,7 @@ std::pair<std::vector<float*>, std::vector<int*>> prepareDataset(){
     // displaying random image out of train set.
     random_idx = (rand() % num_test_images); 
     // since it is a 2d array, need to skip 784 (img_size) elements per row.
-    showImage(test_imgs + random_idx * img_size, 28, 28, std::string(std::string("Ex. test img: ") + std::to_string(test_labels[random_idx])));
+    showMNIST(test_imgs + random_idx * img_size, 28, 28, std::string(std::string("Ex. test img: ") + std::to_string(test_labels[random_idx])));
 
     std::cout<<std::endl<<"[.] Starting conversion to float."<<std::endl;
 

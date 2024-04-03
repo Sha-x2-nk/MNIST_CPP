@@ -1,4 +1,4 @@
-#include <MNIST/mnist_read.hpp>
+#include <MNIST/readMNIST.hpp>
 
 #include <iostream>
 #include <fstream>
@@ -13,9 +13,9 @@ int reverseInt(int i)
     return ((int)c1 << 24) + ((int)c2 << 16) + ((int)c3 << 8) + c4;
 }
 
-uchar *read_mnist_images(std::string &path, int &num_images, int &img_size)
+// reading mnist images from file.
+uchar *readMNIST_images(std::string &path, int &num_images, int &img_size)
 {
-
     std::ifstream file(path, std::ios::binary);
 
     if (file.is_open())
@@ -52,7 +52,8 @@ uchar *read_mnist_images(std::string &path, int &num_images, int &img_size)
     }
 }
 
-uchar *read_mnist_labels(std::string &path, int &num_labels)
+// reading mnist labels from file.
+uchar *readMNIST_labels(std::string &path, int &num_labels)
 {
 
     std::ifstream file(path, std::ios::binary);

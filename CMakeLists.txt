@@ -5,23 +5,28 @@ project(MNIST_C LANGUAGES CXX CUDA)
 find_package(CUDA REQUIRED)
 
 find_package(OpenCV REQUIRED)
-# set(WITH_CUDA OFF)
 
 set(SOURCES 
     main.cu
-    src/numC/gpuConfig.cu
-    src/layers/affineLayer.cu
-    src/layers/dropoutLayer.cu
-    src/layers/layer.cu
-    src/layers/reluLayer.cu
-    src/lossFunctions/softmax.cu
-    src/optimisers/adam.cu
     src/NeuralNet.cu
-    src/MNIST/mnist_read.cpp
-    src/visualisations/showImg.cpp
+    modules/numC/src/gpuConfig.cu
+    modules/layers/src/affineLayer.cu
+    modules/layers/src/dropoutLayer.cu
+    modules/layers/src/layer.cu
+    modules/layers/src/reluLayer.cu
+    modules/lossFunctions/src/softmax.cu
+    modules/optimisers/src/adam.cu
+    modules/MNIST/src/readMNIST.cpp
+    modules/MNIST/src/showMNIST.cpp
 )
 
-include_directories(include)
+include_directories(include
+                    modules/layers/include
+                    modules/numC/include                    
+                    modules/lossFunctions/include                    
+                    modules/optimisers/include                    
+                    modules/MNIST/include                    
+)
 
 add_executable(main ${SOURCES})
 
