@@ -68,6 +68,7 @@ int main(){
         free(imgsNlabels.first[i]);
         free(imgsNlabels.second[1]);
     }
+
     cublasDestroy(np::cbls_handle);    
     return 0;
 }

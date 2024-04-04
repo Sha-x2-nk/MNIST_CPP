@@ -51,7 +51,7 @@ void AdamOptimiser::step(np::ArrayGPU<float> &param, np::ArrayGPU<float> &grad)
     this->m = (this->m * this->beta1) + grad * (1 - this->beta1);
     auto mt = this->m / (1 - powf(this->beta1, static_cast<float>(this->t))); // bias correction
 
-    // second momentum
+    // second momentum. adagrad
     this->v = this->v * this->beta2 + np::square(grad) * (1 - this->beta2);
     auto vt = this->v / (1 - powf(this->beta2, static_cast<float>(this->t)));
 
