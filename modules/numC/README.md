@@ -245,4 +245,7 @@ While NumPy offers a vast array of commonly used functions such as sort, argsort
 Contributions to enhance and add new functionalities are welcome! If you find areas where additional features could benefit the project or have ideas for improvements, feel free to contribute by opening an issue or submitting a pull request on GitHub.
 
 ## Acknowledgements
-The kernels used here have been a result of lots of code browsing and book - programming massively parallel processors. Acknowledgement for most signification resources has been done in my cuda-projects repository.
+- CuBLAS, cuda blas library for dot product
+- The kernels used here have been a result of lots of code browsing and book - programming massively parallel processors. Acknowledgement for most signification resources has been done in my cuda-projects repository.
+
+
