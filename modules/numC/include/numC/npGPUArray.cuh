@@ -19,7 +19,6 @@ namespace np
 	class ArrayGPU
 	{
 	private:
-	public:
 		/* Operator functions
 			1 for +
 			2 for -
@@ -49,6 +48,7 @@ namespace np
 		template<char F>
 		ArrayGPU<int> applyReductionArgF(const int axis) const;
 
+	public:
 		TP *mat;
 		int rows, cols;
 
