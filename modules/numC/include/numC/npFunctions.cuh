@@ -60,7 +60,7 @@ namespace np
 		3. sqaure
 		4. sqrt
 	*/
-	template<typename TP, char F>
+	template <typename TP, char F>
 	ArrayGPU<TP> _F(const ArrayGPU<TP> &A);
 
 	// np.exp
@@ -287,8 +287,9 @@ namespace np
 		3. sqaure
 		4. sqrt
 	*/
-	template<typename TP, char F>
-	ArrayGPU<TP> _F(const ArrayGPU<TP> &A){
+	template <typename TP, char F>
+	ArrayGPU<TP> _F(const ArrayGPU<TP> &A)
+	{
 		ArrayGPU<TP> res(A.rows, A.cols);
 
 		const int BLOCK_SIZE = GPU_NUM_CUDA_CORE;

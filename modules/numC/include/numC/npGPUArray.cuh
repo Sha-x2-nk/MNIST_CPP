@@ -31,9 +31,9 @@ namespace np
 			9 for ==
 			10 for !=
 		*/
-		template<char OP>
+		template <char OP>
 		ArrayGPU<TP> applyOp(const ArrayGPU<TP> &B) const;
-		template<char OP>
+		template <char OP>
 		ArrayGPU<TP> applyOp(const TP Scalar) const;
 
 		/*
@@ -43,9 +43,9 @@ namespace np
 			2: min
 			3: max
 		*/
-		template<char F>
+		template <char F>
 		ArrayGPU<TP> applyReductionF(const int axis) const;
-		template<char F>
+		template <char F>
 		ArrayGPU<int> applyReductionArgF(const int axis) const;
 
 	public:
@@ -551,7 +551,7 @@ namespace np
 	*/
 
 	template <typename TP>
-	template<char OP>
+	template <char OP>
 	ArrayGPU<TP> ArrayGPU<TP>::applyOp(const ArrayGPU<TP> &B) const
 	{
 		if (this->rows == 1 && this->cols == 1)
@@ -655,7 +655,7 @@ namespace np
 	}
 
 	template <typename TP>
-	template<char OP>
+	template <char OP>
 	ArrayGPU<TP> ArrayGPU<TP>::applyOp(const TP Scalar) const
 	{
 		ArrayGPU<TP> res(this->rows, this->cols);

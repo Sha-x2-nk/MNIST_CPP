@@ -80,11 +80,10 @@ np::ArrayGPU<float> NeuralNet::forward(const np::ArrayGPU<float> &X)
     // last layer no activations or dropouts
     out = affine_layers.back()(out);
 
-
     return out;
 }
 
-// return outNloss vector 
+// return outNloss vector
 std::pair<np::ArrayGPU<float>, np::ArrayGPU<float>> NeuralNet::forward(const np::ArrayGPU<float> &X, const np::ArrayGPU<int> &y)
 {
     auto out = X;
@@ -97,14 +96,14 @@ std::pair<np::ArrayGPU<float>, np::ArrayGPU<float>> NeuralNet::forward(const np:
         out = dropout_layers[i](out);
 
         out = relu_layers[i](out);
-
     }
 
     // last layer no activations or dropouts
     out = affine_layers.back()(out);
 
     // if model is in eval mode, return out and loss only. No need for backprop
-    if(this->mode == "eval"){
+    if (this->mode == "eval")
+    {
         return {out, SoftmaxLoss::computeLoss(out, y)};
     }
 
@@ -156,7 +155,7 @@ void NeuralNet::adamStep()
     for (int layerIdx = 0; layerIdx < this->affine_layers.size(); ++layerIdx)
     {
         // for every layer, there are 2 adam configs.
-        adam_configs[layerIdx*2].step(affine_layers[layerIdx].W, affine_layers[layerIdx].dW);
-        adam_configs[layerIdx*2 + 1].step(affine_layers[layerIdx].b, affine_layers[layerIdx].db);
+        adam_configs[layerIdx * 2].step(affine_layers[layerIdx].W, affine_layers[layerIdx].dW);
+        adam_configs[layerIdx * 2 + 1].step(affine_layers[layerIdx].b, affine_layers[layerIdx].db);
     }
 }
