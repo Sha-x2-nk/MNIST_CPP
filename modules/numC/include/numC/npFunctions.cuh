@@ -357,8 +357,18 @@ namespace np
 	template <typename TP>
 	std::vector<np::ArrayGPU<TP>> array_split(const ArrayGPU<TP> &A, const int num_parts, int axis)
 	{
+		if(num_parts <= 0){
+			std::cerr << "INVALID NUM_PARTS ARGUMENT IN array_split!\n";
+			return {};
+		}
+		else if(axis != 0){
+			std::cerr << "INVALID AXIS ARGUMENT IN array_split!\n";
+			return {};
+		}
+		else if(num_parts == 1)
+			return {A};
 		// returns length % n sub-arrays of size length/n + 1 and the rest of size length/n.
-		if (axis == 0)
+		else if (axis == 0)
 		{
 			std::vector<np::ArrayGPU<TP>> splitted_arrays;
 
@@ -379,11 +389,6 @@ namespace np
 				st_idx += tmp.size();
 			}
 			return splitted_arrays;
-		}
-		else
-		{
-			std::cerr << "INVALID AXIS ARGUMENT!\n";
-			return {};
 		}
 	}
 }
