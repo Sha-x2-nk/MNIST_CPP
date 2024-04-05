@@ -56,9 +56,9 @@ After splitting validation set randomly,
 
 the following results were obtained:
 
-- <b>Training Accuracy</b>: 99.6 %
+- <b>Training Accuracy</b>: 100 %
 - <b>Validation Accuracy</b>: 100 %
-- <b>Test Accuracy</b>: 95.9 %
+- <b>Test Accuracy</b>: 96.0 %
 
 ## Failed Cases
 
