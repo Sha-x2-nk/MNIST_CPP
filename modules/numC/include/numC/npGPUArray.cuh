@@ -10,6 +10,7 @@
 #include <cublas_v2.h>
 
 #include <iostream>
+#include <vector>
 
 #define ceil(x, y) (x + y - 1) / y
 
@@ -57,6 +58,10 @@ namespace np
 		// initialise array with all values set to Val
 		ArrayGPU(const int rows, const int cols, const TP Val);
 
+		ArrayGPU(const std::vector<TP> &A);
+
+		ArrayGPU(const std::vector<std::vector<TP>> &A);
+
 		ArrayGPU(const ArrayGPU<TP> &A);
 
 		void reshape(const int newRows, const int newCols);
@@ -64,10 +69,10 @@ namespace np
 		unsigned int size() const;
 
 		// pointer to host memory.
-		void copyFromCPU(TP *h_array);
+		void copyFromCPU(const TP *h_array);
 
 		// pointer to device memory.
-		void copyFromGPU(TP *d_array);
+		void copyFromGPU(const TP *d_array);
 
 		void print() const;
 
@@ -211,6 +216,29 @@ namespace np
 		cudaDeviceSynchronize();
 	}
 
+	template<typename TP>
+	ArrayGPU<TP>::ArrayGPU(const std::vector<TP> &A){
+		this->rows = 1;
+		this->cols = A.size();
+
+		CUDA_CALL(cudaMalloc((void **)&this->mat, this->rows * this->cols * sizeof(TP)));
+
+		this->copyFromCPU(A.data());
+	}
+
+	template<typename TP>
+	ArrayGPU<TP>::ArrayGPU(const std::vector<std::vector<TP>> &A){
+		this->rows = A.size();
+		this->cols = A[0].size();
+
+		CUDA_CALL(cudaMalloc((void **)&this->mat, this->rows * this->cols * sizeof(TP)));
+
+		for(int rowIdx = 0; rowIdx< this->rows; ++rowIdx)
+			CUDA_CALL(cudaMemcpy(mat + rowIdx * this->cols, A[rowIdx].data(), this->cols * sizeof(TP), cudaMemcpyHostToDevice));
+
+	}
+
+
 	// copy constructor
 	template <typename TP>
 	ArrayGPU<TP>::ArrayGPU(const ArrayGPU<TP> &A)
@@ -244,14 +272,14 @@ namespace np
 
 	// pointer to host memory.
 	template <typename TP>
-	void ArrayGPU<TP>::copyFromCPU(TP *h_array)
+	void ArrayGPU<TP>::copyFromCPU(const TP *h_array)
 	{
 		CUDA_CALL(cudaMemcpy(mat, h_array, this->rows * this->cols * sizeof(TP), cudaMemcpyHostToDevice));
 	}
 
 	// pointer to device memory.
 	template <typename TP>
-	void ArrayGPU<TP>::copyFromGPU(TP *d_array)
+	void ArrayGPU<TP>::copyFromGPU(const TP *d_array)
 	{
 		CUDA_CALL(cudaMemcpy(this->mat, d_array, this->rows * this->cols * sizeof(TP), cudaMemcpyDeviceToDevice));
 	}

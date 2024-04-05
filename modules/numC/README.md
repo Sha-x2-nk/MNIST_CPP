@@ -31,8 +31,15 @@ int main(){
     /* mandatory call, once in main function. this function gets gpu config, i.e. number
     of cuda cores and number of SMs to efficiently schedule algorithms on GPU. */
 
-    auto A = np::ArrayGPU<float>(10, 2); // creates a 10x2 array filled with 0s
+    auto A = np::ArrayGPU<float>(10, 2); // creates a 10x2 array filled with 0s'
     A = np::ArrayGPU<float>(10, 2, 5); // 10x2 array with all elements as 5.
+    A = np::ArrayGPU<float>({1, 2, 4, 5, 6}); // supplying matrix 
+    A = np::ArrayGPU<float>({
+                                {1.5, 2.5, 3.5, 4.5, 5.5, 6.5},
+                                {0.1, 0.2, 0.3, 0.4, 0.5, 0.6},
+                            }); // supplying 2d matrix
+
+
 
     int r = A.rows; // gets number of rows
     int c = A.cols; // gets number of cols

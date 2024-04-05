@@ -29,48 +29,54 @@ NeuralNet trainModel(float *x_train, int *y_train, int train_size, float *x_val,
 int main()
 {
     np::getGPUConfig(0);
-    std::cout << std::endl
-              << "----------------------------------------------------" << std::endl;
-    std::cout << "----------------STARTING DATA FETCH-----------------" << std::endl;
-    std::cout << "----------------------------------------------------" << std::endl;
+    // std::cout << std::endl
+    //           << "----------------------------------------------------" << std::endl;
+    // std::cout << "----------------STARTING DATA FETCH-----------------" << std::endl;
+    // std::cout << "----------------------------------------------------" << std::endl;
 
-    auto imgsNlabels = prepareDataset();
+    // auto imgsNlabels = prepareDataset();
 
-    std::cout << std::endl
-              << "----------------------------------------------------" << std::endl;
-    std::cout << "-------------IMAGES AND LABELS FETCHED--------------" << std::endl;
-    std::cout << "----------------------------------------------------" << std::endl;
+    // std::cout << std::endl
+    //           << "----------------------------------------------------" << std::endl;
+    // std::cout << "-------------IMAGES AND LABELS FETCHED--------------" << std::endl;
+    // std::cout << "----------------------------------------------------" << std::endl;
 
-    std::cout << std::endl
-              << "----------------------------------------------------" << std::endl;
-    std::cout << "-------------Beginning GPU execution----------------" << std::endl;
-    std::cout << "----------------------------------------------------" << std::endl;
+    // std::cout << std::endl
+    //           << "----------------------------------------------------" << std::endl;
+    // std::cout << "-------------Beginning GPU execution----------------" << std::endl;
+    // std::cout << "----------------------------------------------------" << std::endl;
 
-    NeuralNet nn = trainModel(imgsNlabels.first[0], imgsNlabels.second[0], 58000, imgsNlabels.first[1], imgsNlabels.second[1], 2000, imgsNlabels.first[2], imgsNlabels.second[2], 10000, 784);
+    // NeuralNet nn = trainModel(imgsNlabels.first[0], imgsNlabels.second[0], 58000, imgsNlabels.first[1], imgsNlabels.second[1], 2000, imgsNlabels.first[2], imgsNlabels.second[2], 10000, 784);
 
-    // viewing columns where test data was misclassified
-    nn.eval();
-    std::vector<int> miss_classified_test_idxs;
-    for (int i = 0; i < 10000; ++i)
-    {
-        auto x = np::ArrayGPU<float>(1, 784);
-        x.copyFromCPU(imgsNlabels.first[2] + i * 784);
+    // // viewing columns where test data was misclassified
+    // nn.eval();
+    // std::vector<int> miss_classified_test_idxs;
+    // for (int i = 0; i < 10000; ++i)
+    // {
+    //     auto x = np::ArrayGPU<float>(1, 784);
+    //     x.copyFromCPU(imgsNlabels.first[2] + i * 784);
 
-        auto y_label = (imgsNlabels.second[2] + i)[0];
-        auto y_pred = nn(x).argmax(1).at(0);
+    //     auto y_label = (imgsNlabels.second[2] + i)[0];
+    //     auto y_pred = nn(x).argmax(1).at(0);
 
-        if (y_pred != y_label)
-        {
-            showMNIST(imgsNlabels.first[2] + i * 784, 28, 28, std::string(std::string("Test Img. actual: ") + std::to_string(y_label) + std::string(" predicted: ") + std::to_string(y_pred)));
-        }
-    }
+    //     if (y_pred != y_label)
+    //     {
+    //         showMNIST(imgsNlabels.first[2] + i * 784, 28, 28, std::string(std::string("Test Img. actual: ") + std::to_string(y_label) + std::string(" predicted: ") + std::to_string(y_pred)));
+    //     }
+    // }
 
-    // releasing memory occupied
-    for (int i = 0; i < 3; ++i)
-    {
-        free(imgsNlabels.first[i]);
-        free(imgsNlabels.second[1]);
-    }
+    // // releasing memory occupied
+    // for (int i = 0; i < 3; ++i)
+    // {
+    //     free(imgsNlabels.first[i]);
+    //     free(imgsNlabels.second[1]);
+    // }
+
+    auto A = np::ArrayGPU<float>({
+                                    {1, 2, 3, 4, 5, 6},
+                                    {1.5, 2.5, 3.5, 4.5, 5.5, 6.5}
+                                 });
+    std::cout<<A<<std::endl;
 
     cublasDestroy(np::cbls_handle);
     return 0;
