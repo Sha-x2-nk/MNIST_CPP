@@ -54,11 +54,12 @@ namespace np
 
 	/*
 	functions per element
-		F
-		1. exp
-		2. log
-		3. sqaure
-		4. sqrt
+	F
+		#define NP_F_EXP 17
+		#define NP_F_LOG 18
+		#define NP_F_SQAURE 19
+		#define NP_F_SQRT 20
+		#define NP_F_POW 21
 	*/
 	template <typename TP, char F>
 	ArrayGPU<TP> _F(const ArrayGPU<TP> &A);
@@ -110,7 +111,7 @@ namespace np
 
 		const int BLOCK_SIZE = GPU_NUM_CUDA_CORE;
 		dim3 block(BLOCK_SIZE);
-		dim3 grid(ceil(range, block.x));
+		dim3 grid(std::min<int>(GPU_NUM_SM * 2, ceil(range, block.x)));
 
 		kernelInitMatArange<TP><<<grid, block>>>(ans.mat, range);
 		cudaDeviceSynchronize();
@@ -127,9 +128,9 @@ namespace np
 
 	/*
 	maxmin
-		F
-		1: min
-		2: max
+	F
+		#define NP_OP_MAXIMUM 11
+		#define NP_OP_MINIMUM 12
 	*/
 	template <typename TP, char F>
 	ArrayGPU<TP> _maxmin(const ArrayGPU<TP> &A, const ArrayGPU<TP> &B)
@@ -141,9 +142,9 @@ namespace np
 
 			const int BLOCK_SIZE = GPU_NUM_CUDA_CORE;
 			dim3 block(BLOCK_SIZE);
-			dim3 grid(ceil(res.size(), block.x));
+			dim3 grid(std::min<int>(GPU_NUM_SM * 2, ceil(res.size(), block.x)));
 
-			kernelMatMaxminScalar<TP, F><<<grid, block>>>(B.mat, A.at(0), res.mat, res.size());
+			kernelMatOpScalar<TP, F><<<grid, block>>>(B.mat, A.at(0), res.mat, res.size());
 			cudaDeviceSynchronize();
 			return res;
 		}
@@ -154,9 +155,9 @@ namespace np
 
 			const int BLOCK_SIZE = GPU_NUM_CUDA_CORE;
 			dim3 block(BLOCK_SIZE);
-			dim3 grid(ceil(res.size(), block.x));
+			dim3 grid(std::min<int>(GPU_NUM_SM * 2, ceil(res.size(), block.x)));
 
-			kernelMatMaxminScalar<TP, F><<<grid, block>>>(A.mat, B.at(0), res.mat, res.size());
+			kernelMatOpScalar<TP, F><<<grid, block>>>(A.mat, B.at(0), res.mat, res.size());
 			cudaDeviceSynchronize();
 			return res;
 		}
@@ -171,8 +172,8 @@ namespace np
 			ArrayGPU<TP> res(B.rows, B.cols);
 			const int BLOCK_SIZE = GPU_NUM_CUDA_CORE;
 			dim3 block(BLOCK_SIZE);
-			dim3 grid(ceil(res.size(), block.x));
-			kernelMatMaxminVecAlongCols<TP, F><<<grid, block>>>(A.mat, B.mat, res.mat, res.size(), B.cols);
+			dim3 grid(std::min<int>(GPU_NUM_SM * 2, ceil(res.size(), block.x)));
+			kernelMatOpVecAlongCols<TP, F><<<grid, block>>>(A.mat, B.mat, res.mat, res.size(), B.cols);
 			cudaDeviceSynchronize();
 
 			return res;
@@ -183,8 +184,8 @@ namespace np
 			ArrayGPU<TP> res(B.rows, B.cols);
 			const int BLOCK_SIZE = GPU_NUM_CUDA_CORE;
 			dim3 block(BLOCK_SIZE);
-			dim3 grid(ceil(res.size(), block.x));
-			kernelMatMaxminVecAlongRows<TP, F><<<grid, block>>>(A.mat, B.mat, res.mat, res.size(), B.cols);
+			dim3 grid(std::min<int>(GPU_NUM_SM * 2, ceil(res.size(), block.x)));
+			kernelMatOpVecAlongRows<TP, F><<<grid, block>>>(A.mat, B.mat, res.mat, res.size(), B.cols);
 			cudaDeviceSynchronize();
 
 			return res;
@@ -198,8 +199,8 @@ namespace np
 			ArrayGPU<TP> res(A.rows, A.cols);
 			const int BLOCK_SIZE = GPU_NUM_CUDA_CORE;
 			dim3 block(BLOCK_SIZE);
-			dim3 grid(ceil(res.size(), block.x));
-			kernelMatMaxminVecAlongCols<TP, F><<<grid, block>>>(A.mat, B.mat, res.mat, res.size(), A.cols);
+			dim3 grid(std::min<int>(GPU_NUM_SM * 2, ceil(res.size(), block.x)));
+			kernelMatOpVecAlongCols<TP, F><<<grid, block>>>(A.mat, B.mat, res.mat, res.size(), A.cols);
 			cudaDeviceSynchronize();
 
 			return res;
@@ -210,8 +211,8 @@ namespace np
 			ArrayGPU<TP> res(A.rows, A.cols);
 			const int BLOCK_SIZE = GPU_NUM_CUDA_CORE;
 			dim3 block(BLOCK_SIZE);
-			dim3 grid(ceil(res.size(), block.x));
-			kernelMatMaxminVecAlongRows<TP, F><<<grid, block>>>(A.mat, B.mat, res.mat, res.size(), A.cols);
+			dim3 grid(std::min<int>(GPU_NUM_SM * 2, ceil(res.size(), block.x)));
+			kernelMatOpVecAlongRows<TP, F><<<grid, block>>>(A.mat, B.mat, res.mat, res.size(), A.cols);
 			cudaDeviceSynchronize();
 
 			return res;
@@ -222,8 +223,8 @@ namespace np
 			ArrayGPU<TP> res(A.rows, A.cols);
 			const int BLOCK_SIZE = GPU_NUM_CUDA_CORE;
 			dim3 block(BLOCK_SIZE);
-			dim3 grid(ceil(res.size(), block.x));
-			kernelMatMaxminMat<TP, F><<<grid, block>>>(A.mat, B.mat, res.mat, res.size());
+			dim3 grid(std::min<int>(GPU_NUM_SM*2, ceil(res.size(), block.x)));
+			kernelMatOpMat<TP, F><<<grid, block>>>(A.mat, B.mat, res.mat, res.size());
 			cudaDeviceSynchronize();
 			return res;
 		}
@@ -241,51 +242,51 @@ namespace np
 		return _maxmin<TP, F>(A, tmp);
 	}
 
-	// np.maximum
-	template <typename TP>
-	ArrayGPU<TP> maximum(const ArrayGPU<TP> &A, const ArrayGPU<TP> &B)
-	{
-		return _maxmin<TP, 2>(A, B);
-	}
-
-	template <typename TP>
-	ArrayGPU<TP> maximum(const ArrayGPU<TP> &A, const TP Scalar)
-	{
-		return _maxmin<TP, 2>(A, Scalar);
-	}
-
-	template <typename TP>
-	ArrayGPU<TP> maximum(const TP Scalar, const ArrayGPU<TP> &A)
-	{
-		return _maxmin<TP, 2>(A, Scalar);
-	}
-
 	// np.minimum
 	template <typename TP>
 	ArrayGPU<TP> minimum(const ArrayGPU<TP> &A, const ArrayGPU<TP> &B)
 	{
-		return _maxmin<TP, 1>(A, B);
+		return _maxmin<TP, NP_OP_MINIMUM>(A, B);
 	}
 
 	template <typename TP>
 	ArrayGPU<TP> minimum(const ArrayGPU<TP> &A, const TP Scalar)
 	{
-		return _maxmin<TP, 1>(A, Scalar);
+		return _maxmin<TP, NP_OP_MINIMUM>(A, Scalar);
 	}
 
 	template <typename TP>
 	ArrayGPU<TP> minimum(const TP Scalar, const ArrayGPU<TP> &A)
 	{
-		return _maxmin<TP, 1>(A, Scalar);
+		return _maxmin<TP, NP_OP_MINIMUM>(A, Scalar);
+	}
+
+	// np.maximum
+	template <typename TP>
+	ArrayGPU<TP> maximum(const ArrayGPU<TP> &A, const ArrayGPU<TP> &B)
+	{
+		return _maxmin<TP, NP_OP_MAXIMUM>(A, B);
+	}
+
+	template <typename TP>
+	ArrayGPU<TP> maximum(const ArrayGPU<TP> &A, const TP Scalar)
+	{
+		return _maxmin<TP, NP_OP_MAXIMUM>(A, Scalar);
+	}
+
+	template <typename TP>
+	ArrayGPU<TP> maximum(const TP Scalar, const ArrayGPU<TP> &A)
+	{
+		return _maxmin<TP, NP_OP_MAXIMUM>(A, Scalar);
 	}
 
 	/*
 	functions per element
-		F
-		1. exp
-		2. log
-		3. sqaure
-		4. sqrt
+	F
+		#define NP_F_EXP 19
+		#define NP_F_LOG 20
+		#define NP_F_SQAURE 21
+		#define NP_F_SQRT 22
 	*/
 	template <typename TP, char F>
 	ArrayGPU<TP> _F(const ArrayGPU<TP> &A)
@@ -294,7 +295,7 @@ namespace np
 
 		const int BLOCK_SIZE = GPU_NUM_CUDA_CORE;
 		dim3 block(BLOCK_SIZE);
-		dim3 grid(ceil(res.size(), block.x));
+		dim3 grid(std::min<int>(GPU_NUM_SM * 2, ceil(res.size(), block.x)));
 		kernelFMat<TP, F><<<grid, block>>>(A.mat, res.mat, res.size());
 		cudaDeviceSynchronize();
 		return res;
@@ -304,28 +305,28 @@ namespace np
 	template <typename TP>
 	ArrayGPU<TP> exp(const ArrayGPU<TP> &A)
 	{
-		return _F<TP, 1>(A);
+		return _F<TP, NP_F_EXP>(A);
 	}
 
 	// np.log
 	template <typename TP>
 	ArrayGPU<TP> log(const ArrayGPU<TP> &A)
 	{
-		return _F<TP, 2>(A);
+		return _F<TP, NP_F_LOG>(A);
 	}
 
 	// np.square
 	template <typename TP>
 	ArrayGPU<TP> square(const ArrayGPU<TP> &A)
 	{
-		return _F<TP, 3>(A);
+		return _F<TP, NP_F_SQAURE>(A);
 	}
 
 	// np.sqrt
 	template <typename TP>
 	ArrayGPU<TP> sqrt(const ArrayGPU<TP> &A)
 	{
-		return _F<TP, 4>(A);
+		return _F<TP, NP_F_SQRT>(A);
 	}
 
 	// np.pow
@@ -336,7 +337,8 @@ namespace np
 
 		const int BLOCK_SIZE = GPU_NUM_CUDA_CORE;
 		dim3 block(BLOCK_SIZE);
-		dim3 grid(ceil(res.size(), block.x));
+		dim3 grid(std::min<int>(GPU_NUM_SM * 2, ceil(res.size(), block.x)));
+		
 		kernelPowMat<TP><<<grid, block>>>(A.mat, pow, res.mat, res.size());
 		cudaDeviceSynchronize();
 		return res;
@@ -346,9 +348,10 @@ namespace np
 	template <typename TP>
 	void shuffle(ArrayGPU<TP> &A, unsigned long long seed)
 	{
+		if(A.size() <= 1) return;
 		const int BLOCK_SIZE = GPU_NUM_CUDA_CORE;
 		dim3 block(BLOCK_SIZE);
-		dim3 grid(ceil(A.size(), block.x));
+		dim3 grid(ceil(A.size(), block.x * 4));
 
 		kernelMatShuffle<TP><<<grid, block>>>(A.mat, A.size(), seed);
 		cudaDeviceSynchronize();
@@ -381,7 +384,7 @@ namespace np
 			{
 				int this_part_size = part_size + (i < remainder ? 1 : 0);
 
-				np::ArrayGPU<TP> tmp(this_part_size, A.cols);
+				np::ArrayGPU<TP> tmp(A.mat + st_idx, this_part_size, A.cols);
 				tmp.copyFromGPU(A.mat + st_idx);
 
 				splitted_arrays.push_back(tmp);
@@ -391,5 +394,6 @@ namespace np
 			return splitted_arrays;
 		}
 	}
+
 }
 #endif

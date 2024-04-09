@@ -31,6 +31,10 @@ std::pair<np::ArrayGPU<float>, np::ArrayGPU<float>> SoftmaxLoss::computeLossAndG
 
     auto dx = scores;
     dx.set(np::arange<int>(x.rows), y, dx.at(np::arange<int>(x.rows), y) - 1);
+
+    for(int i= 0; i< n; ++i){
+        dx.at(i, y[i]) -= 1;
+    }
     dx = dx / x.rows;
     return {loss, dx};
 }

@@ -12,115 +12,328 @@
 #include <iostream>
 #include <vector>
 
-#define ceil(x, y) (x + y - 1) / y
 
 namespace np
 {
+	#define ceil(x, y) ((x + y - 1) / y)
+	#define NP_OP_ADD 1
+	#define NP_OP_SUB 2
+	#define NP_OP_MUL 3
+	#define NP_OP_DIV 4
+	#define NP_OP_LESS_THAN 5
+	#define NP_OP_LESS_THAN_EQ 6
+	#define NP_OP_GREATER_THAN 7
+	#define NP_OP_GREATER_THAN_EQ 8
+	#define NP_OP_EQ 9
+	#define NP_OP_NOT_EQ 10
+	#define NP_OP_MINIMUM 11
+	#define NP_OP_MAXIMUM 12
+
+	#define NP_SET_EQ 13
+
+	#define NP_REDUCE_SUM 14
+	#define NP_REDUCE_MIN 15
+	#define NP_REDUCE_MAX 16
+	#define NP_REDUCE_ARGMIN 17
+	#define NP_REDUCE_ARGMAX 18
+
+	#define NP_F_EXP 19
+	#define NP_F_LOG 20
+	#define NP_F_SQAURE 21
+	#define NP_F_SQRT 22
+	#define NP_F_POW 23
+
 	template <typename TP>
 	class ArrayGPU
 	{
 	private:
-		/* Operator functions
-			1 for +
-			2 for -
-			3 for *
-			4 for /
-			5 for <
-			6 for <=
-			7 for >
-			8 for >=
-			9 for ==
-			10 for !=
-		*/
+		// reference counter -> Implemented so that all arrays can share the same memory. array will be deleted when this becomes 0.
+		int *ref_count; 
+		// _rows and _cols of array.
+		int _rows, _cols;
+		
 		template <char OP>
 		ArrayGPU<TP> applyOp(const ArrayGPU<TP> &B) const;
 		template <char OP>
 		ArrayGPU<TP> applyOp(const TP Scalar) const;
 
-		/*
-		REDUCTION
-			F
-			1: sum
-			2: min
-			3: max
-		*/
 		template <char F>
 		ArrayGPU<TP> applyReductionF(const int axis) const;
 		template <char F>
 		ArrayGPU<int> applyReductionArgF(const int axis) const;
 
 	public:
+		// main array.
 		TP *mat;
-		int rows, cols;
+		friend class Random;
 
-		ArrayGPU(const int rows = 1, const int cols = 1);
+		// ####################### CONSTRUCTORS ############################
 
-		// initialise array with all values set to Val
-		ArrayGPU(const int rows, const int cols, const TP Val);
+		/*
+			Default constructor
+			Sets _rows = _cols = 0
+		*/
+		ArrayGPU();
 
+		/*
+			Parameterised constructor
+			Creates a 1D array
+			Arguments:
+			* sz = size of array 
+			Ex: ArrayGPU<float>(10);
+		*/
+		ArrayGPU(const int sz);
+
+		/*
+			Parameterised constructor
+			Creates a 2D array
+			Arguments:
+			* _rows = _rows in array
+			* _cols = _cols in array
+			Ex: ArrayGPU<float>(3, 4);
+		*/
+		ArrayGPU(const int _rows, const int _cols);
+
+		/*
+			Parameterised constructor
+			Creates a 2D array fill with a default value.
+			Arguments:
+			* _rows = _rows in array
+			* _cols = _cols in array
+			* Val = Scalar to fill the array with
+			Ex: ArrayGPU<float>(3, 4, 0);
+		*/
+		ArrayGPU(const int _rows, const int _cols, const TP Val);
+
+		/*
+			Parameterised constructor
+			Creates a 1D array with values taking from std::vector.
+			Arguments:
+			* std::vector<>
+			Ex: ArrayGPU<float>({0, 1, 2, 3, 4, 5});
+		*/
 		ArrayGPU(const std::vector<TP> &A);
 
+		/*
+			Parameterised constructor
+			Creates a 2D array with values taking from std::vector.
+			Arguments:
+			* std::vector<std::vector<>>
+			Ex: ArrayGPU<float>({{0, 1, 2, 3, 4, 5},
+								 {6, 7, 8, 9, 10, 11});
+		*/
 		ArrayGPU(const std::vector<std::vector<TP>> &A);
 
+		/*
+			Parameterised constructor
+			Creates a 1D array and copies data from a pointer to array in memory
+			Arguments:
+			* TP* 
+			* sz = size of array
+			* loc = "cpu" or "gpu"
+			Ex: ArrayGPU<float>(array, 5, "cpu");
+		*/
+		ArrayGPU(const TP *h_array, const int sz, const std::string &loc = "cpu");
+
+		/*
+			Parameterised constructor
+			Creates a 2D array and copies data from a pointer to array in memory
+			Arguments:
+			* TP* 
+			* _rows = _rows of mat
+			* _cols = _cols of mat
+			* loc = "cpu" or "gpu"
+			Ex: ArrayGPU<float>(array, 5, 6, "gpu");
+		*/
+		ArrayGPU(const TP *h_array, int _rows, const int _cols, const std::string &loc = "cpu"); 
+
+		/*
+			Copy constructor
+		*/
 		ArrayGPU(const ArrayGPU<TP> &A);
 
+		/*
+			assignment operator overload
+		*/
+		void operator=(const ArrayGPU<TP> &A);
+
+		/*
+			assignment operator overload. this fills the array with Scal value.
+			created to be used with indexing
+		*/
+		void operator=(const TP Scal);
+
+		// ####################### GETTER FUNCTIONS ############################
+
+		/*
+			returns size of array.
+			Ex: A.size();
+		*/
+		const unsigned int size() const;
+	
+		/*
+			returns _rows of array.
+			Ex: A._rows();
+		*/
+		const unsigned int rows() const;
+
+		/*
+			returns _cols of array.
+			Ex: A._cols();
+		*/
+		const unsigned int cols() const;
+
+		/*
+			returns reference count of array.
+			Ex: A.refCount();
+		*/
+		const unsigned int refCount() const;
+
+		// ####################### ARRAY UTILITY FUNCTIONS ############################
+
+		/*
+			Prints the array on stdout.
+			Ex: A.print();
+		*/
+		void print() const;
+		
+		/*
+			Overloaded cout
+			Ex: std::cout<<A;
+		*/
+		// friend std::ostream &operator<<(std::ostream &out, const ArrayGPU<TP> &A);
+
+		/*
+			Returns a copy of array.
+			Ex: auto B = A.copy();
+		*/
+		ArrayGPU<TP> copy() const;
+
+		/*
+			Returns transpose of array.
+			Ex: auto AT = A.T();
+		*/
+		ArrayGPU<TP> T() const;
+		
+		/*
+			Reshapes the array. Org size has to be same as new size.
+			Arguments:
+			* newRows - number of _rows
+			* newCols - number of _cols
+			Ex: A.reshape(5, 10);
+		*/
 		void reshape(const int newRows, const int newCols);
 
-		unsigned int size() const;
+		/*
+			Returns a copy of array as cpu pointer.
+			Ex: float *a = A.cpu();
+		*/
+		TP* cpu() const;
+		
+		// ####################### ARRAY ELEMENT GETTER SETTER FUNCTIONS ############################
 
-		// pointer to host memory.
-		void copyFromCPU(const TP *h_array);
+		/*
+			Returns element at idx as array object.
+			Arguments:
+			* idx - idx of element
+			Ex: auto B = A.at(0);
+		*/
+		ArrayGPU<TP> at(const int idx) const;
 
-		// pointer to device memory.
-		void copyFromGPU(const TP *d_array);
+		/*
+			Returns element at (r, c) as array object.
+			Arguments:
+			* r - r to access from
+			* c - c to access from
+			Ex: auto B = A.at(5, 2);
+		*/
+		ArrayGPU<TP> at(const int r, const int c) const;
 
-		void print() const;
+		// ######################### TO BE DONE #########################################
+		/*
+			Returns elements at std::vector<int> indexes as array object.
+			Arguments:
+			* std::vector<int> - indexes to fetch from
+			Ex: auto B = A.at({1, 2, 3, 4, 5});
+		*/
+		// ArrayGPU<TP> at(const std::vector<int> &idxs) const;
 
-		// transpose
-		ArrayGPU<TP> T() const;
+		/*
+			Returns elements at ArrayGPU<int> indexes as array object.
+			Arguments:
+			* ArrayGPU<float> - indexes to fetch from
 
-		// get value at an index
-		TP at(const int idx) const;
+			Ex: auto B = A.at({1, 2, 3, 4, 5});
+		*/
+		// ArrayGPU<TP> at(const ArrayGPU<int> &idxs) const;
 
-		// get value at r, c
-		TP at(const int r, const int c) const;
+		/*
+			Returns elements at ArrayGPU<int> && ArrayGPU<int> indexes as array object.
+			Arguments:
+			* idx - idx of element
+			Ex: auto B = A.at(R, C);
+		*/
+		// ArrayGPU<TP> at(const ArrayGPU<int> &r, const ArrayGPU<int> &c) const;
 
-		// get values from multiple indexes
-		ArrayGPU<TP> at(const ArrayGPU<int> &idxs) const;
+		/*
+			Returns elements at std::vector<int> && ArrayGPU<int> indexes as array object.
+			Arguments:
+			* idx - idx of element
+			Ex: auto B = A.at({1, 2, 3, 4, 5}, C);
+		*/
+		// ArrayGPU<TP> at(const std::vector<int> &r, const ArrayGPU<int> &c) const;
 
-		// get values from multiple indexes
-		ArrayGPU<TP> at(const ArrayGPU<int> &r, const ArrayGPU<int> &c) const;
+		/*
+			Returns elements at ArrayGPU<int> && std::vector<int> indexes as array object.
+			Arguments:
+			* idx - idx of element
+			Ex: auto B = A.at(R, {1, 2, 3, 4, 5});
+		*/
+		// ArrayGPU<TP> at(const ArrayGPU<int> &r, const std::vector<int> &c) const;
 
-		// set value at idx
-		void set(const int idx, const TP val);
+		/*
+			Returns elements at std::vector<> && ArrayGPU<int> indexes as array object.
+			Arguments:
+			* idx - idx of element
+			Ex: auto B = A.at({1, 2, 3, 4, 5}, {1, 2, 3, 4, 5, 6, 7, 8});
+		*/
+		// ArrayGPU<TP> at(const std::vector<int> &r, const std::vector<int> &c) const;
 
-		// set value at r, c
-		void set(const int r, const int c, const TP val);
+		// ####################### DOT PRODUCT ############################
 
-		// set values from multiple indexes
-		void set(const ArrayGPU<int> &idxs, const ArrayGPU<TP> &val);
-
-		// set values from multiple indexes
-		void set(const ArrayGPU<int> &r, const ArrayGPU<int> &c, const ArrayGPU<TP> &val);
-
-		// defining dot product
+		/*
+			Returns dot product of two arrays
+			Arguments:
+			* B - second array
+			Ex: auto C = A.dot(B);
+		*/
 		ArrayGPU<TP> dot(const ArrayGPU<TP> &B) const;
-
+		/*
+			Returns dot product of two arrays. First is transposed
+			Arguments:
+			* B - second array
+			Ex: auto C = A.Tdot(B);
+			Is same as - auto C = A.T().dot(B)
+		*/
 		ArrayGPU<TP> Tdot(const ArrayGPU<TP> &B) const;
-
+		/*
+			Returns dot product of two arrays. Second is transposed
+			Arguments:
+			* B - second array
+			Ex: auto C = A.dotT(B);
+			Is same as - auto C = A.dot(B.T())
+		*/
 		ArrayGPU<TP> dotT(const ArrayGPU<TP> &B) const;
 
-		// assignment operator overload
-		void operator=(const ArrayGPU<TP> &A);
+		// TO BE DONE.
+		
 
 		// add functions
 		ArrayGPU<TP> operator+(const ArrayGPU<TP> &B) const;
-
 		ArrayGPU<TP> operator+(const TP Scalar) const;
 
 		// minus
 		ArrayGPU<TP> operator-(const ArrayGPU<TP> &B) const;
-
 		ArrayGPU<TP> operator-(const TP Scalar) const;
 
 		// unary negation operator
@@ -128,45 +341,37 @@ namespace np
 
 		// multiply
 		ArrayGPU<TP> operator*(const ArrayGPU<TP> &B) const;
-
 		ArrayGPU<TP> operator*(const TP Scalar) const;
 
 		// divide
 		ArrayGPU<TP> operator/(const ArrayGPU<TP> &B) const;
-
 		ArrayGPU<TP> operator/(const TP Scalar) const;
 
 		// returns an array of 0s and 1s depending on true or false of the conditions.
-		//  element wise comparison
+		// element wise comparison
 
 		// >
 		ArrayGPU<TP> operator>(const ArrayGPU<TP> &B) const;
-
 		ArrayGPU<TP> operator>(const TP Scalar) const;
 
 		// <
 		ArrayGPU<TP> operator<(const ArrayGPU<TP> &B) const;
-
 		ArrayGPU<TP> operator<(const TP Scalar) const;
 
 		// >=
 		ArrayGPU<TP> operator>=(const ArrayGPU<TP> &B) const;
-
 		ArrayGPU<TP> operator>=(const TP Scalar) const;
 
 		// <=
 		ArrayGPU<TP> operator<=(const ArrayGPU<TP> &B) const;
-
 		ArrayGPU<TP> operator<=(const TP Scalar) const;
 
 		// ==
 		ArrayGPU<TP> operator==(const ArrayGPU<TP> &B) const;
-
 		ArrayGPU<TP> operator==(const TP Scalar) const;
 
 		// !=
 		ArrayGPU<TP> operator!=(const ArrayGPU<TP> &B) const;
-
 		ArrayGPU<TP> operator!=(const TP Scalar) const;
 
 		// sum. along axis or total
@@ -180,7 +385,6 @@ namespace np
 
 		// argmax
 		ArrayGPU<int> argmax(const int axis = -1) const;
-
 		// argmin
 		ArrayGPU<int> argmin(const int axis = -1) const;
 
@@ -190,134 +394,338 @@ namespace np
 		~ArrayGPU();
 	};
 
-	template <typename TP>
-	ArrayGPU<TP>::ArrayGPU(const int rows, const int cols)
-	{
-		this->rows = rows;
-		this->cols = cols;
+	// ####################### CONSTRUCTORS ############################
 
-		CUDA_CALL(cudaMalloc((void **)&this->mat, this->rows * this->cols * sizeof(TP)));
-		CUDA_CALL(cudaMemset(this->mat, 0, this->rows * this->cols * sizeof(TP)));
+	/*
+		Default constructor
+		Sets _rows = _cols = 0
+	*/
+	template <typename TP>
+	ArrayGPU<TP>::ArrayGPU(){
+		this->_rows = 0;
+		this->_cols = 0;
 	}
 
-	// initialise all values with same value (broadcast)
-	template <typename TP>
-	ArrayGPU<TP>::ArrayGPU(const int rows, const int cols, const TP Val)
-	{
-		this->rows = rows;
-		this->cols = cols;
+	/*
+		Parameterised constructor
+		Creates a 1D array
+		Arguments:
+		* sz = size of array 
+		Ex: ArrayGPU<float>(10);
+	*/
+	template<typename TP>
+	ArrayGPU<TP>::ArrayGPU(const int sz){
+		this->_rows = 1;
+		this->_cols = sz;
 
-		CUDA_CALL(cudaMalloc((void **)&this->mat, this->rows * this->cols * sizeof(TP)));
+		CUDA_CALL(cudaMalloc((void **)&this->mat, this->_rows * this->_cols * sizeof(TP)));
+
+		// initialising ref_count
+		this->ref_count = (int*)malloc(sizeof(int));
+		(*this->ref_count) = 1;
+	}
+
+	/*
+		Parameterised constructor
+		Creates a 2D array
+		Arguments:
+		* _rows = _rows in array
+		* _cols = _cols in array
+		Ex: ArrayGPU<float>(3, 4);
+	*/
+	template <typename TP>
+	ArrayGPU<TP>::ArrayGPU(const int _rows, const int _cols)
+	{
+		this->_rows = _rows;
+		this->_cols = _cols;
+
+		CUDA_CALL(cudaMalloc((void **)&this->mat, this->_rows * this->_cols * sizeof(TP)));
+
+		// initialising ref_count
+		this->ref_count = (int*)malloc(sizeof(int));
+		(*this->ref_count) = 1;
+	}
+
+	/*
+		Parameterised constructor
+		Creates a 2D array fill with a default value.
+		Arguments:
+		* _rows = _rows in array
+		* _cols = _cols in array
+		* Val = Scalar to fill the array with
+		Ex: ArrayGPU<float>(3, 4, 0);
+	*/
+	template <typename TP>
+	ArrayGPU<TP>::ArrayGPU(const int _rows, const int _cols, const TP Val)
+	{
+		this->_rows = _rows;
+		this->_cols = _cols;
+
+		CUDA_CALL(cudaMalloc((void **)&this->mat, this->_rows * this->_cols * sizeof(TP)));
 
 		const int BLOCK_SIZE = GPU_NUM_CUDA_CORE;
 		dim3 block(BLOCK_SIZE);
-		dim3 grid(ceil(this->rows * this->cols, block.x));
-		kernelInitMatBroadcast<TP><<<grid, block>>>(mat, Val, this->rows * this->cols);
+		dim3 grid(std::min<int>(GPU_NUM_SM * 2, ceil(this->_rows * this->_cols, block.x)));
+
+		kernelInitMatBroadcast<TP><<<grid, block>>>(mat, Val, this->_rows * this->_cols);
 		cudaDeviceSynchronize();
-	}
 
+		// initialising ref_count
+		this->ref_count = (int*)malloc(sizeof(int));
+		(*this->ref_count) = 1;
+	}
+	
+	/*
+		Parameterised constructor
+		Creates a 1D array with values taking from std::vector.
+		Arguments:
+		* std::vector<>
+		Ex: ArrayGPU<float>({0, 1, 2, 3, 4, 5});
+	*/
+	template <typename TP>
+	ArrayGPU<TP>::ArrayGPU(const std::vector<TP> &A)
+	{
+		this->_rows = 1;
+		this->_cols = A.size();
+
+		CUDA_CALL(cudaMalloc((void **)&this->mat, this->_rows * this->_cols * sizeof(TP)));
+
+		CUDA_CALL(cudaMemcpy(this->mat, A.data(), this->_rows * this->_cols * sizeof(TP), cudaMemcpyHostToDevice));
+
+		// initialising ref_count
+		this->ref_count = (int*)malloc(sizeof(int));
+		(*this->ref_count) = 1;
+	}
+	
+	/*
+		Parameterised constructor
+		Creates a 2D array with values taking from std::vector.
+		Arguments:
+		* std::vector<std::vector<>>
+		Ex: ArrayGPU<float>({{0, 1, 2, 3, 4, 5},
+							{6, 7, 8, 9, 10, 11});
+	*/
+	template <typename TP>
+	ArrayGPU<TP>::ArrayGPU(const std::vector<std::vector<TP>> &A)
+	{
+		this->_rows = A.size();
+		this->_cols = A[0].size();
+
+		CUDA_CALL(cudaMalloc((void **)&this->mat, this->_rows * this->_cols * sizeof(TP)));
+
+		for (int rowIdx = 0; rowIdx < this->_rows; ++rowIdx)
+			CUDA_CALL(cudaMemcpy(mat + rowIdx * this->_cols, A[rowIdx].data(), this->_cols * sizeof(TP), cudaMemcpyHostToDevice));
+
+		// initialising ref_count
+		this->ref_count = (int*)malloc(sizeof(int));
+		(*this->ref_count) = 1;
+	}
+	
+	/*
+		Parameterised constructor
+		Creates a 1D array and copies data from a pointer to array in memory
+		Arguments:
+		* TP* 
+		* sz = size of array
+		* loc = "cpu" or "gpu"
+		Ex: ArrayGPU<float>(array, 5, "cpu");
+	*/
 	template<typename TP>
-	ArrayGPU<TP>::ArrayGPU(const std::vector<TP> &A){
-		this->rows = 1;
-		this->cols = A.size();
+	ArrayGPU<TP>::ArrayGPU(const TP *array, const int sz, const std::string &loc){
+		this->_rows = 1;
+		this->_cols = sz;
 
-		CUDA_CALL(cudaMalloc((void **)&this->mat, this->rows * this->cols * sizeof(TP)));
-
-		this->copyFromCPU(A.data());
+		if(loc == "cpu"){
+			CUDA_CALL(cudaMalloc((void**)&this->mat, this->_rows * this->_cols * sizeof(float)));
+			CUDA_CALL(cudaMemcpy(this->mat, array, this->_rows * this->_cols * cudaMemcpyHostToDevice));
+			// initialising ref_count
+			this->ref_count = (int*)malloc(sizeof(int));
+			(*this->ref_count) = 1;
+		}
+		else if(loc == "gpu"){
+			CUDA_CALL(cudaMalloc((void**)&this->mat, this->_rows * this->_cols * sizeof(float)));
+			CUDA_CALL(cudaMemcpy(this->mat, array, this->_rows * this->_cols * cudaMemcpyDeviceToDevice));
+			// initialising ref_count
+			this->ref_count = (int*)malloc(sizeof(int));
+			(*this->ref_count) = 1;
+		}
+		else
+			std::cerr<<"INVALID PARAM LOC: POSSIBLE VALUES \"cpu\", \"gpu\"\n";
+		
 	}
-
+	
+	/*
+		Parameterised constructor
+		Creates a 2D array and copies data from a pointer to array in memory
+		Arguments:
+		* TP* 
+		* _rows = _rows of mat
+		* _cols = _cols of mat
+		* loc = "cpu" or "gpu"
+		Ex: ArrayGPU<float>(array, 5, 6, "gpu");
+	*/
 	template<typename TP>
-	ArrayGPU<TP>::ArrayGPU(const std::vector<std::vector<TP>> &A){
-		this->rows = A.size();
-		this->cols = A[0].size();
+	ArrayGPU<TP>::ArrayGPU(const TP *array, const int _rows, const int _cols, const std::string &loc){
+		this->_rows = _rows;
+		this->_cols = _cols;
 
-		CUDA_CALL(cudaMalloc((void **)&this->mat, this->rows * this->cols * sizeof(TP)));
+		if(loc == "cpu"){
+			CUDA_CALL(cudaMalloc((void**)&this->mat, this->_rows * this->_cols * sizeof(TP)));
+			CUDA_CALL(cudaMemcpy(this->mat, array, this->_rows * this->_cols * sizeof(TP), cudaMemcpyHostToDevice));
+			// initialising ref_count
+			this->ref_count = (int*)malloc(sizeof(int));
+			(*this->ref_count) = 1;
+		}
+		else if(loc == "gpu"){
+			CUDA_CALL(cudaMalloc((void**)&this->mat, this->_rows * this->_cols * sizeof(TP)));
+			CUDA_CALL(cudaMemcpy(this->mat, array, this->_rows * this->_cols * sizeof(TP), cudaMemcpyDeviceToDevice));
+			// initialising ref_count
+			this->ref_count = (int*)malloc(sizeof(int));
+			(*this->ref_count) = 1;
+		}
+		else
+			std::cerr<<"INVALID PARAM LOC: POSSIBLE VALUES \"cpu\", \"gpu\"\n";
+	} 
 
-		for(int rowIdx = 0; rowIdx< this->rows; ++rowIdx)
-			CUDA_CALL(cudaMemcpy(mat + rowIdx * this->cols, A[rowIdx].data(), this->cols * sizeof(TP), cudaMemcpyHostToDevice));
-
-	}
-
-
-	// copy constructor
+	/*
+		Copy constructor
+	*/
 	template <typename TP>
 	ArrayGPU<TP>::ArrayGPU(const ArrayGPU<TP> &A)
 	{
-		this->rows = A.rows;
-		this->cols = A.cols;
-		CUDA_CALL(cudaMalloc((void **)&this->mat, this->rows * this->cols * sizeof(TP)));
-
-		this->copyFromGPU(A.mat);
+		this->_rows = A._rows;
+		this->_cols = A._cols;
+		this->mat = A.mat;
+		this->ref_count = A.ref_count;
+		++(*this->ref_count);
 	}
 
+	/*
+		assignment operator overload
+	*/
 	template <typename TP>
-	void ArrayGPU<TP>::reshape(const int newRows, const int newCols)
-	{
-		if (newRows * newCols == this->rows * this->cols)
-		{
-			this->rows = newRows;
-			this->cols = newCols;
+	void ArrayGPU<TP>::operator=(const ArrayGPU<TP> &A)
+	{	
+		if(this != &A){
+			this->_rows = A._rows;
+			this->_cols = A._cols;
+			--(*this->ref_count);
+			if(*this->ref_count == 0){
+				cudaFree(this->mat);
+				free(this->ref_count);
+			}
+			this->mat = A.mat;
+			this->ref_count = A.ref_count;
+			++(*this->ref_count);
 		}
-		else
-		{
-			std::cerr << "\nError! New size and old size are not equal.";
-		}
 	}
-
+	
+	/*
+		assignment operator overload. this fills the array with Scal value.
+		created to be used with indexing
+	*/
 	template <typename TP>
-	unsigned int ArrayGPU<TP>::size() const
-	{
-		return this->rows * this->cols;
-	}
+	void ArrayGPU<TP>::operator=(const TP Scal){
+		const int BLOCK_SIZE = GPU_NUM_CUDA_CORE;
+		dim3 block(BLOCK_SIZE);
+		dim3 grid(std::min<int>(GPU_NUM_SM * 2, ceil(this->_rows * this->_cols, block.x)));
 
-	// pointer to host memory.
-	template <typename TP>
-	void ArrayGPU<TP>::copyFromCPU(const TP *h_array)
-	{
-		CUDA_CALL(cudaMemcpy(mat, h_array, this->rows * this->cols * sizeof(TP), cudaMemcpyHostToDevice));
-	}
-
-	// pointer to device memory.
-	template <typename TP>
-	void ArrayGPU<TP>::copyFromGPU(const TP *d_array)
-	{
-		CUDA_CALL(cudaMemcpy(this->mat, d_array, this->rows * this->cols * sizeof(TP), cudaMemcpyDeviceToDevice));
-	}
-
-	template <typename TP>
-	void ArrayGPU<TP>::print() const
-	{
-		kernelPrintMat<TP><<<1, 1>>>(mat, this->rows, this->cols);
+		kernelInitMatBroadcast<TP><<<grid, block>>>(mat, Scal, this->_rows * this->_cols);
 		cudaDeviceSynchronize();
 	}
 
-	// overloading cout
+	// ####################### GETTER FUNCTIONS ############################
+
+	/*
+		returns size of array.
+		Ex: A.size();
+	*/
 	template <typename TP>
-	std::ostream &operator<<(std::ostream &out, ArrayGPU<TP> &A)
+	const unsigned int ArrayGPU<TP>::size() const{
+		return this->_rows * this->_cols;
+	}
+
+	/*
+		returns _rows of array.
+		Ex: A._rows();
+	*/
+	template <typename TP>
+	const unsigned int ArrayGPU<TP>::rows() const{
+		return this->_rows;
+	}
+
+	/*
+		returns _cols of array.
+		Ex: A._cols();
+	*/
+	template <typename TP>
+	const unsigned int ArrayGPU<TP>::cols() const{
+		return this->_cols;
+	}
+
+	/*
+		returns reference count of array.
+		Ex: A.refCount();
+	*/
+	template <typename TP>
+	const unsigned int ArrayGPU<TP>::refCount() const{
+		return (*this->ref_count);
+	}
+
+	// ####################### ARRAY UTILITY FUNCTIONS ############################
+
+	/*
+		Prints the array on stdout.
+		Ex: A.print();
+	*/
+	template <typename TP>
+	void ArrayGPU<TP>::print() const
+	{
+		kernelPrintMat<TP><<<1, 1>>>(mat, this->_rows, this->_cols);
+		cudaDeviceSynchronize();
+	}
+
+	/*
+		Overloaded cout
+		Ex: std::cout<<A;
+	*/
+	template <typename TP>
+	std::ostream& operator<<(std::ostream &out, const ArrayGPU<TP> &A)
 	{
 		A.print();
 		return out;
 	}
 
-	// transpose
+	/*
+		Returns a copy of array.
+		Ex: auto B = A.copy();
+	*/ 
+	template<typename TP>
+	ArrayGPU<TP> ArrayGPU<TP>::copy() const {
+		return ArrayGPU<TP>(this->mat, this->_rows, this->_cols, "gpu");
+	}
+
+	/*
+		Returns transpose of array.
+		Ex: auto AT = A.T();
+	*/
 	template <typename TP>
 	ArrayGPU<TP> ArrayGPU<TP>::T() const
 	{
-		ArrayGPU<TP> out(this->cols, this->rows);
-
+		ArrayGPU<TP> out(this->_cols, this->_rows);
 		const int TILE_WIDTH = (GPU_NUM_CUDA_CORE == 64) ? 8 : 16;
 		const int ROW_BLOCK = (GPU_NUM_CUDA_CORE == 64) ? 4 : 8;
 		dim3 block(TILE_WIDTH, ROW_BLOCK);
-		dim3 grid(ceil(this->cols, TILE_WIDTH), ceil(this->rows, TILE_WIDTH));
+		dim3 grid(ceil(this->_cols, TILE_WIDTH), ceil(this->_rows, TILE_WIDTH));
 
 		switch (GPU_NUM_CUDA_CORE)
 		{
 		case 64:
-			kernelTransposeInMem<TP, 8, 4><<<grid, block>>>(this->mat, out.mat, this->rows, this->cols);
+			kernelTransposeInMem<TP, 8, 4><<<grid, block>>>(this->mat, out.mat, this->_rows, this->_cols);
 			break;
 
 		default:
-			kernelTransposeInMem<TP, 16, 8><<<grid, block>>>(this->mat, out.mat, this->rows, this->cols);
+			kernelTransposeInMem<TP, 16, 8><<<grid, block>>>(this->mat, out.mat, this->_rows, this->_cols);
 			break;
 		}
 		cudaDeviceSynchronize();
@@ -325,129 +733,88 @@ namespace np
 		return out;
 	}
 
-	// get value at idx
+	/*
+		Reshapes the array. Org size has to be same as new size.
+		Arguments:
+		* newRows - number of _rows
+		* newCols - number of _cols
+		Ex: A.reshape(5, 10);
+	*/
 	template <typename TP>
-	TP ArrayGPU<TP>::at(const int idx) const
+	void ArrayGPU<TP>::reshape(const int newRows, const int newCols)
 	{
-		TP val;
-		CUDA_CALL(cudaMemcpy(&val, mat + idx, sizeof(TP), cudaMemcpyDeviceToHost));
-		return val;
+		if (newRows * newCols == this->_rows * this->_cols)
+		{
+			this->_rows = newRows;
+			this->_cols = newCols;
+		}
+		else if(newRows == -1 && (this->_rows * this->_cols) % newCols == 0){
+			this->_rows = (this->_rows * this->_cols) / newCols;
+			this->_cols = newCols;
+		}
+		else if(newCols == -1 && (this->_rows * this->_cols) % newRows == 0){
+			this->_cols = (this->_rows * this->_cols) / newRows;
+			this->_rows = newRows;
+		}
+		else
+			std::cerr << "\nError! New size and old size are not equal.";
 	}
 
-	// get value at r, c
+	/*
+		Returns a copy of array as cpu pointer.
+		Ex: float *a = A.cpu();
+	*/
 	template <typename TP>
-	TP ArrayGPU<TP>::at(const int r, const int c) const
-	{
-		return at(r * this->cols + c);
+	TP* ArrayGPU<TP>::cpu() const{
+		TP *array_h = (TP *)malloc(this->_rows * this->_cols * sizeof(TP));
+
+		CUDA_CALL(cudaMemcpy(array_h, this->mat, this->_rows * this->_cols * sizeof(TP), cudaMemcpyDeviceToHost));
+		return array_h;
 	}
 
-	// get values from multiple indexes
+	// ####################### ARRAY ELEMENT GETTER SETTER FUNCTIONS ############################
+
+	/*
+		Returns element at idx as array object.
+		Arguments:
+		* idx - idx of element
+		Ex: auto B = A.at(0);
+	*/
 	template <typename TP>
-	ArrayGPU<TP> ArrayGPU<TP>::at(const ArrayGPU<int> &idxs) const
+	ArrayGPU<TP> ArrayGPU<TP>::at(const int idx) const
 	{
-		int size = std::max<int>(idxs.rows, idxs.cols);
-		ArrayGPU<TP> ans(size);
-
-		const int BLOCK_SIZE = GPU_NUM_CUDA_CORE;
-		dim3 block(BLOCK_SIZE);
-		dim3 grid(ceil(size, block.x));
-		kernelGetMatValues<TP><<<grid, block>>>(mat, ans.mat, idxs.mat, size);
-		cudaDeviceSynchronize();
-
-		return ans;
+		ArrayGPU<TP> res(1, 1);
+		res.mat = (this->mat + idx);
+		return res;
 	}
 
-	// get values from multiple indexes
+	/*
+		Returns element at (r, c) as array object.
+		Arguments:
+		* r - r to access from
+		* c - c to access from
+		Ex: auto B = A.at(5, 2);
+	*/
 	template <typename TP>
-	ArrayGPU<TP> ArrayGPU<TP>::at(const ArrayGPU<int> &r, const ArrayGPU<int> &c) const
+	ArrayGPU<TP> ArrayGPU<TP>::at(const int r, const int c) const
 	{
-		/*
-			r = (0, 1, 2, 3, 4, 5, 6)
-			c = (7, 6, 4, 2, 1, 8, 9)
-			fetch all (ri , ci) elements
-		*/
-		int size = std::max<int>(r.rows, r.cols);
-		ArrayGPU<TP> ans(size);
-
-		const int BLOCK_SIZE = GPU_NUM_CUDA_CORE;
-		dim3 block(BLOCK_SIZE);
-		dim3 grid(ceil(size, block.x));
-		kernelGetMatValues<TP><<<grid, block>>>(mat, this->cols, ans.mat, r.mat, c.mat, size);
-		cudaDeviceSynchronize();
-
-		return ans;
+		return this->at(r * this->_cols + c);
 	}
 
-	// set value at idx
-	template <typename TP>
-	void ArrayGPU<TP>::set(const int idx, const TP val)
-	{
-		CUDA_CALL(cudaMemcpy(mat + idx, &val, sizeof(TP), cudaMemcpyHostToDevice));
-	}
-
-	// set value at r, c
-	template <typename TP>
-	void ArrayGPU<TP>::set(const int r, const int c, const TP val)
-	{
-		int idx = r * this->cols + c;
-		set(idx, val);
-	}
-
-	// set values from multiple indexes
-	template <typename TP>
-	void ArrayGPU<TP>::set(const ArrayGPU<int> &idxs, const ArrayGPU<TP> &val)
-	{
-		/*
-			r = (0, 1, 2, 3, 4, 5, 6)
-			c = (7, 6, 4, 2, 1, 8, 9)
-			val = (1, 2, 3, 4, 5, 6, 7)
-		set all (ri , ci) elements to vali
-		*/
-		int size = std::max<int>(idxs.rows, idxs.cols); // one dimension will always be 1.
-
-		const int BLOCK_SIZE = GPU_NUM_CUDA_CORE;
-		dim3 block(BLOCK_SIZE);
-		dim3 grid(ceil(size, block.x));
-		kernelSetMatValues<TP><<<grid, block>>>(mat, val.mat, idxs.mat, size);
-		cudaDeviceSynchronize();
-	}
-
-	// set values from multiple indexes
-	template <typename TP>
-	void ArrayGPU<TP>::set(const ArrayGPU<int> &r, const ArrayGPU<int> &c, const ArrayGPU<TP> &val)
-	{
-		/*
-			r = (0, 1, 2, 3, 4, 5, 6)
-			c = (7, 6, 4, 2, 1, 8, 9)
-			val = (1, 2, 3, 4, 5, 6, 7)
-		set all (ri , ci) elements to vali
-		*/
-		int size = std::max<int>(r.rows, r.cols); // one dimension will always be 1.
-
-		const int BLOCK_SIZE = GPU_NUM_CUDA_CORE;
-		dim3 block(BLOCK_SIZE);
-		dim3 grid(ceil(size, block.x));
-		kernelSetMatValues<TP><<<grid, block>>>(mat, this->cols, val.mat, r.mat, c.mat, size);
-		cudaDeviceSynchronize();
-	}
-
-	// defining dot product
+	// ####################### DOT PRODUCT ############################
+	/*
+		Returns dot product of two arrays
+		Arguments:
+		* B - second array
+		Ex: auto C = A.dot(B);
+	*/
 	template <typename TP>
 	ArrayGPU<TP> ArrayGPU<TP>::dot(const ArrayGPU<TP> &B) const
 	{
-		/*
-			C = A @ B
-			input:
-				A: shape MxK
-				B: shape KxN
-			output:
-				C: shape MxN
-
-		*/
 		// condition for dot product
-		if (this->cols == B.rows)
+		if (this->_cols == B._rows)
 		{
-			ArrayGPU<TP> res(this->rows, B.cols);
+			ArrayGPU<TP> res(this->_rows, B._cols);
 
 			const float alpha = 1.0f;
 			const float beta = 0.0f;
@@ -455,12 +822,12 @@ namespace np
 			// C = A . B k lie.
 			cublasSgemm(cbls_handle, //
 						CUBLAS_OP_N, CUBLAS_OP_N,
-						B.cols, this->rows, this->cols, // B cols, A rows, A cols
+						B._cols, this->_rows, this->_cols, // B _cols, A _rows, A _cols
 						&alpha,
-						B.mat, B.cols,		   // B, B cols
-						this->mat, this->cols, // A, A cols
+						B.mat, B._cols,		   // B, B _cols
+						this->mat, this->_cols, // A, A _cols
 						&beta,
-						res.mat, B.cols); // C, B cols
+						res.mat, B._cols); // C, B _cols
 
 			return res;
 		}
@@ -470,24 +837,19 @@ namespace np
 			return np::ArrayGPU<TP>(1, 1, 0);
 		}
 	}
-
-	// dot with first matrix transposed
+	/*
+		Returns dot product of two arrays. First is transposed
+		Arguments:
+		* B - second array
+		Ex: auto C = A.Tdot(B);
+		Is same as - auto C = A.T().dot(B)
+	*/
 	template <typename TP>
 	ArrayGPU<TP> ArrayGPU<TP>::Tdot(const ArrayGPU<TP> &B) const
 	{
-		/*
-			C = A.T @ B
-			input:
-				A: shape KxM
-				B: shape KxN
-			output:
-				C: shape MxN
-
-		*/
-		// condition for dot product
-		if (this->rows == B.rows)
+		if (this->_rows == B._rows)
 		{
-			ArrayGPU<TP> res(this->cols, B.cols);
+			ArrayGPU<TP> res(this->_cols, B._cols);
 
 			const float alpha = 1.0f;
 			const float beta = 0.0f;
@@ -495,12 +857,12 @@ namespace np
 			// C = AT . B
 			cublasSgemm(cbls_handle, //
 						CUBLAS_OP_N, CUBLAS_OP_T,
-						B.cols, this->cols, this->rows, // B cols, A cols, A rows
+						B._cols, this->_cols, this->_rows, // B _cols, A _cols, A _rows
 						&alpha,
-						B.mat, B.cols,		   // B, B cols
-						this->mat, this->cols, // A, A cols
+						B.mat, B._cols,		   // B, B _cols
+						this->mat, this->_cols, // A, A _cols
 						&beta,
-						res.mat, B.cols); // C, B cols
+						res.mat, B._cols); // C, B _cols
 
 			return res;
 		}
@@ -510,36 +872,31 @@ namespace np
 			return np::ArrayGPU<TP>(1, 1, 0);
 		}
 	}
-
-	// dot with second mat tranposed
+	/*
+		Returns dot product of two arrays. Second is transposed
+		Arguments:
+		* B - second array
+		Ex: auto C = A.dotT(B);
+		Is same as - auto C = A.dot(B.T())
+	*/
 	template <typename TP>
 	ArrayGPU<TP> ArrayGPU<TP>::dotT(const ArrayGPU<TP> &B) const
 	{
-		/*
-			C = A @ B.T
-			input:
-				A: shape MxK
-				B: shape NxK
-			output:
-				C: shape MxN
-
-		*/
-		// condition for dot product
-		if (this->cols == B.cols)
+		if (this->_cols == B._cols)
 		{
-			ArrayGPU<TP> res(this->rows, B.rows);
+			ArrayGPU<TP> res(this->_rows, B._rows);
 
 			const float alpha = 1.0f;
 			const float beta = 0.0f;
 
 			cublasSgemm(cbls_handle, //
 						CUBLAS_OP_T, CUBLAS_OP_N,
-						B.rows, this->rows, this->cols, // B cols, A rows, A cols
+						B._rows, this->_rows, this->_cols, // B _cols, A _rows, A _cols
 						&alpha,
-						B.mat, B.cols,		   // B, B cols
-						this->mat, this->cols, // A, A cols
+						B.mat, B._cols,		   // B, B _cols
+						this->mat, this->_cols, // A, A _cols
 						&beta,
-						res.mat, B.rows); // C, B cols
+						res.mat, B._rows); // C, B _cols
 
 			return res;
 		}
@@ -550,127 +907,99 @@ namespace np
 		}
 	}
 
-	// assignment operator overload
-	template <typename TP>
-	void ArrayGPU<TP>::operator=(const ArrayGPU<TP> &A)
-	{
-		// free the contents
-		CUDA_CALL(cudaFree(this->mat));
-
-		// allocate memory
-		this->rows = A.rows;
-		this->cols = A.cols;
-		CUDA_CALL(cudaMalloc((void **)&this->mat, this->rows * this->cols * sizeof(TP)));
-
-		this->copyFromGPU(A.mat);
-	}
-
-	/* Operator functions
-		1 for +
-		2 for -
-		3 for *
-		4 for /
-		5 for <
-		6 for <=
-		7 for >
-		8 for >=
-		9 for ==
-		10 for !=
-	*/
-
 	template <typename TP>
 	template <char OP>
 	ArrayGPU<TP> ArrayGPU<TP>::applyOp(const ArrayGPU<TP> &B) const
 	{
-		if (this->rows == 1 && this->cols == 1)
+		if (this->_rows == 1 && this->_cols == 1)
 		{
 			// A is scalar
-			ArrayGPU<TP> res(B.rows, B.cols);
+			ArrayGPU<TP> res(B._rows, B._cols);
 
 			const int BLOCK_SIZE = GPU_NUM_CUDA_CORE;
 			dim3 block(BLOCK_SIZE);
-			dim3 grid(ceil(res.size(), block.x));
+			dim3 grid(std::min<int>(GPU_NUM_SM*2, ceil(res.size(), block.x)));
 
-			kernelScalarOpMat<TP, OP><<<grid, block>>>(this->at(0), B.mat, res.mat, res.size());
+			kernelScalarOpMat<TP, OP><<<grid, block>>>(this->mat, B.mat, res.mat, res.size());
 			cudaDeviceSynchronize();
 			return res;
 		}
-		else if (B.rows == 1 && B.cols == 1)
+		else if (B._rows == 1 && B._cols == 1)
 		{
 			// B is scalar
-			ArrayGPU<TP> res(this->rows, this->cols);
+			ArrayGPU<TP> res(this->_rows, this->_cols);
 
 			const int BLOCK_SIZE = GPU_NUM_CUDA_CORE;
 			dim3 block(BLOCK_SIZE);
-			dim3 grid(ceil(res.size(), block.x));
+			dim3 grid(std::min<int>(GPU_NUM_SM*2, ceil(res.size(), block.x)));
 
-			kernelMatOpScalar<TP, OP><<<grid, block>>>(this->mat, B.at(0), res.mat, res.size());
+			kernelMatOpScalar<TP, OP><<<grid, block>>>(this->mat, B.mat, res.mat, res.size());
 			cudaDeviceSynchronize();
 			return res;
 		}
 		// if A is vector
 		// A vector ki dim, is equal to either col or row of B
-		// row vector. will extend along cols if possible. (prioritising in case of square matrix)
-		// vice versa for cols
+		// row vector. will extend along _cols if possible. (prioritising in case of square matrix)
+		// vice versa for _cols
 
-		else if ((this->cols == 1 && this->rows == B.rows) || (this->rows == 1 && this->cols == B.rows))
+		else if ((this->_cols == 1 && this->_rows == B._rows) || (this->_rows == 1 && this->_cols == B._rows))
 		{
-			// along rows add kr
-			ArrayGPU<TP> res(B.rows, B.cols);
+			// along _rows add kr
+			ArrayGPU<TP> res(B._rows, B._cols);
 			const int BLOCK_SIZE = GPU_NUM_CUDA_CORE;
 			dim3 block(BLOCK_SIZE);
-			dim3 grid(ceil(res.size(), block.x));
-			kernelVecOpMatAlongCols<TP, OP><<<grid, block>>>(this->mat, B.mat, res.mat, res.size(), B.cols);
+			dim3 grid(std::min<int>(GPU_NUM_SM*2, ceil(res.size(), block.x)));
+			kernelVecOpMatAlongCols<TP, OP><<<grid, block>>>(this->mat, B.mat, res.mat, res.size(), B._cols);
 			cudaDeviceSynchronize();
 
 			return res;
 		}
-		else if ((this->cols == 1 && this->rows == B.cols) || (this->rows == 1 && this->cols == B.cols))
+		else if ((this->_cols == 1 && this->_rows == B._cols) || (this->_rows == 1 && this->_cols == B._cols))
 		{
-			// along cols add kr
-			ArrayGPU<TP> res(B.rows, B.cols);
+			// along _cols add kr
+			ArrayGPU<TP> res(B._rows, B._cols);
 			const int BLOCK_SIZE = GPU_NUM_CUDA_CORE;
 			dim3 block(BLOCK_SIZE);
-			dim3 grid(ceil(res.size(), block.x));
-			kernelVecOpMatAlongRows<TP, OP><<<grid, block>>>(this->mat, B.mat, res.mat, res.size(), B.cols);
+			dim3 grid(std::min<int>(GPU_NUM_SM*2, ceil(res.size(), block.x)));
+			kernelVecOpMatAlongRows<TP, OP><<<grid, block>>>(this->mat, B.mat, res.mat, res.size(), B._cols);
 			cudaDeviceSynchronize();
 
 			return res;
 		}
 		// B is vetor
 		// B vector ki dim, is eq to either col or row of B
-		// row vector. will extend along cols if possible. (prioritising in case of square matrix)
-		else if ((B.cols == 1 && this->rows == B.rows) || (B.rows == 1 && this->rows == B.cols))
+		// row vector. will extend along _cols if possible. (prioritising in case of square matrix)
+		else if ((B._cols == 1 && this->_rows == B._rows) || (B._rows == 1 && this->_rows == B._cols))
 		{
-			// along rows add kr
-			ArrayGPU<TP> res(this->rows, this->cols);
+			// along _rows add kr
+			ArrayGPU<TP> res(this->_rows, this->_cols);
 			const int BLOCK_SIZE = GPU_NUM_CUDA_CORE;
 			dim3 block(BLOCK_SIZE);
-			dim3 grid(ceil(res.size(), block.x));
-			kernelMatOpVecAlongCols<TP, OP><<<grid, block>>>(this->mat, B.mat, res.mat, res.size(), this->cols);
+			dim3 grid(std::min<int>(GPU_NUM_SM*2, ceil(res.size(), block.x)));
+			kernelMatOpVecAlongCols<TP, OP><<<grid, block>>>(this->mat, B.mat, res.mat, res.size(), this->_cols);
 			cudaDeviceSynchronize();
 
 			return res;
 		}
-		else if ((B.cols == 1 && this->cols == B.rows) || (B.rows == 1 && this->cols == B.cols))
+		else if ((B._cols == 1 && this->_cols == B._rows) || (B._rows == 1 && this->_cols == B._cols))
 		{
-			// along cols add kr
-			ArrayGPU<TP> res(this->rows, this->cols);
+			// along _cols add kr
+			ArrayGPU<TP> res(this->_rows, this->_cols);
 			const int BLOCK_SIZE = GPU_NUM_CUDA_CORE;
 			dim3 block(BLOCK_SIZE);
-			dim3 grid(ceil(res.size(), block.x));
-			kernelMatOpVecAlongRows<TP, OP><<<grid, block>>>(this->mat, B.mat, res.mat, res.size(), this->cols);
+			dim3 grid(std::min<int>(GPU_NUM_SM*2, ceil(res.size(), block.x)));
+			kernelMatOpVecAlongRows<TP, OP><<<grid, block>>>(this->mat, B.mat, res.mat, res.size(), this->_cols);
 			cudaDeviceSynchronize();
 
 			return res;
 		}
-		else if (this->rows == B.rows && this->cols == B.cols)
+		else if (this->_rows == B._rows && this->_cols == B._cols)
 		{
 			// A and B both are matrices of same dimensions
-			ArrayGPU<TP> res(this->rows, this->cols);
+			ArrayGPU<TP> res(this->_rows, this->_cols);
 			const int BLOCK_SIZE = GPU_NUM_CUDA_CORE;
 			dim3 block(BLOCK_SIZE);
-			dim3 grid(ceil(res.size(), block.x));
+			dim3 grid(std::min<int>(GPU_NUM_SM*2, ceil(res.size(), block.x)));
 			kernelMatOpMat<TP, OP><<<grid, block>>>(this->mat, B.mat, res.mat, res.size());
 			cudaDeviceSynchronize();
 			return res;
@@ -686,10 +1015,10 @@ namespace np
 	template <char OP>
 	ArrayGPU<TP> ArrayGPU<TP>::applyOp(const TP Scalar) const
 	{
-		ArrayGPU<TP> res(this->rows, this->cols);
+		ArrayGPU<TP> res(this->_rows, this->_cols);
 		const int BLOCK_SIZE = GPU_NUM_CUDA_CORE;
 		dim3 block(BLOCK_SIZE);
-		dim3 grid(ceil(res.size(), block.x));
+		dim3 grid(std::min<int>(GPU_NUM_SM*2, ceil(res.size(), block.x)));
 		kernelMatOpScalar<TP, OP><<<grid, block>>>(this->mat, Scalar, res.mat, res.size());
 		cudaDeviceSynchronize();
 		return res;
@@ -699,91 +1028,123 @@ namespace np
 	template <typename TP>
 	ArrayGPU<TP> ArrayGPU<TP>::operator+(const ArrayGPU<TP> &B) const
 	{
-		return this->applyOp<1>(B);
+		return this->applyOp<NP_OP_ADD>(B);
 	}
 
 	template <typename TP>
 	ArrayGPU<TP> ArrayGPU<TP>::operator+(const TP Scalar) const
 	{
-		return this->applyOp<1>(Scalar);
+		return this->applyOp<NP_OP_ADD>(Scalar);
 	}
 
 	template <typename TP>
-	ArrayGPU<TP> operator+(const TP Scal, const ArrayGPU<TP> &A)
+	ArrayGPU<TP> operator+(const TP Scal, const ArrayGPU<TP> &B)
 	{
-		ArrayGPU<TP> tmp(1, 1, Scal);
-		return tmp + A;
+		// A is scalar
+		ArrayGPU<TP> res(B._rows, B._cols);
+
+		const int BLOCK_SIZE = GPU_NUM_CUDA_CORE;
+		dim3 block(BLOCK_SIZE);
+		dim3 grid(std::min<int>(GPU_NUM_SM*2, ceil(res.size(), block.x)));
+
+		kernelScalarOpMat<TP, NP_OP_ADD><<<grid, block>>>(Scal, B.mat, res.mat, res.size());
+		cudaDeviceSynchronize();
+		return res;
 	}
 
 	// subtraction
 	template <typename TP>
 	ArrayGPU<TP> ArrayGPU<TP>::operator-(const ArrayGPU<TP> &B) const
 	{
-		return this->applyOp<2>(B);
+		return this->applyOp<NP_OP_SUB>(B);
 	}
 
 	template <typename TP>
 	ArrayGPU<TP> ArrayGPU<TP>::operator-(const TP Scalar) const
 	{
-		return this->applyOp<2>(Scalar);
+		return this->applyOp<NP_OP_SUB>(Scalar);
 	}
 
 	template <typename TP>
-	ArrayGPU<TP> operator-(const TP Scal, const ArrayGPU<TP> &A)
+	ArrayGPU<TP> operator-(const TP Scal, const ArrayGPU<TP> &B)
 	{
-		ArrayGPU<TP> tmp(1, 1, Scal);
-		return tmp - A;
+		// A is scalar
+		ArrayGPU<TP> res(B._rows, B._cols);
+
+		const int BLOCK_SIZE = GPU_NUM_CUDA_CORE;
+		dim3 block(BLOCK_SIZE);
+		dim3 grid(std::min<int>(GPU_NUM_SM*2, ceil(res.size(), block.x)));
+
+		kernelScalarOpMat<TP, NP_OP_SUB><<<grid, block>>>(Scal, B.mat, res.mat, res.size());
+		cudaDeviceSynchronize();
+		return res;
 	}
 
 	// multiplication
 	template <typename TP>
 	ArrayGPU<TP> ArrayGPU<TP>::operator*(const ArrayGPU<TP> &B) const
 	{
-		return this->applyOp<3>(B);
+		return this->applyOp<NP_OP_MUL>(B);
 	}
 
 	template <typename TP>
 	ArrayGPU<TP> ArrayGPU<TP>::operator*(const TP Scalar) const
 	{
-		return this->applyOp<3>(Scalar);
+		return this->applyOp<NP_OP_MUL>(Scalar);
 	}
 
 	template <typename TP>
-	ArrayGPU<TP> operator*(const TP Scal, const ArrayGPU<TP> &A)
+	ArrayGPU<TP> operator*(const TP Scal, const ArrayGPU<TP> &B)
 	{
-		ArrayGPU<TP> tmp(1, 1, Scal);
-		return tmp * A;
+		// A is scalar
+		ArrayGPU<TP> res(B._rows, B._cols);
+
+		const int BLOCK_SIZE = GPU_NUM_CUDA_CORE;
+		dim3 block(BLOCK_SIZE);
+		dim3 grid(std::min<int>(GPU_NUM_SM*2, ceil(res.size(), block.x)));
+
+		kernelScalarOpMat<TP, NP_OP_MUL><<<grid, block>>>(Scal, B.mat, res.mat, res.size());
+		cudaDeviceSynchronize();
+		return res;
 	}
 
 	// division
 	template <typename TP>
 	ArrayGPU<TP> ArrayGPU<TP>::operator/(const ArrayGPU<TP> &B) const
 	{
-		return this->applyOp<4>(B);
+		return this->applyOp<NP_OP_DIV>(B);
 	}
 
 	template <typename TP>
 	ArrayGPU<TP> ArrayGPU<TP>::operator/(const TP Scalar) const
 	{
-		return this->applyOp<4>(Scalar);
+		return this->applyOp<NP_OP_DIV>(Scalar);
 	}
 
 	template <typename TP>
-	ArrayGPU<TP> operator/(const TP Scal, const ArrayGPU<TP> &A)
+	ArrayGPU<TP> operator/(const TP Scal, const ArrayGPU<TP> &B)
 	{
-		ArrayGPU<TP> tmp(1, 1, Scal);
-		return tmp / A;
+		// A is scalar
+		ArrayGPU<TP> res(B._rows, B._cols);
+
+		const int BLOCK_SIZE = GPU_NUM_CUDA_CORE;
+		dim3 block(BLOCK_SIZE);
+		dim3 grid(std::min<int>(GPU_NUM_SM*2, ceil(res.size(), block.x)));
+
+		kernelScalarOpMat<TP, NP_OP_DIV><<<grid, block>>>(Scal, B.mat, res.mat, res.size());
+		cudaDeviceSynchronize();
+		return res;
 	}
 
 	// unary negation operator
 	template <typename TP>
 	ArrayGPU<TP> ArrayGPU<TP>::operator-() const
 	{
-		ArrayGPU<TP> res(this->rows, this->cols);
+		ArrayGPU<TP> res(this->_rows, this->_cols);
 		const int BLOCK_SIZE = GPU_NUM_CUDA_CORE;
 		dim3 block(BLOCK_SIZE);
-		dim3 grid(ceil(res.size(), block.x));
-		kernelMatOpScalar<TP, 3><<<grid, block>>>(this->mat, -1, res.mat, res.size());
+		dim3 grid(std::min<int>(GPU_NUM_SM*2, ceil(res.size(), block.x)));
+		kernelMatOpScalar<TP, NP_OP_MUL><<<grid, block>>>(this->mat, -1, res.mat, res.size());
 		cudaDeviceSynchronize();
 		return res;
 	}
@@ -795,120 +1156,168 @@ namespace np
 	template <typename TP>
 	ArrayGPU<TP> ArrayGPU<TP>::operator<(const ArrayGPU<TP> &B) const
 	{
-		return this->applyOp<5>(B);
+		return this->applyOp<NP_OP_LESS_THAN>(B);
 	}
 
 	template <typename TP>
 	ArrayGPU<TP> ArrayGPU<TP>::operator<(const TP Scalar) const
 	{
-		return this->applyOp<5>(Scalar);
+		return this->applyOp<NP_OP_LESS_THAN>(Scalar);
 	}
 
 	template <typename TP>
-	ArrayGPU<TP> operator<(const TP Scal, const ArrayGPU<TP> &A)
+	ArrayGPU<TP> operator<(const TP Scal, const ArrayGPU<TP> &B)
 	{
-		ArrayGPU<TP> tmp(1, 1, Scal);
-		return tmp < A;
+		// A is scalar
+		ArrayGPU<TP> res(B._rows, B._cols);
+
+		const int BLOCK_SIZE = GPU_NUM_CUDA_CORE;
+		dim3 block(BLOCK_SIZE);
+		dim3 grid(std::min<int>(GPU_NUM_SM*2, ceil(res.size(), block.x)));
+
+		kernelScalarOpMat<TP, NP_OP_LESS_THAN><<<grid, block>>>(Scal, B.mat, res.mat, res.size());
+		cudaDeviceSynchronize();
+		return res;
 	}
 
 	// <=
 	template <typename TP>
 	ArrayGPU<TP> ArrayGPU<TP>::operator<=(const ArrayGPU<TP> &B) const
 	{
-		return this->applyOp<6>(B);
+		return this->applyOp<NP_OP_LESS_THAN_EQ>(B);
 	}
 
 	template <typename TP>
 	ArrayGPU<TP> ArrayGPU<TP>::operator<=(const TP Scalar) const
 	{
-		return this->applyOp<6>(B);
+		return this->applyOp<NP_OP_LESS_THAN_EQ>(B);
 	}
 
 	template <typename TP>
-	ArrayGPU<TP> operator<=(const TP Scal, const ArrayGPU<TP> &A)
+	ArrayGPU<TP> operator<=(const TP Scal, const ArrayGPU<TP> &B)
 	{
-		ArrayGPU<TP> tmp(1, 1, Scal);
-		return tmp <= A;
+		// A is scalar
+		ArrayGPU<TP> res(B._rows, B._cols);
+
+		const int BLOCK_SIZE = GPU_NUM_CUDA_CORE;
+		dim3 block(BLOCK_SIZE);
+		dim3 grid(std::min<int>(GPU_NUM_SM*2, ceil(res.size(), block.x)));
+
+		kernelScalarOpMat<TP, NP_OP_LESS_THAN_EQ><<<grid, block>>>(Scal, B.mat, res.mat, res.size());
+		cudaDeviceSynchronize();
+		return res;
 	}
 
 	// >
 	template <typename TP>
 	ArrayGPU<TP> ArrayGPU<TP>::operator>(const ArrayGPU<TP> &B) const
 	{
-		return this->applyOp<7>(B);
+		return this->applyOp<NP_OP_GREATER_THAN>(B);
 	}
 
 	template <typename TP>
 	ArrayGPU<TP> ArrayGPU<TP>::operator>(const TP Scalar) const
 	{
-		return this->applyOp<7>(Scalar);
+		return this->applyOp<NP_OP_GREATER_THAN>(Scalar);
 	}
 
 	template <typename TP>
-	ArrayGPU<TP> operator>(const TP Scal, const ArrayGPU<TP> &A)
+	ArrayGPU<TP> operator>(const TP Scal, const ArrayGPU<TP> &B)
 	{
-		ArrayGPU<TP> tmp(1, 1, Scal);
-		return tmp > A;
+		// A is scalar
+		ArrayGPU<TP> res(B._rows, B._cols);
+
+		const int BLOCK_SIZE = GPU_NUM_CUDA_CORE;
+		dim3 block(BLOCK_SIZE);
+		dim3 grid(std::min<int>(GPU_NUM_SM*2, ceil(res.size(), block.x)));
+
+		kernelScalarOpMat<TP, NP_OP_GREATER_THAN><<<grid, block>>>(Scal, B.mat, res.mat, res.size());
+		cudaDeviceSynchronize();
+		return res;
 	}
 
 	// >=
 	template <typename TP>
 	ArrayGPU<TP> ArrayGPU<TP>::operator>=(const ArrayGPU<TP> &B) const
 	{
-		return this->applyOp<8>(B);
+		return this->applyOp<NP_OP_GREATER_THAN_EQ>(B);
 	}
 
 	template <typename TP>
 	ArrayGPU<TP> ArrayGPU<TP>::operator>=(const TP Scalar) const
 	{
-		return this->applyOp<8>(B);
+		return this->applyOp<NP_OP_GREATER_THAN_EQ>(B);
 	}
 
 	template <typename TP>
-	ArrayGPU<TP> operator>=(const TP Scal, const ArrayGPU<TP> &A)
+	ArrayGPU<TP> operator>=(const TP Scal, const ArrayGPU<TP> &B)
 	{
-		ArrayGPU<TP> tmp(1, 1, Scal);
-		return tmp >= A;
+		// A is scalar
+		ArrayGPU<TP> res(B._rows, B._cols);
+
+		const int BLOCK_SIZE = GPU_NUM_CUDA_CORE;
+		dim3 block(BLOCK_SIZE);
+		dim3 grid(std::min<int>(GPU_NUM_SM*2, ceil(res.size(), block.x)));
+
+		kernelScalarOpMat<TP, NP_OP_GREATER_THAN_EQ><<<grid, block>>>(Scal, B.mat, res.mat, res.size());
+		cudaDeviceSynchronize();
+		return res;
 	}
 
 	// ==
 	template <typename TP>
 	ArrayGPU<TP> ArrayGPU<TP>::operator==(const ArrayGPU<TP> &B) const
 	{
-		return this->applyOp<9>(B);
+		return this->applyOp<NP_OP_EQ>(B);
 	}
 
 	template <typename TP>
 	ArrayGPU<TP> ArrayGPU<TP>::operator==(const TP Scalar) const
 	{
-		return this->applyOp<9>(B);
+		return this->applyOp<NP_OP_EQ>(B);
 	}
 
 	template <typename TP>
-	ArrayGPU<TP> operator==(const TP Scal, const ArrayGPU<TP> &A)
+	ArrayGPU<TP> operator==(const TP Scal, const ArrayGPU<TP> &B)
 	{
-		ArrayGPU<TP> tmp(1, 1, Scal);
-		return tmp == A;
+		// A is scalar
+		ArrayGPU<TP> res(B._rows, B._cols);
+
+		const int BLOCK_SIZE = GPU_NUM_CUDA_CORE;
+		dim3 block(BLOCK_SIZE);
+		dim3 grid(std::min<int>(GPU_NUM_SM*2, ceil(res.size(), block.x)));
+
+		kernelScalarOpMat<TP, NP_OP_EQ><<<grid, block>>>(Scal, B.mat, res.mat, res.size());
+		cudaDeviceSynchronize();
+		return res;
 	}
 
 	// !=
 	template <typename TP>
 	ArrayGPU<TP> ArrayGPU<TP>::operator!=(const ArrayGPU<TP> &B) const
 	{
-		return this->applyOp<10>(B);
+		return this->applyOp<NP_OP_NOT_EQ>(B);
 	}
 
 	template <typename TP>
 	ArrayGPU<TP> ArrayGPU<TP>::operator!=(const TP Scalar) const
 	{
-		return this->applyOp<10>(B);
+		return this->applyOp<NP_OP_NOT_EQ>(B);
 	}
 
 	template <typename TP>
-	ArrayGPU<TP> operator!=(const TP Scal, const ArrayGPU<TP> &A)
+	ArrayGPU<TP> operator!=(const TP Scal, const ArrayGPU<TP> &B)
 	{
-		ArrayGPU<TP> tmp(1, 1, Scal);
-		return tmp != A;
+		// A is scalar
+		ArrayGPU<TP> res(B._rows, B._cols);
+
+		const int BLOCK_SIZE = GPU_NUM_CUDA_CORE;
+		dim3 block(BLOCK_SIZE);
+		dim3 grid(std::min<int>(GPU_NUM_SM*2, ceil(res.size(), block.x)));
+
+		kernelScalarOpMat<TP, NP_OP_NOT_EQ><<<grid, block>>>(Scal, B.mat, res.mat, res.size());
+		cudaDeviceSynchronize();
+		return res;
 	}
 
 	template <typename TP>
@@ -950,31 +1359,33 @@ namespace np
 		else if (axis == 0)
 		{
 			// sum along columns. dimension=numCols
-			return this->T().applyReductionF<F>(1).T();
+			auto ans = (this->T()).applyReductionF<F>(1);
+			ans.reshape(1, -1);
+			return ans;
 		}
 		else if (axis == 1)
 		{
-			// sum along rows. output dim = numRows
-			ArrayGPU<TP> res(this->rows);
+			// sum along _rows. output dim = numRows
+			ArrayGPU<TP> res(this->_rows, 1);
 
 			const int BLOCK_SIZE = ((GPU_NUM_CUDA_CORE == 64) ? 64 : 128) * 2;
 			dim3 block(BLOCK_SIZE);
-			dim3 grid(std::min<int>(ceil(this->cols, block.x), GPU_NUM_SM * 2));
+			dim3 grid(std::min<int>(ceil(this->_cols, block.x), GPU_NUM_SM * 2));
 
 			TP *tmp_d;
-			CUDA_CALL(cudaMalloc((void **)&tmp_d, sizeof(TP) * this->rows * grid.x));
+			CUDA_CALL(cudaMalloc((void **)&tmp_d, sizeof(TP) * this->_rows * grid.x));
 
 			switch (GPU_NUM_CUDA_CORE)
 			{
 			case 64:
-				for (int i = 0; i < this->rows; ++i)
+				for (int i = 0; i < this->_rows; ++i)
 				{
-					kernelReduceF<TP, 64 * 2, F><<<grid, block>>>(this->mat + i * this->cols, tmp_d + i * grid.x, this->cols);
+					kernelReduceF<TP, 64 * 2, F><<<grid, block>>>(this->mat + i * this->_cols, tmp_d + i * grid.x, this->_cols);
 				}
 
 				cudaDeviceSynchronize();
 
-				for (int i = 0; i < this->rows; ++i)
+				for (int i = 0; i < this->_rows; ++i)
 				{
 					kernelReduceF<TP, 64 * 2, F><<<1, block>>>(tmp_d + i * grid.x, res.mat + i, grid.x);
 				}
@@ -982,14 +1393,14 @@ namespace np
 				cudaDeviceSynchronize();
 				break;
 			default:
-				for (int i = 0; i < this->rows; ++i)
+				for (int i = 0; i < this->_rows; ++i)
 				{
-					kernelReduceF<TP, 128 * 2, F><<<grid, block>>>(this->mat + i * this->cols, tmp_d + i * grid.x, this->cols);
+					kernelReduceF<TP, 128 * 2, F><<<grid, block>>>(this->mat + i * this->_cols, tmp_d + i * grid.x, this->_cols);
 				}
 
 				cudaDeviceSynchronize();
 
-				for (int i = 0; i < this->rows; ++i)
+				for (int i = 0; i < this->_rows; ++i)
 				{
 					kernelReduceF<TP, 128 * 2, F><<<1, block>>>(tmp_d + i * grid.x, res.mat + i, grid.x);
 				}
@@ -1009,21 +1420,21 @@ namespace np
 	template <typename TP>
 	ArrayGPU<TP> ArrayGPU<TP>::sum(const int axis) const
 	{
-		return this->applyReductionF<1>(axis);
+		return this->applyReductionF<NP_REDUCE_SUM>(axis);
 	}
 
 	// min. along axis or total
 	template <typename TP>
 	ArrayGPU<TP> ArrayGPU<TP>::min(const int axis) const
 	{
-		return this->applyReductionF<2>(axis);
+		return this->applyReductionF<NP_REDUCE_MIN>(axis);
 	}
 
 	// max. along axis or total
 	template <typename TP>
 	ArrayGPU<TP> ArrayGPU<TP>::max(const int axis) const
 	{
-		return this->applyReductionF<3>(axis);
+		return this->applyReductionF<NP_REDUCE_MAX>(axis);
 	}
 
 	template <typename TP>
@@ -1043,7 +1454,7 @@ namespace np
 			TP *tmp_A_d;
 			CUDA_CALL(cudaMalloc((void **)&tmp_A_d, sizeof(TP) * grid.x));
 			int *tmp_A_Idx_d;
-			CUDA_CALL(cudaMalloc((void **)&tmp_A_Idx_d, sizeof(const int) * grid.x));
+			CUDA_CALL(cudaMalloc((void **)&tmp_A_Idx_d, sizeof(int) * grid.x));
 
 			switch (GPU_NUM_CUDA_CORE)
 			{
@@ -1051,6 +1462,10 @@ namespace np
 				kernelReduceArgF<TP, 64 * 2, F><<<grid, block>>>(this->mat, tmp_A_d, tmp_A_Idx_d, this->size());
 				cudaDeviceSynchronize();
 				// please guarantee that BLOCK_SIZE > grid.x. otherwise multiple kernel calls will have to be made.
+				if(grid.x == 1){
+					resIdx.mat = tmp_A_Idx_d;
+					return resIdx;
+				}
 				kernelReduceArgF<TP, 64 * 2, F><<<1, block>>>(tmp_A_d, tmp_A_Idx_d, res.mat, resIdx.mat, grid.x);
 				cudaDeviceSynchronize();
 				break;
@@ -1058,6 +1473,10 @@ namespace np
 				kernelReduceArgF<TP, 128 * 2, F><<<grid, block>>>(this->mat, tmp_A_d, tmp_A_Idx_d, this->size());
 				cudaDeviceSynchronize();
 				// please guarantee that BLOCK_SIZE > grid.x. otherwise multiple kernel calls will have to be made.
+				if(grid.x == 1){
+					resIdx.mat = tmp_A_Idx_d;
+					return resIdx;
+				}
 				kernelReduceArgF<TP, 128 * 2, F><<<1, block>>>(tmp_A_d, tmp_A_Idx_d, res.mat, resIdx.mat, grid.x);
 				cudaDeviceSynchronize();
 			}
@@ -1069,54 +1488,55 @@ namespace np
 		else if (axis == 0)
 		{
 			// sum along columns. dimension=numCols
-			return this->T().applyReductionArgF<F>(1).T();
+			auto ans = this->T().applyReductionArgF<F>(1);
+			ans.reshape(1, -1);
+			return ans;
 		}
 		else if (axis == 1)
 		{
-			// sum along rows. output dim = numRows
-			ArrayGPU<TP> res(this->rows);
-			ArrayGPU<int> resIdx(this->rows);
+			// sum along _rows. output dim = numRows
+			ArrayGPU<TP> res(this->_rows, 1);
+			ArrayGPU<int> resIdx(this->_rows, 1);
 
-			const int BLOCK_SIZE = ((GPU_NUM_CUDA_CORE == 64) ? 64 : 128) * 2;
+			const int BLOCK_SIZE = ((GPU_NUM_CUDA_CORE == 128) ? 128 : 64) * 2;
 			dim3 block(BLOCK_SIZE);
-			dim3 grid(std::min<int>(ceil(this->cols, block.x), GPU_NUM_SM * 2));
+			dim3 grid(std::min<int>(GPU_NUM_SM * 2, ceil(this->_cols, block.x)));
+			std::cout<<"\nBLOCK: "<<block.x<<" GRID: "<<grid.x<<std::endl;
 
 			TP *tmp_A_d;
-			CUDA_CALL(cudaMalloc((void **)&tmp_A_d, sizeof(TP) * this->rows * grid.x));
+			CUDA_CALL(cudaMalloc((void **)&tmp_A_d, sizeof(TP) * this->_rows * grid.x));
 			int *tmp_A_Idx_d;
-			CUDA_CALL(cudaMalloc((void **)&tmp_A_Idx_d, sizeof(const int) * this->rows * grid.x));
+			CUDA_CALL(cudaMalloc((void **)&tmp_A_Idx_d, sizeof(int) * this->_rows * grid.x));
 
 			switch (GPU_NUM_CUDA_CORE)
 			{
 			case 64:
-				for (int i = 0; i < this->rows; ++i)
-				{
-					kernelReduceArgF<TP, 64 * 2, F><<<grid, block>>>(this->mat + i * this->cols, tmp_A_d + i * grid.x, tmp_A_Idx_d + i * grid.x, this->cols);
-				}
-
+				for (int i = 0; i < this->_rows; ++i)
+					kernelReduceArgF<TP, 64 * 2, F><<<grid, block>>>(this->mat + i * this->_cols, tmp_A_d + i * grid.x, tmp_A_Idx_d + i * grid.x, this->_cols);
 				cudaDeviceSynchronize();
 
-				for (int i = 0; i < this->rows; ++i)
-				{
-					kernelReduceArgF<TP, 64 * 2, F><<<1, block>>>(tmp_A_d + i * grid.x, tmp_A_Idx_d + i * grid.x, res.mat + i, resIdx.mat + i, grid.x);
+				if(grid.x == 1){
+					resIdx.mat = tmp_A_Idx_d;
+					return resIdx;
 				}
-
+				for (int i = 0; i < this->_rows; ++i)
+					kernelReduceArgF<TP, 64 * 2, F><<<1, block>>>(tmp_A_d + i * grid.x, tmp_A_Idx_d + i * grid.x, res.mat + i, resIdx.mat + i, grid.x);
 				cudaDeviceSynchronize();
 				break;
 			default:
-				for (int i = 0; i < this->rows; ++i)
-				{
-					kernelReduceArgF<TP, 128 * 2, F><<<grid, block>>>(this->mat + i * this->cols, tmp_A_d + i * grid.x, tmp_A_Idx_d + i * grid.x, this->cols);
-				}
+				for (int i = 0; i < this->_rows; ++i)
+					kernelReduceArgF<TP, 128 * 2, F><<<grid, block>>>(this->mat + i * this->_cols, tmp_A_d + i * grid.x, tmp_A_Idx_d + i * grid.x, this->_cols);
 
 				cudaDeviceSynchronize();
-
-				for (int i = 0; i < this->rows; ++i)
-				{
+				if(grid.x == 1){
+					resIdx.mat = tmp_A_Idx_d;
+					return resIdx;
+				}
+				for (int i = 0; i < this->_rows; ++i)
 					kernelReduceArgF<TP, 128 * 2, F><<<1, block>>>(tmp_A_d + i * grid.x, tmp_A_Idx_d + i * grid.x, res.mat + i, resIdx.mat + i, grid.x);
-				}
 
 				cudaDeviceSynchronize();
+
 			}
 
 			return resIdx;
@@ -1133,20 +1553,24 @@ namespace np
 	template <typename TP>
 	ArrayGPU<int> ArrayGPU<TP>::argmin(const int axis) const
 	{
-		return this->applyReductionArgF<2>(axis);
+		return this->applyReductionArgF<NP_REDUCE_ARGMIN>(axis);
 	}
 
 	// argmax
 	template <typename TP>
 	ArrayGPU<int> ArrayGPU<TP>::argmax(const int axis) const
 	{
-		return this->applyReductionArgF<3>(axis);
+		return this->applyReductionArgF<NP_REDUCE_ARGMAX>(axis);
 	}
 
 	template <typename TP>
 	ArrayGPU<TP>::~ArrayGPU()
 	{
-		cudaFree(this->mat);
+		--(*this->ref_count);
+		if(*this->ref_count == 0){
+			cudaFree(this->mat);
+			free(ref_count);
+		}
 	}
 }
 
