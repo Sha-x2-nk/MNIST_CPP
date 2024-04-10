@@ -34,8 +34,8 @@ namespace np
         ArrayGPU<TP> ar(rows, cols);
 
         const int BLOCK_SIZE = (GPU_NUM_CUDA_CORE == 64)?64:128;
-        dim3 block(BLOCK_SIZE * 6);
-        dim3 grid(np_ceil( ar.size(), block.x));
+        dim3 block(BLOCK_SIZE);
+        dim3 grid(np_ceil( ar.size(), (block.x * 50)));
         kernelInitializeRandomUnif<TP><<<grid, block>>>(ar.mat, rows * cols, seed);
         cudaDeviceSynchronize();
 
@@ -54,8 +54,8 @@ namespace np
     {
         ArrayGPU<TP> ar(rows, cols);
         const int BLOCK_SIZE = (GPU_NUM_CUDA_CORE == 64)?64:128;
-        dim3 block(BLOCK_SIZE * 6);
-        dim3 grid(np_ceil(ar.size(), block.x));
+        dim3 block(BLOCK_SIZE);
+        dim3 grid(np_ceil(ar.size(), (block.x * 50)));
         kernelInitializeRandomNorm<TP><<<grid, block>>>(ar.mat, ar.size(), seed);
         cudaDeviceSynchronize();
         return ar;

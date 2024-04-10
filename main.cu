@@ -73,8 +73,7 @@ int main()
     auto X = np::Random::randn<float>(8190, 8190);
     auto Y = np::Random::randn<float>(8190, 8190, time(NULL) + rand());
     auto st = clock();
-    std::cout << X << std::endl;
-    X.set(np::arange<int>(8190), np::arange<int>(8190), NP_F_LOG);
+    auto Z = X.T();
     auto end = clock();
     std::cout<<"\nTIME TAKEN: "<<((static_cast<double>(end - st)) * 1000)/(static_cast<double>(CLOCKS_PER_SEC))<< " ms.";
     

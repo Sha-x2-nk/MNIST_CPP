@@ -183,14 +183,14 @@ template <typename TP>
 __global__ void kernelInitializeRandomUnif(TP *arr, const int size, const unsigned long long seed)
 {
 	int idx = blockIdx.x * blockDim.x + threadIdx.x;
-	idx *= 6;
+	idx *= 50;
 	if (idx < size)
 	{
 		curandState state;
 		curand_init(seed, idx, 0, &state); // Initialize curand state for each thread
 		arr[idx] = curand_uniform(&state);  // Generate a random value
 		
-		for(int i= 1; i< 6 && idx + i< size; ++i){
+		for(int i= 1; i< 50 && idx + i< size; ++i){
 			arr[idx + i] = curand_uniform(&state); // generate random value
 		}
 	}
@@ -201,13 +201,13 @@ template <typename TP>
 __global__ void kernelInitializeRandomNorm(TP *arr, const int size, const unsigned long long seed)
 {
 	int idx = blockIdx.x * blockDim.x + threadIdx.x;
-	idx *= 6;
+	idx *= 50;
 	if (idx < size)
 	{
 		curandState state;
 		curand_init(seed, idx, 0, &state); // Initialize curand state for each thread
 		arr[idx] = curand_normal(&state);  // Generate a random value
-		for(int i= 1; i < 6 && idx + i< size; ++i){
+		for(int i= 1; i < 50 && idx + i< size; ++i){
 			arr[idx + i] = curand_normal(&state); // generate random value
 		}
 	}
