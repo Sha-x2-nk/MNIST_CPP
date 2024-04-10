@@ -183,7 +183,7 @@ template <typename TP>
 __global__ void kernelInitializeRandomUnif(TP *arr, const int size, const unsigned long long seed)
 {
 	int idx = blockIdx.x * blockDim.x + threadIdx.x;
-	idx *= 4;
+	idx *= 5;
 	if (idx < size)
 	{
 		curandState state;
@@ -199,6 +199,9 @@ __global__ void kernelInitializeRandomUnif(TP *arr, const int size, const unsign
 		++idx;
 		if(idx< size)
 			arr[idx] = curand_uniform(&state);  // Generate a random value
+		++idx;
+		if(idx< size)
+			arr[idx] = curand_normal(&state);  // Generate a random value
 	}
 }
 
@@ -207,7 +210,7 @@ template <typename TP>
 __global__ void kernelInitializeRandomNorm(TP *arr, const int size, const unsigned long long seed)
 {
 	int idx = blockIdx.x * blockDim.x + threadIdx.x;
-	idx *= 4;
+	idx *= 5;
 	if (idx < size)
 	{
 		curandState state;
@@ -216,6 +219,9 @@ __global__ void kernelInitializeRandomNorm(TP *arr, const int size, const unsign
 		
 		++idx;
 		if (idx < size)
+			arr[idx] = curand_normal(&state);  // Generate a random value
+		++idx;
+		if(idx< size)
 			arr[idx] = curand_normal(&state);  // Generate a random value
 		++idx;
 		if(idx< size)
@@ -318,6 +324,186 @@ __global__ void kernelInitMatArange(TP *in, const int range)
 	}
 }
 
+// get values at idxs in A, store C
+template <typename TP>
+__global__ void kernelGetMat(const TP *A, TP* C, const int *idxs, const int size){
+	int idx = blockDim.x * blockIdx.x + threadIdx.x;
+	int grid_size = blockDim.x * gridDim.x;
+	
+	while (idx < size){
+		C[idx] = A[idxs[idx]];
+		idx += grid_size;
+	}
+}
+
+// get values at idxs in A, store C
+template <typename TP>
+__global__ void kernelGetMat(const TP *A, const int rdin, TP* C, const int *r_idxs, const int *c_idxs, const int size){
+	int idx = blockDim.x * blockIdx.x + threadIdx.x;
+	int grid_size = blockDim.x * gridDim.x;
+	
+	while (idx < size){
+		C[idx] = A[r_idxs[idx] * rdin + c_idxs[idx]];
+		idx += grid_size;
+	}
+}
+
+// stes C[i] to A[i] OP B[i], just that i random idx
+template <typename TP, char OP>
+__global__ void kernelSetMat(TP *A, const TP B, const int *idxs, const int size){
+	int idx = blockIdx.x * blockDim.x + threadIdx.x;
+	int grid_size = blockDim.x * gridDim.x;
+
+	while(idx < size){
+		if constexpr (OP == 1)
+			A[idxs[idx]] += B;
+		else if constexpr (OP == 2)
+			A[idxs[idx]] -= B;
+		else if constexpr (OP == 3)
+			A[idxs[idx]] *= B;
+		else if constexpr (OP == 4)
+			A[idxs[idx]] /= B;
+		else if constexpr (OP == 5)
+			A[idxs[idx]] = A[idxs[idx]] < B;
+		else if constexpr (OP == 6)
+			A[idxs[idx]] = A[idxs[idx]] <= B;
+		else if constexpr (OP == 7)
+			A[idxs[idx]] = A[idxs[idx]] > B;
+		else if constexpr (OP == 8)
+			A[idxs[idx]] = A[idxs[idx]] >= B;
+		else if constexpr (OP == 9)
+			A[idxs[idx]] = A[idxs[idx]] == B;
+		else if constexpr (OP == 10)
+			A[idxs[idx]] = A[idxs[idx]] != B;
+		else if constexpr (OP == 11)
+			A[idxs[idx]] = (A[idxs[idx]] < B) ? A[idxs[idx]] : B;
+		else if constexpr (OP == 12)
+			A[idxs[idx]] = (A[idxs[idx]] > B) ? A[idxs[idx]] : B;
+		else if constexpr (OP == 13)
+			A[idxs[idx]] = B;
+		else
+			printf("ERROR! INVALID OPERATOR IN kernelSet.\n");
+		idx += grid_size;	
+	}
+}
+
+// stes C[i] to A[i] OP B[i], just that i random idx
+template <typename TP, char OP>
+__global__ void kernelSetMat(TP *A, const TP *B, const int *idxs, const int size){
+	int idx = blockIdx.x * blockDim.x + threadIdx.x;
+	int grid_size = blockDim.x * gridDim.x;
+
+	while(idx < size){
+		if constexpr (OP == 1)
+			A[idxs[idx]] += B[idx];
+		else if constexpr (OP == 2)
+			A[idxs[idx]] -= B[idx];
+		else if constexpr (OP == 3)
+			A[idxs[idx]] *= B[idx];
+		else if constexpr (OP == 4)
+			A[idxs[idx]] /= B[idx];
+		else if constexpr (OP == 5)
+			A[idxs[idx]] = A[idxs[idx]] < B[idx];
+		else if constexpr (OP == 6)
+			A[idxs[idx]] = A[idxs[idx]] <= B[idx];
+		else if constexpr (OP == 7)
+			A[idxs[idx]] = A[idxs[idx]] > B[idx];
+		else if constexpr (OP == 8)
+			A[idxs[idx]] = A[idxs[idx]] >= B[idx];
+		else if constexpr (OP == 9)
+			A[idxs[idx]] = A[idxs[idx]] == B[idx];
+		else if constexpr (OP == 10)
+			A[idxs[idx]] = A[idxs[idx]] != B[idx];
+		else if constexpr (OP == 11)
+			A[idxs[idx]] = (A[idxs[idx]] < B[idx]) ? A[idxs[idx]] : B[idx];
+		else if constexpr (OP == 12)
+			A[idxs[idx]] = (A[idxs[idx]] > B[idx]) ? A[idxs[idx]] : B[idx];
+		else if constexpr (OP == 13)
+			A[idxs[idx]] = B[idx];
+		else
+			printf("ERROR! INVALID OPERATOR IN kernelSet.\n");
+		idx += grid_size;		
+	}
+}
+
+// stes C[i] to A[i] OP B[i], just that i random idx
+template <typename TP, char OP>
+__global__ void kernelSetMat(TP *A, const int rdin, const TP B, const int *r_idxs, const int *c_idxs, const int size){
+	int idx = blockIdx.x * blockDim.x + threadIdx.x;
+	int grid_size = blockDim.x * gridDim.x;
+
+	while(idx < size){
+		if constexpr (OP == 1)
+			A[r_idxs[idx] * rdin + c_idxs[idx]] += B;
+		else if constexpr (OP == 2)
+			A[r_idxs[idx] * rdin + c_idxs[idx]] -= B;
+		else if constexpr (OP == 3)
+			A[r_idxs[idx] * rdin + c_idxs[idx]] *= B;
+		else if constexpr (OP == 4)
+			A[r_idxs[idx] * rdin + c_idxs[idx]] /= B;
+		else if constexpr (OP == 5)
+			A[r_idxs[idx] * rdin + c_idxs[idx]] = A[r_idxs[idx] * rdin + c_idxs[idx]] < B;
+		else if constexpr (OP == 6)
+			A[r_idxs[idx] * rdin + c_idxs[idx]] = A[r_idxs[idx] * rdin + c_idxs[idx]] <= B;
+		else if constexpr (OP == 7)
+			A[r_idxs[idx] * rdin + c_idxs[idx]] = A[r_idxs[idx] * rdin + c_idxs[idx]] > B;
+		else if constexpr (OP == 8)
+			A[r_idxs[idx] * rdin + c_idxs[idx]] = A[r_idxs[idx] * rdin + c_idxs[idx]] >= B;
+		else if constexpr (OP == 9)
+			A[r_idxs[idx] * rdin + c_idxs[idx]] = A[r_idxs[idx] * rdin + c_idxs[idx]] == B;
+		else if constexpr (OP == 10)
+			A[r_idxs[idx] * rdin + c_idxs[idx]] = A[r_idxs[idx] * rdin + c_idxs[idx]] != B;
+		else if constexpr (OP == 11)
+			A[r_idxs[idx] * rdin + c_idxs[idx]] = (A[r_idxs[idx] * rdin + c_idxs[idx]] < B) ? A[r_idxs[idx] * rdin + c_idxs[idx]] : B;
+		else if constexpr (OP == 12)
+			A[r_idxs[idx] * rdin + c_idxs[idx]] = (A[r_idxs[idx] * rdin + c_idxs[idx]] > B) ? A[r_idxs[idx] * rdin + c_idxs[idx]] : B;
+		else if constexpr (OP == 13)
+			A[r_idxs[idx] * rdin + c_idxs[idx]] = B;
+		else
+			printf("ERROR! INVALID OPERATOR IN kernelSet.\n");
+		idx += grid_size;		
+	}
+}
+
+// stes C[i] to A[i] OP B[i], just that i random idx
+template <typename TP, char OP>
+__global__ void kernelSetMat(TP *A, const int rdin, const TP *B, const int *r_idxs, const int *c_idxs, const int size){
+	int idx = blockIdx.x * blockDim.x + threadIdx.x;
+	int grid_size = blockDim.x * gridDim.x;
+
+	while(idx < size){
+		if constexpr (OP == 1)
+			A[r_idxs[idx] * rdin + c_idxs[idx]] += B[idx];
+		else if constexpr (OP == 2)
+			A[r_idxs[idx] * rdin + c_idxs[idx]] -= B[idx];
+		else if constexpr (OP == 3)
+			A[r_idxs[idx] * rdin + c_idxs[idx]] *= B[idx];
+		else if constexpr (OP == 4)
+			A[r_idxs[idx] * rdin + c_idxs[idx]] /= B[idx];
+		else if constexpr (OP == 5)
+			A[r_idxs[idx] * rdin + c_idxs[idx]] = A[r_idxs[idx] * rdin + c_idxs[idx]] < B[idx];
+		else if constexpr (OP == 6)
+			A[r_idxs[idx] * rdin + c_idxs[idx]] = A[r_idxs[idx] * rdin + c_idxs[idx]] <= B[idx];
+		else if constexpr (OP == 7)
+			A[r_idxs[idx] * rdin + c_idxs[idx]] = A[r_idxs[idx] * rdin + c_idxs[idx]] > B[idx];
+		else if constexpr (OP == 8)
+			A[r_idxs[idx] * rdin + c_idxs[idx]] = A[r_idxs[idx] * rdin + c_idxs[idx]] >= B[idx];
+		else if constexpr (OP == 9)
+			A[r_idxs[idx] * rdin + c_idxs[idx]] = A[r_idxs[idx] * rdin + c_idxs[idx]] == B[idx];
+		else if constexpr (OP == 10)
+			A[r_idxs[idx] * rdin + c_idxs[idx]] = A[r_idxs[idx] * rdin + c_idxs[idx]] != B[idx];
+		else if constexpr (OP == 11)
+			A[r_idxs[idx] * rdin + c_idxs[idx]] = (A[r_idxs[idx] * rdin + c_idxs[idx]] < B[idx]) ? A[r_idxs[idx] * rdin + c_idxs[idx]] : B[idx];
+		else if constexpr (OP == 12)
+			A[r_idxs[idx] * rdin + c_idxs[idx]] = (A[r_idxs[idx] * rdin + c_idxs[idx]] > B[idx]) ? A[r_idxs[idx] * rdin + c_idxs[idx]] : B[idx];
+		else if constexpr (OP == 13)
+			A[r_idxs[idx] * rdin + c_idxs[idx]] = B[idx];
+		else
+			printf("ERROR! INVALID OPERATOR IN kernelSet.\n");
+		idx += grid_size;		
+	}
+}
+
 /* Operator functions
 	#define NP_OP_ADD 1
 	#define NP_OP_SUB 2
@@ -365,9 +551,9 @@ __global__ void kernelMatOpMat(const TP *A, const TP *B, TP *C, const int size)
 			C[idx] = A[idx] == B[idx];
 		else if constexpr (OP == 10)
 			C[idx] = A[idx] != B[idx];
-		if constexpr (F == 11)
+		else if constexpr (OP == 11)
 			C[idx] = (A[idx] < B[idx]) ? A[idx] : B[idx];
-		else if constexpr (F == 12)
+		else if constexpr (OP == 12)
 			C[idx] = (A[idx] > B[idx]) ? A[idx] : B[idx];
 		else
 			printf("ERROR! INVALID OPERATOR IN kernelMatOPMat.\n");
@@ -406,9 +592,9 @@ __global__ void kernelMatOpScalar(const TP *A, const TP Scal, TP *C, const int s
 			C[idx] = A[idx] == Scal;
 		else if constexpr (OP == 10)
 			C[idx] = A[idx] != Scal;
-		if constexpr (F == 11)
+		else if constexpr (OP == 11)
 			C[idx] = (A[idx] < Scal) ? A[idx] : Scal;
-		else if constexpr (F == 12)
+		else if constexpr (OP == 12)
 			C[idx] = (A[idx] > Scal) ? A[idx] : Scal;
 		else
 			printf("ERROR! INVALID OPERATOR IN kernelMatOPScalar.\n");
@@ -443,9 +629,9 @@ __global__ void kernelMatOpScalar(const TP *A, const TP *Scal_a, TP *C, const in
 			C[idx] = A[idx] == Scal;
 		else if constexpr (OP == 10)
 			C[idx] = A[idx] != Scal;
-		if constexpr (F == 11)
+		else if constexpr (OP == 11)
 			C[idx] = (A[idx] < Scal) ? A[idx] : Scal;
-		else if constexpr (F == 12)
+		else if constexpr (OP == 12)
 			C[idx] = (A[idx] > Scal) ? A[idx] : Scal;
 		else
 			printf("ERROR! INVALID OPERATOR IN kernelMatOPScalar.\n");
@@ -481,9 +667,9 @@ __global__ void kernelScalarOpMat(const TP Scal, const TP *A, TP *C, const int s
 			C[idx] = Scal == A[idx];
 		else if constexpr (OP == 10)
 			C[idx] = Scal != A[idx];
-		if constexpr (F == 11)
+		else if constexpr (OP == 11)
 			C[idx] = (A[idx] < Scal) ? A[idx] : Scal;
-		else if constexpr (F == 12)
+		else if constexpr (OP == 12)
 			C[idx] = (A[idx] > Scal) ? A[idx] : Scal;
 		else
 			printf("ERROR! INVALID OPERATOR IN kernelScalarOpMat.\n");
@@ -520,9 +706,9 @@ __global__ void kernelScalarOpMat(const TP *Scal_a, const TP *A, TP *C, const in
 			C[idx] = Scal == A[idx];
 		else if constexpr (OP == 10)
 			C[idx] = Scal != A[idx];
-		if constexpr (F == 11)
+		else if constexpr (OP == 11)
 			C[idx] = (A[idx] < Scal) ? A[idx] : Scal;
-		else if constexpr (F == 12)
+		else if constexpr (OP == 12)
 			C[idx] = (A[idx] > Scal) ? A[idx] : Scal;
 		else
 			printf("ERROR! INVALID OPERATOR IN kernelScalarOpMat.\n");
@@ -563,9 +749,9 @@ __global__ void kernelMatOpVecAlongCols(const TP *A, const TP *V, TP *C, const i
 			C[idx] = A[idx] == V[r];
 		else if constexpr (OP == 10)
 			C[idx] = A[idx] != V[r];
-		if constexpr (F == 11)
+		else if constexpr (OP == 11)
 			C[idx] = (A[idx] < V[r]) ? A[idx] : V[r];
-		else if constexpr (F == 12)
+		else if constexpr (OP == 12)
 			C[idx] = (A[idx] > V[r]) ? A[idx] : V[r];
 		else
 			printf("ERROR! INVALID OPERATOR IN kernelScalarOpMat.\n");
@@ -602,9 +788,9 @@ __global__ void kernelVecOpMatAlongCols(const TP *V, const TP *A, TP *C, const i
 			C[idx] = V[r] == A[idx];
 		else if constexpr (OP == 10)
 			C[idx] = V[r] != A[idx];
-		if constexpr (F == 11)
+		else if constexpr (OP == 11)
 			C[idx] = (A[idx] < V[r]) ? A[idx] : V[r];
-		else if constexpr (F == 12)
+		else if constexpr (OP == 12)
 			C[idx] = (A[idx] > V[r]) ? A[idx] : V[r];
 		else
 			printf("ERROR! INVALID OPERATOR IN kernelScalarOpMat.\n");
@@ -645,9 +831,9 @@ __global__ void kernelMatOpVecAlongRows(const TP *A, const TP *V, TP *C, const i
 			C[idx] = A[idx] == V[c];
 		else if constexpr (OP == 10)
 			C[idx] = A[idx] != V[c];
-		if constexpr (F == 11)
+		else if constexpr (OP == 11)
 			C[idx] = (A[idx] < V[c]) ? A[idx] : V[c];
-		else if constexpr (F == 12)
+		else if constexpr (OP == 12)
 			C[idx] = (A[idx] > V[c]) ? A[idx] : V[c];
 		else
 			printf("ERROR! INVALID OPERATOR IN kernelScalarOpMat.\n");
@@ -684,9 +870,9 @@ __global__ void kernelVecOpMatAlongRows(const TP *V, const TP *A, TP *C, const i
 			C[idx] = V[c] == A[idx];
 		else if constexpr (OP == 10)
 			C[idx] = V[c] != A[idx];
-		if constexpr (F == 11)
+		else if constexpr (OP == 11)
 			C[idx] = (A[idx] < V[c]) ? A[idx] : V[c];
-		else if constexpr (F == 12)
+		else if constexpr (OP == 12)
 			C[idx] = (A[idx] > V[c]) ? A[idx] : V[c];
 		else
 			printf("ERROR! INVALID OPERATOR IN kernelScalarOpMat.\n");
@@ -1010,7 +1196,6 @@ __global__ void kernelReduceArgF(const TP *A, TP *outputMax, int *outputIdx, con
 	else if constexpr (F == 18)
 		s_A[tx] = INT_MIN;
 	s_A[tx] = -1;
-
 	// assume 1 hi grid launch kr rha h tu
 	while (idx < size)
 	{
@@ -1050,25 +1235,26 @@ __global__ void kernelReduceArgF(const TP *A, TP *outputMax, int *outputIdx, con
 		idx += grid_size;
 	}
 	__syncthreads();
-
+	
 	if constexpr (BLOCK_SIZE > 511)
 	{
 		if (tx < 256)
 		{
 			if constexpr (F == 17)
 			{
-				if (s_A[tx] > s_A[idx + 256])
+				if (s_A[tx] > s_A[tx + 256])
 				{
-					s_A[tx] = s_A[idx + 256];
-					s_Idx[tx] = idx + 256;
+					s_A[tx] = s_A[tx + 256];
+					s_Idx[tx] = s_Idx[tx + 256];
 				}
 			}
 			else if constexpr (F == 18)
 			{
-				if (s_A[tx] < s_A[idx + 256])
+				if (s_A[tx] < s_A[tx + 256])
 				{
-					s_A[tx] = s_A[idx + 256];
-					s_Idx[tx] = idx + 256;
+					s_A[tx] = s_A[tx + 256];
+					s_Idx[tx] = s_Idx[tx + 256];
+
 				}
 			}
 		}
@@ -1081,41 +1267,42 @@ __global__ void kernelReduceArgF(const TP *A, TP *outputMax, int *outputIdx, con
 		{
 			if constexpr (F == 17)
 			{
-				if (s_A[tx] > s_A[idx + 128])
+				if (s_A[tx] > s_A[tx + 128])
 				{
-					s_A[tx] = s_A[idx + 128];
-					s_Idx[tx] = idx + 128;
+					s_A[tx] = s_A[tx + 128];
+					s_Idx[tx] = s_Idx[tx + 128];
 				}
 			}
 			else if constexpr (F == 18)
 			{
-				if (s_A[tx] < s_A[idx + 128])
+				if (s_A[tx] < s_A[tx + 128])
 				{
-					s_A[tx] = s_A[idx + 128];
-					s_Idx[tx] = idx + 128;
+					s_A[tx] = s_A[tx + 128];
+					s_Idx[tx] = s_Idx[tx + 128];
 				}
 			}
 		}
 		__syncthreads();
 	}
+
 	if constexpr (BLOCK_SIZE > 127)
 	{
 		if (tx < 64)
 		{
 			if constexpr (F == 17)
 			{
-				if (s_A[tx] > s_A[idx + 64])
+				if (s_A[tx] > s_A[tx + 64])
 				{
 					s_A[tx] = s_A[idx + 64];
-					s_Idx[tx] = idx + 64;
+					s_Idx[tx] = s_Idx[tx + 64];
 				}
 			}
 			else if constexpr (F == 18)
 			{
-				if (s_A[tx] < s_A[idx + 64])
+				if (s_A[tx] < s_A[tx + 64])
 				{
-					s_A[tx] = s_A[idx + 64];
-					s_Idx[tx] = idx + 64;
+					s_A[tx] = s_A[tx + 64];
+					s_Idx[tx] = s_Idx[tx + 64];
 				}
 			}
 		}
@@ -1197,18 +1384,18 @@ __global__ void kernelReduceArgF(const TP *A, const int *A_idx, TP *outputMax, i
 		{
 			if constexpr (F == 17)
 			{
-				if (s_A[tx] > s_A[idx + 256])
+				if (s_A[tx] > s_A[tx + 256])
 				{
-					s_A[tx] = s_A[idx + 256];
-					s_Idx[tx] = idx + 256;
+					s_A[tx] = s_A[tx + 256];
+					s_Idx[tx] = s_Idx[tx + 256];
 				}
 			}
 			else if constexpr (F == 18)
 			{
-				if (s_A[tx] < s_A[idx + 256])
+				if (s_A[tx] < s_A[tx + 256])
 				{
-					s_A[tx] = s_A[idx + 256];
-					s_Idx[tx] = idx + 256;
+					s_A[tx] = s_A[tx + 256];
+					s_Idx[tx] = s_Idx[tx + 256];
 				}
 			}
 		}
@@ -1221,18 +1408,18 @@ __global__ void kernelReduceArgF(const TP *A, const int *A_idx, TP *outputMax, i
 		{
 			if constexpr (F == 17)
 			{
-				if (s_A[tx] > s_A[idx + 128])
+				if (s_A[tx] > s_A[tx + 128])
 				{
-					s_A[tx] = s_A[idx + 128];
-					s_Idx[tx] = idx + 128;
+					s_A[tx] = s_A[tx + 128];
+					s_Idx[tx] = s_Idx[tx + 128];
 				}
 			}
 			else if constexpr (F == 18)
 			{
-				if (s_A[tx] < s_A[idx + 128])
+				if (s_A[tx] < s_A[tx + 128])
 				{
-					s_A[tx] = s_A[idx + 128];
-					s_Idx[tx] = idx + 128;
+					s_A[tx] = s_A[tx + 128];
+					s_Idx[tx] = s_Idx[tx + 128];
 				}
 			}
 		}
@@ -1244,18 +1431,18 @@ __global__ void kernelReduceArgF(const TP *A, const int *A_idx, TP *outputMax, i
 		{
 			if constexpr (F == 17)
 			{
-				if (s_A[tx] > s_A[idx + 64])
+				if (s_A[tx] > s_A[tx + 64])
 				{
-					s_A[tx] = s_A[idx + 64];
-					s_Idx[tx] = idx + 64;
+					s_A[tx] = s_A[tx + 64];
+					s_Idx[tx] = s_A[tx + 64];
 				}
 			}
 			else if constexpr (F == 18)
 			{
-				if (s_A[tx] < s_A[idx + 64])
+				if (s_A[tx] < s_A[tx + 64])
 				{
-					s_A[tx] = s_A[idx + 64];
-					s_Idx[tx] = idx + 64;
+					s_A[tx] = s_A[tx + 64];
+					s_Idx[tx] = s_Idx[tx + 64];
 				}
 			}
 		}

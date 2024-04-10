@@ -16,8 +16,9 @@
 
 NeuralNet::NeuralNet(float reg, float p_keep)
 {
-    this->reg = 0.0;
+    this->reg = reg;
     this->relu_layers.push_back(ReLULayer());
+
     this->dropout_layers.push_back(DropoutLayer(p_keep));
 
     this->affine_layers.push_back(AffineLayer(784, 2048));

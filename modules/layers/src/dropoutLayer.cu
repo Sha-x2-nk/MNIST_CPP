@@ -50,7 +50,7 @@ np::ArrayGPU<float> DropoutLayer::forward(const np::ArrayGPU<float> &X, const st
     */
     if (mode == "train")
     {
-        this->cache = (np::Random::rand<float>(X.rows, X.cols) < this->p_keep) / this->p_keep;
+        this->cache = (np::Random::rand<float>(X.rows(), X.cols()) < this->p_keep) / this->p_keep;
         auto out = this->cache * X;
         return out;
     }

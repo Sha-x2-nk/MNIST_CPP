@@ -27,15 +27,12 @@ std::pair<np::ArrayGPU<float>, np::ArrayGPU<float>> SoftmaxLoss::computeLossAndG
 
     scores = scores + 1e-8; // epsilon to prevent -log(0)
 
-    auto loss = (-np::log(scores.at(np::arange<int>(x.rows), y))).sum() / x.rows;
+    auto loss = (-np::log(scores.get(np::arange<int>(x.rows()), y))).sum() / x.rows();
 
     auto dx = scores;
-    dx.set(np::arange<int>(x.rows), y, dx.at(np::arange<int>(x.rows), y) - 1);
+    dx.set(np::arange<int>(x.rows()), y, NP_OP_SUB, 1);
 
-    for(int i= 0; i< n; ++i){
-        dx.at(i, y[i]) -= 1;
-    }
-    dx = dx / x.rows;
+    dx = dx / x.rows();
     return {loss, dx};
 }
 
@@ -57,7 +54,7 @@ np::ArrayGPU<float> SoftmaxLoss::computeLoss(const np::ArrayGPU<float> &x, const
 
     scores = scores + 1e-8; // epsilon to prevent -log(0)
 
-    auto loss = (-np::log(scores.at(np::arange<int>(x.rows), y))).sum() / x.rows;
+    auto loss = (-np::log(scores.get(np::arange<int>(x.rows()), y))).sum() / x.rows();
 
     return loss;
 }

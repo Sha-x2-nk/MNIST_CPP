@@ -37,7 +37,7 @@ public:
 
     // mode = [eval | train]
     std::string mode;
-
+    
     // default + parameter constructor
     NeuralNet(const float reg = 0.0, float p_keep = 1.0);
 
