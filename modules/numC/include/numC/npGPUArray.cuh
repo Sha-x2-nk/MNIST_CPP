@@ -1975,7 +1975,7 @@ namespace np
 	template <typename TP>
 	ArrayGPU<TP> ArrayGPU<TP>::operator<=(const TP Scalar) const
 	{
-		return this->applyOp<NP_OP_LESS_THAN_EQ>(B);
+		return this->applyOp<NP_OP_LESS_THAN_EQ>(Scalar);
 	}
 
 	template <typename TP>
@@ -2031,7 +2031,7 @@ namespace np
 	template <typename TP>
 	ArrayGPU<TP> ArrayGPU<TP>::operator>=(const TP Scalar) const
 	{
-		return this->applyOp<NP_OP_GREATER_THAN_EQ>(B);
+		return this->applyOp<NP_OP_GREATER_THAN_EQ>(Scalar);
 	}
 
 	template <typename TP>
@@ -2059,7 +2059,7 @@ namespace np
 	template <typename TP>
 	ArrayGPU<TP> ArrayGPU<TP>::operator==(const TP Scalar) const
 	{
-		return this->applyOp<NP_OP_EQEQ>(B);
+		return this->applyOp<NP_OP_EQEQ>(Scalar);
 	}
 
 	template <typename TP>
@@ -2087,7 +2087,7 @@ namespace np
 	template <typename TP>
 	ArrayGPU<TP> ArrayGPU<TP>::operator!=(const TP Scalar) const
 	{
-		return this->applyOp<NP_OP_NOT_EQ>(B);
+		return this->applyOp<NP_OP_NOT_EQ>(Scalar);
 	}
 
 	template <typename TP>
