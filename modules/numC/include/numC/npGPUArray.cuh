@@ -69,19 +69,13 @@ namespace np
 		// ####################### CONSTRUCTORS ############################
 
 		/*
-			Default constructor
-			Sets _rows = _cols = 0
-		*/
-		ArrayGPU();
-
-		/*
 			Parameterised constructor
 			Creates a 1D array
 			Arguments:
 			* sz = size of array
 			Ex: ArrayGPU<float>(10);
 		*/
-		ArrayGPU(const int sz);
+		ArrayGPU(const int sz = 1);
 
 		/*
 			Parameterised constructor
@@ -562,17 +556,6 @@ namespace np
 	// ####################### CONSTRUCTORS ############################
 
 	/*
-		Default constructor
-		Sets _rows = _cols = 0
-	*/
-	template <typename TP>
-	ArrayGPU<TP>::ArrayGPU()
-	{
-		this->_rows = 0;
-		this->_cols = 0;
-	}
-
-	/*
 		Parameterised constructor
 		Creates a 1D array
 		Arguments:
@@ -770,8 +753,7 @@ namespace np
 		this->_cols = A._cols;
 		this->mat = A.mat;
 		this->ref_count = A.ref_count;
-		if(A.size() != 0)
-			++(*this->ref_count);
+		++(*this->ref_count);
 	}
 
 	/*
@@ -782,21 +764,17 @@ namespace np
 	{
 		if (this != &A)
 		{
-			if(this->size() != 0){
-				--(*this->ref_count);
-				if (*this->ref_count == 0)
-				{
-					CUDA_CALL(cudaFree(this->mat));
-					free(this->ref_count);
-				}
+			--(*this->ref_count);
+			if (*this->ref_count == 0)
+			{
+				CUDA_CALL(cudaFree(this->mat));
+				free(this->ref_count);
 			}
 			this->_rows = A._rows;
 			this->_cols = A._cols;
 			this->mat = A.mat;
 			this->ref_count = A.ref_count;
-			if(A.size() != 0)
-				++(*this->ref_count);
-			// std::cout<<"\nHI. EXITING ARRAYGPU ASSIGNMENT.\n";
+			++(*this->ref_count);
 		}
 	}
 
@@ -2322,13 +2300,11 @@ namespace np
 	template <typename TP>
 	ArrayGPU<TP>::~ArrayGPU()
 	{
-		if(this->size()>0){
-			--(*this->ref_count);
-			if (*this->ref_count == 0)
-			{
-				cudaFree(this->mat);
-				free(ref_count);
-			}
+		--(*this->ref_count);
+		if (*this->ref_count == 0)
+		{
+			CUDA_CALL(cudaFree(this->mat));
+			free(ref_count);
 		}
 	}
 }

@@ -70,11 +70,12 @@ int main()
     //     free(imgsNlabels.first[i]);
     //     free(imgsNlabels.second[1]);
     // }
+    //auto Y = np::Random::randn<float>(8192, 8192, time(NULL) + rand());
     auto st = clock();
-    auto X = np::Random::randn<float>(819, 819);
+    auto X = np::Random::randn<float>(8192, 8192);
     auto end = clock();
+    //auto Z = X + Y;
     std::cout<<"\nTIME TAKEN: "<<static_cast<double>(end - st)/CLOCKS_PER_SEC;
-    auto Y = np::Random::randn<float>(8192, 8192, time(NULL) + rand());
     
     cublasDestroy(np::cbls_handle);
     return 0;

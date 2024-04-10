@@ -35,7 +35,7 @@ namespace np
 
         const int BLOCK_SIZE = GPU_NUM_SM;
         dim3 block(BLOCK_SIZE);
-        dim3 grid(ceil(rows * cols, block.x * 5));
+        dim3 grid(ceil(rows * cols, block.x * 6));
         kernelInitializeRandomUnif<TP><<<grid, block>>>(ar.mat, rows * cols, seed);
         cudaDeviceSynchronize();
 
@@ -53,13 +53,14 @@ namespace np
     ArrayGPU<TP> Random::randn(const unsigned int rows, const unsigned int cols, const unsigned long long seed)
     {
         ArrayGPU<TP> ar(rows, cols);
-
+        int a;
+        std::cin>>a;
         const int BLOCK_SIZE = GPU_NUM_SM;
         dim3 block(BLOCK_SIZE);
-        dim3 grid(ceil(rows * cols, block.x * 5));
+        dim3 grid(ceil(ar.size(), block.x * 6));
         kernelInitializeRandomNorm<TP><<<grid, block>>>(ar.mat, rows * cols, seed);
         cudaDeviceSynchronize();
-
+        printf("\nGULLU DONE.");
         return ar;
     }
 }
