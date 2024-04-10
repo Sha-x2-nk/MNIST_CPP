@@ -111,7 +111,7 @@ namespace np
 
 		const int BLOCK_SIZE = GPU_NUM_CUDA_CORE;
 		dim3 block(BLOCK_SIZE);
-		dim3 grid(std::min<int>(GPU_NUM_SM * 2, ceil(range, block.x)));
+		dim3 grid(std::min<int>(GPU_NUM_SM * 2, np_ceil(range, block.x)));
 
 		kernelInitMatArange<TP><<<grid, block>>>(ans.mat, range);
 		cudaDeviceSynchronize();
@@ -142,7 +142,7 @@ namespace np
 
 			const int BLOCK_SIZE = GPU_NUM_CUDA_CORE;
 			dim3 block(BLOCK_SIZE);
-			dim3 grid(std::min<int>(GPU_NUM_SM * 2, ceil(res.size(), block.x)));
+			dim3 grid(std::min<int>(GPU_NUM_SM * 2, np_ceil(res.size(), block.x)));
 
 			kernelMatOpScalar<TP, F><<<grid, block>>>(B.mat, A.mat, res.mat, res.size());
 			cudaDeviceSynchronize();
@@ -155,7 +155,7 @@ namespace np
 
 			const int BLOCK_SIZE = GPU_NUM_CUDA_CORE;
 			dim3 block(BLOCK_SIZE);
-			dim3 grid(std::min<int>(GPU_NUM_SM * 2, ceil(res.size(), block.x)));
+			dim3 grid(std::min<int>(GPU_NUM_SM * 2, np_ceil(res.size(), block.x)));
 
 			kernelMatOpScalar<TP, F><<<grid, block>>>(A.mat, B.mat, res.mat, res.size());
 			cudaDeviceSynchronize();
@@ -172,7 +172,7 @@ namespace np
 			ArrayGPU<TP> res(B.rows(), B.cols());
 			const int BLOCK_SIZE = GPU_NUM_CUDA_CORE;
 			dim3 block(BLOCK_SIZE);
-			dim3 grid(std::min<int>(GPU_NUM_SM * 2, ceil(res.size(), block.x)));
+			dim3 grid(std::min<int>(GPU_NUM_SM * 2, np_ceil(res.size(), block.x)));
 			kernelMatOpVecAlongCols<TP, F><<<grid, block>>>(A.mat, B.mat, res.mat, res.size(), B.cols());
 			cudaDeviceSynchronize();
 
@@ -184,7 +184,7 @@ namespace np
 			ArrayGPU<TP> res(B.rows(), B.cols());
 			const int BLOCK_SIZE = GPU_NUM_CUDA_CORE;
 			dim3 block(BLOCK_SIZE);
-			dim3 grid(std::min<int>(GPU_NUM_SM * 2, ceil(res.size(), block.x)));
+			dim3 grid(std::min<int>(GPU_NUM_SM * 2, np_ceil(res.size(), block.x)));
 			kernelMatOpVecAlongRows<TP, F><<<grid, block>>>(A.mat, B.mat, res.mat, res.size(), B.cols());
 			cudaDeviceSynchronize();
 
@@ -199,7 +199,7 @@ namespace np
 			ArrayGPU<TP> res(A.rows(), A.cols());
 			const int BLOCK_SIZE = GPU_NUM_CUDA_CORE;
 			dim3 block(BLOCK_SIZE);
-			dim3 grid(std::min<int>(GPU_NUM_SM * 2, ceil(res.size(), block.x)));
+			dim3 grid(std::min<int>(GPU_NUM_SM * 2, np_ceil(res.size(), block.x)));
 			kernelMatOpVecAlongCols<TP, F><<<grid, block>>>(A.mat, B.mat, res.mat, res.size(), A.cols());
 			cudaDeviceSynchronize();
 
@@ -211,7 +211,7 @@ namespace np
 			ArrayGPU<TP> res(A.rows(), A.cols());
 			const int BLOCK_SIZE = GPU_NUM_CUDA_CORE;
 			dim3 block(BLOCK_SIZE);
-			dim3 grid(std::min<int>(GPU_NUM_SM * 2, ceil(res.size(), block.x)));
+			dim3 grid(std::min<int>(GPU_NUM_SM * 2, np_ceil(res.size(), block.x)));
 			kernelMatOpVecAlongRows<TP, F><<<grid, block>>>(A.mat, B.mat, res.mat, res.size(), A.cols());
 			cudaDeviceSynchronize();
 
@@ -223,7 +223,7 @@ namespace np
 			ArrayGPU<TP> res(A.rows(), A.cols());
 			const int BLOCK_SIZE = GPU_NUM_CUDA_CORE;
 			dim3 block(BLOCK_SIZE);
-			dim3 grid(std::min<int>(GPU_NUM_SM*2, ceil(res.size(), block.x)));
+			dim3 grid(std::min<int>(GPU_NUM_SM*2, np_ceil(res.size(), block.x)));
 			kernelMatOpMat<TP, F><<<grid, block>>>(A.mat, B.mat, res.mat, res.size());
 			cudaDeviceSynchronize();
 			return res;
@@ -295,7 +295,7 @@ namespace np
 
 		const int BLOCK_SIZE = GPU_NUM_CUDA_CORE;
 		dim3 block(BLOCK_SIZE);
-		dim3 grid(std::min<int>(GPU_NUM_SM * 2, ceil(res.size(), block.x)));
+		dim3 grid(std::min<int>(GPU_NUM_SM * 2, np_ceil(res.size(), block.x)));
 		kernelFMat<TP, F><<<grid, block>>>(A.mat, res.mat, res.size());
 		cudaDeviceSynchronize();
 		return res;
@@ -337,7 +337,7 @@ namespace np
 
 		const int BLOCK_SIZE = GPU_NUM_CUDA_CORE;
 		dim3 block(BLOCK_SIZE);
-		dim3 grid(std::min<int>(GPU_NUM_SM * 2, ceil(res.size(), block.x)));
+		dim3 grid(std::min<int>(GPU_NUM_SM * 2, np_ceil(res.size(), block.x)));
 		
 		kernelPowMat<TP><<<grid, block>>>(A.mat, pow, res.mat, res.size());
 		cudaDeviceSynchronize();
@@ -351,7 +351,7 @@ namespace np
 		if(A.size() <= 1) return;
 		const int BLOCK_SIZE = GPU_NUM_CUDA_CORE;
 		dim3 block(BLOCK_SIZE);
-		dim3 grid(ceil(A.size(), block.x * 4));
+		dim3 grid(np_ceil(A.size(), block.x * 4));
 
 		kernelMatShuffle<TP><<<grid, block>>>(A.mat, A.size(), seed);
 		cudaDeviceSynchronize();

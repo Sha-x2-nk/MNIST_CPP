@@ -6,10 +6,9 @@
 typedef unsigned char uchar;
 
 // display MNIST images
-void showMNIST(uchar *img, int img_height, int img_width, std::string &winName)
+void showMNIST(const uchar *img, const int img_height, const int img_width, const std::string &winName)
 {
-    cv::Mat img_(img_height, img_width, CV_8U);
-    img_.data = img;
+    cv::Mat img_(img_height, img_width, CV_8U, (void*)img);
 
     cv::imshow(winName, img_);
     cv::waitKey(0);
@@ -17,7 +16,7 @@ void showMNIST(uchar *img, int img_height, int img_width, std::string &winName)
 }
 
 // display MNIST images, overloaded function to display float converted images
-void showMNIST(float *img, int img_height, int img_width, std::string &winName)
+void showMNIST(const float *img, const int img_height, const int img_width, const std::string &winName)
 {
     uchar *img_ = new uchar[img_height * img_width];
 

@@ -21,7 +21,7 @@ namespace np
         static ArrayGPU<TP> rand(const unsigned int rows = 1, const unsigned int cols = 1, const unsigned int lo = 0, const unsigned int hi = 1, const unsigned long long seed = static_cast<unsigned long long>(time(NULL)));
 
         template <typename TP>
-        static ArrayGPU<TP> rand(const unsigned int rows, const unsigned int cols, const unsigned unsigned long long seed);
+        static ArrayGPU<TP> rand(const unsigned int rows, const unsigned int cols, const unsigned long long seed);
 
         // from normal distribution
         template <typename TP>
@@ -33,9 +33,9 @@ namespace np
     {
         ArrayGPU<TP> ar(rows, cols);
 
-        const int BLOCK_SIZE = GPU_NUM_SM;
-        dim3 block(BLOCK_SIZE);
-        dim3 grid(ceil(rows * cols, block.x * 6));
+        const int BLOCK_SIZE = (GPU_NUM_CUDA_CORE == 64)?64:128;
+        dim3 block(BLOCK_SIZE * 6);
+        dim3 grid(np_ceil( ar.size(), block.x));
         kernelInitializeRandomUnif<TP><<<grid, block>>>(ar.mat, rows * cols, seed);
         cudaDeviceSynchronize();
 
@@ -53,14 +53,11 @@ namespace np
     ArrayGPU<TP> Random::randn(const unsigned int rows, const unsigned int cols, const unsigned long long seed)
     {
         ArrayGPU<TP> ar(rows, cols);
-        int a;
-        std::cin>>a;
-        const int BLOCK_SIZE = GPU_NUM_SM;
-        dim3 block(BLOCK_SIZE);
-        dim3 grid(ceil(ar.size(), block.x * 6));
-        kernelInitializeRandomNorm<TP><<<grid, block>>>(ar.mat, rows * cols, seed);
+        const int BLOCK_SIZE = (GPU_NUM_CUDA_CORE == 64)?64:128;
+        dim3 block(BLOCK_SIZE * 6);
+        dim3 grid(np_ceil(ar.size(), block.x));
+        kernelInitializeRandomNorm<TP><<<grid, block>>>(ar.mat, ar.size(), seed);
         cudaDeviceSynchronize();
-        printf("\nGULLU DONE.");
         return ar;
     }
 }

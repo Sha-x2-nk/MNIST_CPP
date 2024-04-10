@@ -6,7 +6,7 @@
 
 typedef unsigned char uchar;
 
-int reverseInt(int i)
+int reverseInt(const int i)
 {
     unsigned char c1, c2, c3, c4;
     c1 = i & 255, c2 = (i >> 8) & 255, c3 = (i >> 16) & 255, c4 = (i >> 24) & 255;
@@ -14,7 +14,7 @@ int reverseInt(int i)
 }
 
 // reading mnist images from file.
-uchar *readMNISTImages(std::string &path, int &num_images, int &img_size)
+uchar *readMNISTImages(const std::string &path, int &num_images, int &img_size)
 {
     std::ifstream file(path, std::ios::binary);
 
@@ -53,7 +53,7 @@ uchar *readMNISTImages(std::string &path, int &num_images, int &img_size)
 }
 
 // reading mnist labels from file.
-uchar *readMNISTLabels(std::string &path, int &num_labels)
+uchar *readMNISTLabels(const std::string &path, int &num_labels)
 {
 
     std::ifstream file(path, std::ios::binary);

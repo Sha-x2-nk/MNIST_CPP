@@ -6,9 +6,9 @@
 typedef unsigned char uchar;
 
 // display image function.
-void showMNIST(uchar *img, int img_height, int img_width, std::string &winName);
+void showMNIST(const uchar *img, const int img_height, const int img_width, const std::string &winName);
 
 // display image function overloaded to display float styled-images.
-void showMNIST(float *img, int img_height, int img_width, std::string &winName);
+void showMNIST(const float *img, const int img_height, const int img_width, const std::string &winName);
 
 #endif

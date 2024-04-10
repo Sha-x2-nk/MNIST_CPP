@@ -190,21 +190,9 @@ __global__ void kernelInitializeRandomUnif(TP *arr, const int size, const unsign
 		curand_init(seed, idx, 0, &state); // Initialize curand state for each thread
 		arr[idx] = curand_uniform(&state);  // Generate a random value
 		
-		++idx;
-		if (idx < size)
-			arr[idx] = curand_uniform(&state);  // Generate a random value
-		++idx;
-		if(idx< size)
-			arr[idx] = curand_uniform(&state);  // Generate a random value
-		++idx;
-		if(idx< size)
-			arr[idx] = curand_uniform(&state);  // Generate a random value
-		++idx;
-		if(idx< size)
-			arr[idx] = curand_normal(&state);  // Generate a random value
-		++idx;
-		if(idx< size)
-			arr[idx] = curand_normal(&state);  // Generate a random value
+		for(int i= 1; i< 6 && idx + i< size; ++i){
+			arr[idx + i] = curand_uniform(&state); // generate random value
+		}
 	}
 }
 
@@ -219,21 +207,9 @@ __global__ void kernelInitializeRandomNorm(TP *arr, const int size, const unsign
 		curandState state;
 		curand_init(seed, idx, 0, &state); // Initialize curand state for each thread
 		arr[idx] = curand_normal(&state);  // Generate a random value
-		++idx;
-		if (idx < size)
-			arr[idx] = curand_normal(&state);  // Generate a random value
-		++idx;
-		if(idx< size)
-			arr[idx] = curand_normal(&state);  // Generate a random value
-		++idx;
-		if(idx< size)
-			arr[idx] = curand_normal(&state);  // Generate a random value
-		++idx;
-		if(idx< size)
-			arr[idx] = curand_normal(&state);  // Generate a random value
-		++idx;
-		if(idx< size)
-			arr[idx] = curand_normal(&state);  // Generate a random value
+		for(int i= 1; i < 6 && idx + i< size; ++i){
+			arr[idx + i] = curand_normal(&state); // generate random value
+		}
 	}
 }
 
@@ -353,7 +329,7 @@ __global__ void kernelGetMat(const TP *A, const int rdin, TP* C, const int *r_id
 	}
 }
 
-// stes C[i] to A[i] OP B[i], just that i random idx
+// stes A[i] to A[i] OP B[i], just that i random idx
 template <typename TP, char OP>
 __global__ void kernelSetMat(TP *A, const TP B, const int *idxs, const int size){
 	int idx = blockIdx.x * blockDim.x + threadIdx.x;
@@ -386,13 +362,42 @@ __global__ void kernelSetMat(TP *A, const TP B, const int *idxs, const int size)
 			A[idxs[idx]] = (A[idxs[idx]] > B) ? A[idxs[idx]] : B;
 		else if constexpr (OP == 13)
 			A[idxs[idx]] = B;
+		else if constexpr (OP == 19)
+			A[idxs[idx]] = expf(A[idxs[idx]]);
+		else if constexpr (OP == 20)
+			A[idxs[idx]] = logf(A[idxs[idx]]);
+		else if constexpr (OP == 21)
+			A[idxs[idx]] *= A[idxs[idx]];
+		else if constexpr (OP == 22)
+		{
+			if constexpr (std::is_same<TP, int>::value)
+				A[idxs[idx]] = static_cast<int>(sqrtf(A[idxs[idx]]));
+			else if constexpr (std::is_same<TP, float>::value)
+				A[idxs[idx]] = sqrtf(A[idxs[idx]]);
+			else if constexpr (std::is_same<TP, double>::value)
+				A[idxs[idx]] = sqrt(A[idxs[idx]]);
+			else
+				// Handle other types here
+				printf("Unsupported type in kernelSetMat, where F = 22(sqrt)");
+		}
+		else if constexpr (OP == 23){
+			if constexpr (std::is_same<TP, int>::value)
+				A[idxs[idx]] = static_cast<int>(powf(A[idxs[idx]], B));
+			else if constexpr (std::is_same<TP, float>::value)
+				A[idxs[idx]] = powf(A[idxs[idx]], B);
+			else if constexpr (std::is_same<TP, double>::value)
+				A[idxs[idx]] = pow(A[idxs[idx]], static_cast<double>(B));
+			else
+				// Handle other types here
+				printf("Unsupported type in kernelSetMat F=23(power)");
+		}
 		else
-			printf("ERROR! INVALID OPERATOR IN kernelSet.\n");
+			printf("ERROR! INVALID OPERATOR/FUNCTION IN kernelSet.\n");
 		idx += grid_size;	
 	}
 }
 
-// stes C[i] to A[i] OP B[i], just that i random idx
+// stes A[i] to A[i] OP B[i], just that i random idx
 template <typename TP, char OP>
 __global__ void kernelSetMat(TP *A, const TP *B, const int *idxs, const int size){
 	int idx = blockIdx.x * blockDim.x + threadIdx.x;
@@ -425,13 +430,42 @@ __global__ void kernelSetMat(TP *A, const TP *B, const int *idxs, const int size
 			A[idxs[idx]] = (A[idxs[idx]] > B[idx]) ? A[idxs[idx]] : B[idx];
 		else if constexpr (OP == 13)
 			A[idxs[idx]] = B[idx];
+		else if constexpr (OP == 19)
+			A[idxs[idx]] = expf(A[idxs[idx]]);
+		else if constexpr (OP == 20)
+			A[idxs[idx]] = logf(A[idxs[idx]]);
+		else if constexpr (OP == 21)
+			A[idxs[idx]] *= A[idxs[idx]];
+		else if constexpr (OP == 22)
+		{
+			if constexpr (std::is_same<TP, int>::value)
+				A[idxs[idx]] = static_cast<int>(sqrtf(A[idxs[idx]]));
+			else if constexpr (std::is_same<TP, float>::value)
+				A[idxs[idx]] = sqrtf(A[idxs[idx]]);
+			else if constexpr (std::is_same<TP, double>::value)
+				A[idxs[idx]] = sqrt(A[idxs[idx]]);
+			else
+				// Handle other types here
+				printf("Unsupported type in kernelSetMat, where F = 22(sqrt)");
+		}
+		else if constexpr (OP == 23){
+			if constexpr (std::is_same<TP, int>::value)
+				A[idxs[idx]] = static_cast<int>(powf(A[idxs[idx]], B[idx]));
+			else if constexpr (std::is_same<TP, float>::value)
+				A[idxs[idx]] = powf(A[idxs[idx]], B[idx]);
+			else if constexpr (std::is_same<TP, double>::value)
+				A[idxs[idx]] = pow(A[idxs[idx]], static_cast<double>(B[idx]));
+			else
+				// Handle other types here
+				printf("Unsupported type in kernelSetMat F=23(power)");
+		}
 		else
-			printf("ERROR! INVALID OPERATOR IN kernelSet.\n");
+			printf("ERROR! INVALID OPERATOR/FUNCTION IN kernelSet.\n");
 		idx += grid_size;		
 	}
 }
 
-// stes C[i] to A[i] OP B[i], just that i random idx
+// stes A[i] to A[i] OP B[i], just that i random idx
 template <typename TP, char OP>
 __global__ void kernelSetMat(TP *A, const int rdin, const TP B, const int *r_idxs, const int *c_idxs, const int size){
 	int idx = blockIdx.x * blockDim.x + threadIdx.x;
@@ -464,13 +498,42 @@ __global__ void kernelSetMat(TP *A, const int rdin, const TP B, const int *r_idx
 			A[r_idxs[idx] * rdin + c_idxs[idx]] = (A[r_idxs[idx] * rdin + c_idxs[idx]] > B) ? A[r_idxs[idx] * rdin + c_idxs[idx]] : B;
 		else if constexpr (OP == 13)
 			A[r_idxs[idx] * rdin + c_idxs[idx]] = B;
+		else if constexpr (OP == 19)
+			A[r_idxs[idx] * rdin + c_idxs[idx]] = expf(A[r_idxs[idx] * rdin + c_idxs[idx]]);
+		else if constexpr (OP == 20)
+			A[r_idxs[idx] * rdin + c_idxs[idx]] = logf(A[r_idxs[idx] * rdin + c_idxs[idx]]);
+		else if constexpr (OP == 21)
+			A[r_idxs[idx] * rdin + c_idxs[idx]] *= A[r_idxs[idx] * rdin + c_idxs[idx]];
+		else if constexpr (OP == 22)
+		{
+			if constexpr (std::is_same<TP, int>::value)
+				A[r_idxs[idx] * rdin + c_idxs[idx]] = static_cast<int>(sqrtf(A[r_idxs[idx] * rdin + c_idxs[idx]]));
+			else if constexpr (std::is_same<TP, float>::value)
+				A[r_idxs[idx] * rdin + c_idxs[idx]] = sqrtf(A[r_idxs[idx] * rdin + c_idxs[idx]]);
+			else if constexpr (std::is_same<TP, double>::value)
+				A[r_idxs[idx] * rdin + c_idxs[idx]] = sqrt(A[r_idxs[idx] * rdin + c_idxs[idx]]);
+			else
+				// Handle other types here
+				printf("Unsupported type in kernelSetMat, where F = 22(sqrt)");
+		}
+		else if constexpr (OP == 23){
+			if constexpr (std::is_same<TP, int>::value)
+				A[r_idxs[idx] * rdin + c_idxs[idx]] = static_cast<int>(powf(A[r_idxs[idx] * rdin + c_idxs[idx]], B));
+			else if constexpr (std::is_same<TP, float>::value)
+				A[r_idxs[idx] * rdin + c_idxs[idx]] = powf(A[r_idxs[idx] * rdin + c_idxs[idx]], B);
+			else if constexpr (std::is_same<TP, double>::value)
+				A[r_idxs[idx] * rdin + c_idxs[idx]] = pow(A[r_idxs[idx] * rdin + c_idxs[idx]], static_cast<double>(B));
+			else
+				// Handle other types here
+				printf("Unsupported type in kernelSetMat F=23(power)");
+		}
 		else
-			printf("ERROR! INVALID OPERATOR IN kernelSet.\n");
+			printf("ERROR! INVALID OPERATOR/FUNCTION IN kernelSet.\n");
 		idx += grid_size;		
 	}
 }
 
-// stes C[i] to A[i] OP B[i], just that i random idx
+// stes A[i] to A[i] OP B[i], just that i random idx
 template <typename TP, char OP>
 __global__ void kernelSetMat(TP *A, const int rdin, const TP *B, const int *r_idxs, const int *c_idxs, const int size){
 	int idx = blockIdx.x * blockDim.x + threadIdx.x;
@@ -503,8 +566,37 @@ __global__ void kernelSetMat(TP *A, const int rdin, const TP *B, const int *r_id
 			A[r_idxs[idx] * rdin + c_idxs[idx]] = (A[r_idxs[idx] * rdin + c_idxs[idx]] > B[idx]) ? A[r_idxs[idx] * rdin + c_idxs[idx]] : B[idx];
 		else if constexpr (OP == 13)
 			A[r_idxs[idx] * rdin + c_idxs[idx]] = B[idx];
+		else if constexpr (OP == 19)
+			A[r_idxs[idx] * rdin + c_idxs[idx]] = expf(A[r_idxs[idx] * rdin + c_idxs[idx]]);
+		else if constexpr (OP == 20)
+			A[r_idxs[idx] * rdin + c_idxs[idx]] = logf(A[r_idxs[idx] * rdin + c_idxs[idx]]);
+		else if constexpr (OP == 21)
+			A[r_idxs[idx] * rdin + c_idxs[idx]] *= A[r_idxs[idx] * rdin + c_idxs[idx]];
+		else if constexpr (OP == 22)
+		{
+			if constexpr (std::is_same<TP, int>::value)
+				A[r_idxs[idx] * rdin + c_idxs[idx]] = static_cast<int>(sqrtf(A[r_idxs[idx] * rdin + c_idxs[idx]]));
+			else if constexpr (std::is_same<TP, float>::value)
+				A[r_idxs[idx] * rdin + c_idxs[idx]] = sqrtf(A[r_idxs[idx] * rdin + c_idxs[idx]]);
+			else if constexpr (std::is_same<TP, double>::value)
+				A[r_idxs[idx] * rdin + c_idxs[idx]] = sqrt(A[r_idxs[idx] * rdin + c_idxs[idx]]);
+			else
+				// Handle other types here
+				printf("Unsupported type in kernelSetMat, where F = 22(sqrt)");
+		}
+		else if constexpr (OP == 23){
+			if constexpr (std::is_same<TP, int>::value)
+				A[r_idxs[idx] * rdin + c_idxs[idx]] = static_cast<int>(powf(A[r_idxs[idx] * rdin + c_idxs[idx]], B[idx]));
+			else if constexpr (std::is_same<TP, float>::value)
+				A[r_idxs[idx] * rdin + c_idxs[idx]] = powf(A[r_idxs[idx] * rdin + c_idxs[idx]], B[idx]);
+			else if constexpr (std::is_same<TP, double>::value)
+				A[r_idxs[idx] * rdin + c_idxs[idx]] = pow(A[r_idxs[idx] * rdin + c_idxs[idx]], static_cast<double>(B[idx]));
+			else
+				// Handle other types here
+				printf("Unsupported type in kernelSetMat F=23(power)");
+		}
 		else
-			printf("ERROR! INVALID OPERATOR IN kernelSet.\n");
+			printf("ERROR! INVALID OPERATOR/FUNCTION IN kernelSet.\n");
 		idx += grid_size;		
 	}
 }
@@ -845,6 +937,7 @@ __global__ void kernelMatOpVecAlongRows(const TP *A, const TP *V, TP *C, const i
 		idx += grid_size;
 	}
 }
+
 template <typename TP, char OP>
 __global__ void kernelVecOpMatAlongRows(const TP *V, const TP *A, TP *C, const int size, const int N)
 {
@@ -923,7 +1016,7 @@ __global__ void kernelFMat(const TP *A, TP *C, const int size)
 				C[idx] = sqrt(A[idx]);
 			else
 				// Handle other types here
-				printf("Unsupported type in kernelFMat, where F = 4(sqrt)");
+				printf("Unsupported type in kernelFMat, where F = 22(sqrt)");
 		}
 		else
 			printf("Unsupported function type in kernelFMat\n");
@@ -1098,6 +1191,7 @@ __global__ void kernelReduceF(const TP *A, TP *output, const int size)
 	if (tx == 0)
 		output[bx] = s_A[0];
 }
+
 
 template <typename TP, char F>
 __device__ void kernelWarpReduceArgF(volatile TP *s_A, volatile int *s_Idx, const int tid)

@@ -14,8 +14,8 @@
 #include <vector>
 #include <random>
 
-// utility function to calculate ceil(a/b) where a, b are ints
-#define ceil(a, b) (a + b - 1) / b
+// utility function to calculate _ceil(a/b) where a, b are ints
+#define _ceil(a, b) (a + b - 1) / b
 
 typedef unsigned char uchar;
 
@@ -70,12 +70,13 @@ int main()
     //     free(imgsNlabels.first[i]);
     //     free(imgsNlabels.second[1]);
     // }
-    //auto Y = np::Random::randn<float>(8192, 8192, time(NULL) + rand());
+    auto X = np::Random::randn<float>(8190, 8190);
+    auto Y = np::Random::randn<float>(8190, 8190, time(NULL) + rand());
     auto st = clock();
-    auto X = np::Random::randn<float>(8192, 8192);
+    std::cout << X << std::endl;
+    X.set(np::arange<int>(8190), np::arange<int>(8190), NP_F_LOG);
     auto end = clock();
-    //auto Z = X + Y;
-    std::cout<<"\nTIME TAKEN: "<<static_cast<double>(end - st)/CLOCKS_PER_SEC;
+    std::cout<<"\nTIME TAKEN: "<<((static_cast<double>(end - st)) * 1000)/(static_cast<double>(CLOCKS_PER_SEC))<< " ms.";
     
     cublasDestroy(np::cbls_handle);
     return 0;
@@ -87,14 +88,14 @@ std::pair<std::vector<float *>, std::vector<int *>> prepareDataset()
 {
 
     int num_train_images, img_size;
-    uchar *train_imgs = readMNISTImages(std::string("C:/Users/shash/Documents/MNIST_NUMC/modules/MNIST/dataset/train-images.idx3-ubyte"), num_train_images, img_size);
+    uchar *train_imgs = readMNISTImages("C:/Users/shash/Documents/MNIST_NUMC/modules/MNIST/dataset/train-images.idx3-ubyte", num_train_images, img_size);
 
     std::cout << std::endl
               << "[+] Train images fetched!" << std::endl;
     std::cout << "----------Num Images: " << num_train_images << " img size: " << img_size << "-----------" << std::endl;
 
     int num_train_labels;
-    uchar *train_labels = readMNISTLabels(std::string("C:/Users/shash/Documents/MNIST_NUMC/modules/MNIST/dataset/train-labels.idx1-ubyte"), num_train_labels);
+    uchar *train_labels = readMNISTLabels("C:/Users/shash/Documents/MNIST_NUMC/modules/MNIST/dataset/train-labels.idx1-ubyte", num_train_labels);
     std::cout << std::endl
               << "[+] Train labels fetched!" << std::endl;
     std::cout << "-----------Num Labels: " << num_train_labels << "------------------------" << std::endl;
@@ -146,7 +147,7 @@ std::pair<std::vector<float *>, std::vector<int *>> prepareDataset()
     std::cout << "------Validation set size: " << num_val_images << " Train set size: " << (num_train_images - num_val_images) << "-----" << std::endl;
 
     int num_test_images;
-    uchar *test_imgs = readMNISTImages(std::string("C:/Users/shash/Documents/MNIST_NUMC/modules/MNIST/dataset/t10k-images.idx3-ubyte"), num_test_images, img_size);
+    uchar *test_imgs = readMNISTImages("C:/Users/shash/Documents/MNIST_NUMC/modules/MNIST/dataset/t10k-images.idx3-ubyte", num_test_images, img_size);
 
     std::cout << std::endl
               << "[+] Test images fetched!" << std::endl;
@@ -192,7 +193,7 @@ NeuralNet trainModel(float *x_train, int *y_train, int train_size, float *x_val,
     NeuralNet best_model;
     NeuralNet model(0, 0.7315);
 
-    int num_iters = ceil(train_size, batch_size);
+    int num_iters = _ceil(train_size, batch_size);
 
     std::cout << std::endl
               << "[.] Moving train set to GPU" << std::endl;
