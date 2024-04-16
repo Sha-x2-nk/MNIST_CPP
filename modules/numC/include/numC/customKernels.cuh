@@ -180,7 +180,7 @@ __global__ void kernelMatShuffle(TP *A, const int size);
 
 // for uniform distribution
 template <typename TP>
-__global__ void kernelInitializeRandomUnif(TP *arr, const int size, const unsigned long long seed)
+__global__ void kernelInitializeRandomUnif(TP *arr, const int size, int lo, int hi, const unsigned long long seed)
 {
 	int idx = blockIdx.x * blockDim.x + threadIdx.x;
 	idx *= 50;
@@ -191,7 +191,7 @@ __global__ void kernelInitializeRandomUnif(TP *arr, const int size, const unsign
 		arr[idx] = curand_uniform(&state);  // Generate a random value
 		
 		for(int i= 1; i< 50 && idx + i< size; ++i){
-			arr[idx + i] = curand_uniform(&state); // generate random value
+			arr[idx + i] = ( curand_uniform(&state) * (hi - lo) ) + lo; // generate random value
 		}
 	}
 }
@@ -1192,6 +1192,103 @@ __global__ void kernelReduceF(const TP *A, TP *output, const int size)
 		output[bx] = s_A[0];
 }
 
+// warp unroll
+template <typename TP, int BLOCK_SIZE, char F>
+__global__ void kernelReduceFAxis1(const TP *A, TP *output, const int size, const int rows)
+{
+	if constexpr (F != 14 && F != 15 && F != 16)
+	{
+		printf("INVALID ARGUMENT! in kernelReduceF\n");
+		return;
+	}
+	const int bx = blockIdx.x;
+	const int tx = threadIdx.x;
+	int _idx = bx * BLOCK_SIZE * 2 + tx;
+	const int grid_size = BLOCK_SIZE * 2 * gridDim.x;
+	__shared__ TP s_A[BLOCK_SIZE];
+
+	for(int r = 0; r < rows; ++r){
+		int idx = _idx;
+		if constexpr (F == 14)
+			s_A[tx] = 0;
+		else if constexpr (F == 15)
+			s_A[tx] = INT_MAX;
+		else if constexpr (F == 16)
+			s_A[tx] = INT_MIN;
+		// assume 1 hi grid launch kr rha h tu
+		while (idx < size)
+		{
+			if constexpr (F == 14)
+				s_A[tx] += (A[idx] + ((idx + BLOCK_SIZE < size) ? A[idx + BLOCK_SIZE] : 0));
+			else if constexpr (F == 15)
+			{
+				s_A[tx] = min(s_A[tx], A[idx]);
+				if (idx + BLOCK_SIZE < size)
+					s_A[tx] = min(s_A[tx], A[idx + BLOCK_SIZE]);
+			}
+			else if constexpr (F == 16)
+			{
+				s_A[tx] = max(s_A[tx], A[idx]);
+				if (idx + BLOCK_SIZE < size)
+					s_A[tx] = max(s_A[tx], A[idx + BLOCK_SIZE]);
+			}
+
+			idx += grid_size;
+		}
+		__syncthreads();
+
+		if constexpr (BLOCK_SIZE > 511)
+		{
+			if (tx < 256)
+			{
+				if constexpr (F == 14)
+					s_A[tx] += s_A[tx + 256];
+				else if constexpr (F == 15)
+					s_A[tx] = min(s_A[tx], s_A[tx + 256]);
+				else if constexpr (F == 16)
+					s_A[tx] = max(s_A[tx], s_A[tx + 256]);
+			}
+			__syncthreads();
+		}
+
+		if constexpr (BLOCK_SIZE > 255)
+		{
+			if (tx < 128)
+			{
+				if constexpr (F == 14)
+					s_A[tx] += s_A[tx + 128];
+				else if constexpr (F == 15)
+					s_A[tx] = min(s_A[tx], s_A[tx + 128]);
+				else if constexpr (F == 16)
+					s_A[tx] = max(s_A[tx], s_A[tx + 128]);
+			}
+			__syncthreads();
+		}
+		if constexpr (BLOCK_SIZE > 127)
+		{
+			if (tx < 64)
+			{
+				if constexpr (F == 14)
+					s_A[tx] += s_A[tx + 64];
+				else if constexpr (F == 15)
+					s_A[tx] = min(s_A[tx], s_A[tx + 64]);
+				else if constexpr (F == 16)
+					s_A[tx] = max(s_A[tx], s_A[tx + 64]);
+			}
+			__syncthreads();
+		}
+
+		if (tx < 32)
+			kernelWarpReduceF<TP, F>(s_A, tx);
+
+		if (tx == 0)
+			output[bx] = s_A[0];
+		A+= size;
+		output += gridDim.x;
+		__syncthreads();
+	}
+}
+
 
 template <typename TP, char F>
 __device__ void kernelWarpReduceArgF(volatile TP *s_A, volatile int *s_Idx, const int tid)
@@ -1294,7 +1391,7 @@ __global__ void kernelReduceArgF(const TP *A, TP *outputMax, int *outputIdx, con
 		s_A[tx] = INT_MAX;
 	else if constexpr (F == 18)
 		s_A[tx] = INT_MIN;
-	s_A[tx] = -1;
+	s_Idx[tx] = -1;
 	// assume 1 hi grid launch kr rha h tu
 	while (idx < size)
 	{
@@ -1418,6 +1515,154 @@ __global__ void kernelReduceArgF(const TP *A, TP *outputMax, int *outputIdx, con
 	}
 }
 
+template <typename TP, int BLOCK_SIZE, char F>
+__global__ void kernelReduceArgFAxis1(const TP *A, TP *outputMax, int *outputIdx, const int size, const int rows){
+	if constexpr (F != 17 && F != 18)
+	{
+		printf("INVALID ARGUMENT! in kernelReduceArgF\n");
+		return;
+	}
+	const int bx = blockIdx.x;
+	const int tx = threadIdx.x;
+	int _idx = bx * BLOCK_SIZE * 2 + tx;
+	const int grid_size = BLOCK_SIZE * 2 * gridDim.x;
+	__shared__ TP s_A[BLOCK_SIZE];
+	__shared__ int s_Idx[BLOCK_SIZE];
+
+	for(int r = 0; r < rows; ++r){
+		int idx = _idx;
+		if constexpr (F == 17)
+			s_A[tx] = INT_MAX;
+		else if constexpr (F == 18)
+			s_A[tx] = INT_MIN;
+		s_Idx[tx] = -1;
+		// assume 1 hi grid launch kr rha h tu
+		while (idx < size)
+		{
+			if constexpr (F == 17)
+			{
+				if (s_A[tx] > A[idx])
+				{
+					s_A[tx] = A[idx];
+					s_Idx[tx] = idx;
+				}
+				if (idx + BLOCK_SIZE < size)
+				{
+					if (s_A[tx] > A[idx + BLOCK_SIZE])
+					{
+						s_A[tx] = A[idx + BLOCK_SIZE];
+						s_Idx[tx] = idx + BLOCK_SIZE;
+					}
+				}
+			}
+			else if constexpr (F == 18)
+			{
+				if (s_A[tx] < A[idx])
+				{
+					s_A[tx] = A[idx];
+					s_Idx[tx] = idx;
+				}
+				if (idx + BLOCK_SIZE < size)
+				{
+					if (s_A[tx] < A[idx + BLOCK_SIZE])
+					{
+						s_A[tx] = A[idx + BLOCK_SIZE];
+						s_Idx[tx] = idx + BLOCK_SIZE;
+					}
+				}
+			}
+
+			idx += grid_size;
+		}
+		__syncthreads();
+		
+		if constexpr (BLOCK_SIZE > 511)
+		{
+			if (tx < 256)
+			{
+				if constexpr (F == 17)
+				{
+					if (s_A[tx] > s_A[tx + 256])
+					{
+						s_A[tx] = s_A[tx + 256];
+						s_Idx[tx] = s_Idx[tx + 256];
+					}
+				}
+				else if constexpr (F == 18)
+				{
+					if (s_A[tx] < s_A[tx + 256])
+					{
+						s_A[tx] = s_A[tx + 256];
+						s_Idx[tx] = s_Idx[tx + 256];
+
+					}
+				}
+			}
+			__syncthreads();
+		}
+
+		if constexpr (BLOCK_SIZE > 255)
+		{
+			if (tx < 128)
+			{
+				if constexpr (F == 17)
+				{
+					if (s_A[tx] > s_A[tx + 128])
+					{
+						s_A[tx] = s_A[tx + 128];
+						s_Idx[tx] = s_Idx[tx + 128];
+					}
+				}
+				else if constexpr (F == 18)
+				{
+					if (s_A[tx] < s_A[tx + 128])
+					{
+						s_A[tx] = s_A[tx + 128];
+						s_Idx[tx] = s_Idx[tx + 128];
+					}
+				}
+			}
+			__syncthreads();
+		}
+
+		if constexpr (BLOCK_SIZE > 127)
+		{
+			if (tx < 64)
+			{
+				if constexpr (F == 17)
+				{
+					if (s_A[tx] > s_A[tx + 64])
+					{
+						s_A[tx] = s_A[idx + 64];
+						s_Idx[tx] = s_Idx[tx + 64];
+					}
+				}
+				else if constexpr (F == 18)
+				{
+					if (s_A[tx] < s_A[tx + 64])
+					{
+						s_A[tx] = s_A[tx + 64];
+						s_Idx[tx] = s_Idx[tx + 64];
+					}
+				}
+			}
+			__syncthreads();
+		}
+
+		if (tx < 32)
+			kernelWarpReduceArgF<TP, F>(s_A, s_Idx, tx);
+
+		if (tx == 0)
+		{
+			outputMax[bx] = s_A[0];
+			outputIdx[bx] = s_Idx[0];
+		}
+		A += size;
+		outputIdx += gridDim.x;
+		outputMax += gridDim.x;
+	}
+}
+
 // second reduction k time p -> idx serial nhi h, to ek idx ka bhi array dena hoga
 template <typename TP, int BLOCK_SIZE, char F>
 __global__ void kernelReduceArgF(const TP *A, const int *A_idx, TP *outputMax, int *outputIdx, const int size)
@@ -1438,7 +1683,7 @@ __global__ void kernelReduceArgF(const TP *A, const int *A_idx, TP *outputMax, i
 		s_A[tx] = INT_MAX;
 	else if constexpr (F == 18)
 		s_A[tx] = INT_MIN;
-	s_A[tx] = -1;
+	s_Idx[tx] = -1;
 
 	// assume 1 hi grid launch kr rha h tu
 	while (idx < size)
@@ -1558,6 +1803,157 @@ __global__ void kernelReduceArgF(const TP *A, const int *A_idx, TP *outputMax, i
 	}
 }
 
+
+// second reduction k time p -> idx serial nhi h, to ek idx ka bhi array dena hoga
+template <typename TP, int BLOCK_SIZE, char F>
+__global__ void kernelReduceArgFAxis1(const TP *A, const int *A_idx, TP *outputMax, int *outputIdx, const int size, const int rows)
+{
+	if constexpr (F != 17 && F != 18)
+	{
+		printf("INVALID ARGUMENT! in kernelReduceArgF\n");
+		return;
+	}
+	const int bx = blockIdx.x;
+	const int tx = threadIdx.x;
+	int _idx = bx * BLOCK_SIZE * 2 + tx;
+	const int grid_size = BLOCK_SIZE * 2 * gridDim.x;
+	__shared__ TP s_A[BLOCK_SIZE];
+	__shared__ int s_Idx[BLOCK_SIZE];
+
+
+	for(int r = 0; r < rows; ++r){
+		int idx = _idx;
+		if constexpr (F == 17)
+			s_A[tx] = INT_MAX;
+		else if constexpr (F == 18)
+			s_A[tx] = INT_MIN;
+		s_Idx[tx] = -1;
+
+		// assume 1 hi grid launch kr rha h tu
+		while (idx < size)
+		{
+			if constexpr (F == 17)
+			{
+				if (s_A[tx] > A[idx])
+				{
+					s_A[tx] = A[idx];
+					s_Idx[tx] = A_idx[idx];
+				}
+				if (idx + BLOCK_SIZE < size && s_A[tx] > A[idx + BLOCK_SIZE])
+				{
+					s_A[tx] = A[idx + BLOCK_SIZE];
+					s_Idx[tx] = A_idx[idx + BLOCK_SIZE];
+				}
+			}
+			else if constexpr (F == 18)
+			{
+				if (s_A[tx] < A[idx])
+				{
+					s_A[tx] = A[idx];
+					s_Idx[tx] = A_idx[idx];
+				}
+				if (idx + BLOCK_SIZE < size)
+				{
+					if (s_A[tx] < A[idx + BLOCK_SIZE])
+					{
+						s_A[tx] = A[idx + BLOCK_SIZE];
+						s_Idx[tx] = A_idx[idx + BLOCK_SIZE];
+					}
+				}
+			}
+
+			idx += grid_size;
+		}
+		__syncthreads();
+
+		if constexpr (BLOCK_SIZE > 511)
+		{
+			if (tx < 256)
+			{
+				if constexpr (F == 17)
+				{
+					if (s_A[tx] > s_A[tx + 256])
+					{
+						s_A[tx] = s_A[tx + 256];
+						s_Idx[tx] = s_Idx[tx + 256];
+					}
+				}
+				else if constexpr (F == 18)
+				{
+					if (s_A[tx] < s_A[tx + 256])
+					{
+						s_A[tx] = s_A[tx + 256];
+						s_Idx[tx] = s_Idx[tx + 256];
+					}
+				}
+			}
+			__syncthreads();
+		}
+
+		if constexpr (BLOCK_SIZE > 255)
+		{
+			if (tx < 128)
+			{
+				if constexpr (F == 17)
+				{
+					if (s_A[tx] > s_A[tx + 128])
+					{
+						s_A[tx] = s_A[tx + 128];
+						s_Idx[tx] = s_Idx[tx + 128];
+					}
+				}
+				else if constexpr (F == 18)
+				{
+					if (s_A[tx] < s_A[tx + 128])
+					{
+						s_A[tx] = s_A[tx + 128];
+						s_Idx[tx] = s_Idx[tx + 128];
+					}
+				}
+			}
+			__syncthreads();
+		}
+		if constexpr (BLOCK_SIZE > 127)
+		{
+			if (tx < 64)
+			{
+				if constexpr (F == 17)
+				{
+					if (s_A[tx] > s_A[tx + 64])
+					{
+						s_A[tx] = s_A[tx + 64];
+						s_Idx[tx] = s_A[tx + 64];
+					}
+				}
+				else if constexpr (F == 18)
+				{
+					if (s_A[tx] < s_A[tx + 64])
+					{
+						s_A[tx] = s_A[tx + 64];
+						s_Idx[tx] = s_Idx[tx + 64];
+					}
+				}
+			}
+			__syncthreads();
+		}
+
+		if (tx < 32)
+			kernelWarpReduceArgF<TP, F>(s_A, s_Idx, tx);
+
+		if (tx == 0)
+		{
+			outputMax[bx] = s_A[0];
+			outputIdx[bx] = s_Idx[0];
+		}
+
+		A += size;
+		A_idx += size;
+		outputIdx += gridDim.x;
+		outputMax += gridDim.x;
+		__syncthreads();
+	}
+}
+
 template <typename TP>
 __global__ void kernelMatShuffle(TP *A, const int size, const unsigned long long seed)
 {
@@ -1596,6 +1992,32 @@ __global__ void kernelMatShuffle(TP *A, const int size, const unsigned long long
 			A[idx] = A[j];
 			A[j] = temp;
 		}
+	}
+}
+
+template <typename TP>
+__global__ void kernelReLUBackward(TP *dout, TP *cache, TP *dX, int N){
+	int idx = blockIdx.x * blockDim.x + threadIdx.x;
+	int grid_size = blockDim.x * gridDim.x;
+
+	while(idx < N){
+		dX[idx] = dout[idx] * (cache[idx] > 0);
+		idx += grid_size;
+	}
+}
+
+// scores = scores + 1e-8; // epsilon to prevent -log(0)
+// auto loss = (-np::log(scores.get(np::arange<int>(x.rows()), y)));
+// dx.set(np::arange<int>(x.rows()), y, NP_OP_SUB, 1);
+template <typename TP>
+__global__ void kernelSoftMaxUtils(TP *scores, const int *y, float *scores_for_loss, const int NUM_CLASSES, const int N){
+	int idx = blockIdx.x * blockDim.x + threadIdx.x;
+	int grid_size = blockDim.x * gridDim.x;
+
+	while(idx < N){
+		scores_for_loss[idx] = -(logf(scores[idx * NUM_CLASSES + y[idx]] + 1e-8));
+		scores[idx * NUM_CLASSES + y[idx]] -= 1;
+		idx += grid_size;
 	}
 }
 

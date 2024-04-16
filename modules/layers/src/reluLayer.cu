@@ -4,7 +4,9 @@
 
 // numC
 #include <numC/npGPUArray.cuh>
+#include <numC/gpuConfig.cuh>
 #include <numC/npFunctions.cuh>
+#include <numC/customKernels.cuh>
 
 // relu layer definiton
 
@@ -59,7 +61,15 @@ np::ArrayGPU<float> ReLULayer::backward(const np::ArrayGPU<float> &dout)
         Returns:
         - dx: Gradient with respect to x
     */
-    auto dX = dout * (this->cache > 0);
+    np::ArrayGPU<float> dX(dout.rows(), dout.cols());
+    int size = dout.size();
+    const int BLOCK_SIZE = np::GPU_NUM_CUDA_CORE;
+    dim3 block(BLOCK_SIZE);
+    dim3 grid(ceil(std::min<int>(static_cast<float>(size)/block.x, 2 * np::GPU_NUM_SM)));
+
+    kernelReLUBackward<float><<<grid, block>>>(dout.mat, cache.mat, dX.mat, size);
+    cudaDeviceSynchronize();
+
     return dX;
     // #############################################################################################
 }

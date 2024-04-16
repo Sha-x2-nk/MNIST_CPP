@@ -23,17 +23,30 @@ std::pair<np::ArrayGPU<float>, np::ArrayGPU<float>> SoftmaxLoss::computeLossAndG
         - dx: Gradient of the loss with respect to x
     */
     auto exp_x = np::exp(x - x.max(1));
+
     auto scores = exp_x / exp_x.sum(1);
 
-    scores = scores + 1e-8; // epsilon to prevent -log(0)
+    int sz = x.rows();
+    int NUM_CLASSES = x.cols();
 
-    auto loss = (-np::log(scores.get(np::arange<int>(x.rows()), y))).sum() / x.rows();
+    // scores = scores + 1e-8; // epsilon to prevent -log(0)
+    // auto loss = (-np::log(scores.get(np::arange<int>(x.rows()), y))).sum() / x.rows();
+    // scores.set(np::arange<int>(x.rows()), y, NP_OP_SUB, 1);
 
-    auto dx = scores;
-    dx.set(np::arange<int>(x.rows()), y, NP_OP_SUB, 1);
 
-    dx = dx / x.rows();
-    return {loss, dx};
+    np::ArrayGPU<float> scores_for_loss(sz);
+
+    int BLOCK_SIZE = np::GPU_NUM_CUDA_CORE;
+    dim3 block(BLOCK_SIZE);
+    dim3 grid(std::min<int>(ceil(static_cast<float>(sz)/block.x), 2 * np::GPU_NUM_SM));
+
+    kernelSoftMaxUtils<float><<<grid, block>>>(scores.mat, y.mat, scores_for_loss.mat, NUM_CLASSES, sz);
+    cudaDeviceSynchronize();
+    auto loss = scores_for_loss.sum()/sz;
+
+    scores = scores / sz;
+
+    return {loss, scores};
 }
 
 np::ArrayGPU<float> SoftmaxLoss::computeLoss(const np::ArrayGPU<float> &x, const np::ArrayGPU<int> &y)

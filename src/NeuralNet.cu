@@ -94,19 +94,16 @@ std::pair<np::ArrayGPU<float>, np::ArrayGPU<float>> NeuralNet::forward(const np:
     {
         out = this->affine_layers[i](out, this->mode);
 
-        out = dropout_layers[i](out);
+        out = dropout_layers[i](out, this->mode);
 
-        out = relu_layers[i](out);
+        out = relu_layers[i](out, this->mode);
     }
 
     // last layer no activations or dropouts
-    out = affine_layers.back()(out);
-
+    out = affine_layers.back()(out, this->mode);
     // if model is in eval mode, return out and loss only. No need for backprop
     if (this->mode == "eval")
-    {
         return {out, SoftmaxLoss::computeLoss(out, y)};
-    }
 
     // vector of loss, dout
     auto lossNgrad = SoftmaxLoss::computeLossAndGrad(out, y);

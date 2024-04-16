@@ -60,6 +60,7 @@ np::ArrayGPU<float> AffineLayer::forward(const np::ArrayGPU<float> &X, const std
         - cache: x, for backpropagation
     */
     np::ArrayGPU<float> out = X.dot(this->W) + this->b;
+
     if (mode == "train")
         this->cache = X;
 

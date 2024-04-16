@@ -231,7 +231,7 @@ namespace np
 			* idx - idx of element
 			Ex: auto B = A.at(0);
 		*/
-		ArrayGPU<TP> at(const int idx) const;
+		ArrayGPU<TP> at(const int idx) ;
 
 		/*
 			Returns element at (r, c) as array object.
@@ -240,7 +240,7 @@ namespace np
 			* c - c to access from
 			Ex: auto B = A.at(5, 2);
 		*/
-		ArrayGPU<TP> at(const int r, const int c) const;
+		ArrayGPU<TP> at(const int r, const int c) ;
 
 		/*
 			Returns element at idx as array object.
@@ -249,7 +249,7 @@ namespace np
 			Ex: auto B = A.get(0);
 			Note: at returns reference, get returns copy.
 		*/
-		ArrayGPU<TP> get(const int idx) const;
+		TP get(const int idx) const;
 
 		/*
 			Returns element at (r, c) as array object.
@@ -259,7 +259,7 @@ namespace np
 			Ex: auto B = A.get(5, 2);
 			Note: at returns reference, get returns copy.
 		*/
-		ArrayGPU<TP> get(const int r, const int c) const;
+		TP get(const int r, const int c) const;
 
 		/*
 			Returns elements at std::vector<int> indexes as array object.
@@ -948,8 +948,9 @@ namespace np
 		Ex: auto B = A.at(0);
 	*/
 	template <typename TP>
-	ArrayGPU<TP> ArrayGPU<TP>::at(const int idx) const
+	ArrayGPU<TP> ArrayGPU<TP>::at(const int idx) 
 	{
+		
 		ArrayGPU<TP> res(1, 1);
 		res.mat = (this->mat + idx);
 		res.ref_count = this->ref_count;
@@ -965,7 +966,7 @@ namespace np
 		Ex: auto B = A.at(5, 2);
 	*/
 	template <typename TP>
-	ArrayGPU<TP> ArrayGPU<TP>::at(const int r, const int c) const
+	ArrayGPU<TP> ArrayGPU<TP>::at(const int r, const int c) 
 	{
 		return this->at(r * this->_cols + c);
 	}
@@ -978,9 +979,11 @@ namespace np
 		Note: at returns reference, get returns copy.
 	*/
 	template <typename TP>
-	ArrayGPU<TP> ArrayGPU<TP>::get(const int idx) const
+	TP ArrayGPU<TP>::get(const int idx) const
 	{
-		return ArrayGPU<TP>(this->mat + idx, 1, 1, "gpu");
+		TP val;
+		CUDA_CALL(cudaMemcpy(&val, mat + idx, sizeof(TP), cudaMemcpyDeviceToHost));
+		return val;
 	}
 
 	/*
@@ -992,7 +995,7 @@ namespace np
 		Note: at returns reference, get returns copy.
 	*/
 	template <typename TP>
-	ArrayGPU<TP> ArrayGPU<TP>::get(const int r, const int c) const
+	TP ArrayGPU<TP>::get(const int r, const int c) const
 	{
 		return this->get(r * this->_cols + c);
 	}
@@ -2150,48 +2153,34 @@ namespace np
 		}
 		else if (axis == 1)
 		{
-			// sum along _rows. output dim = numRows
+			// reduction along _rows. output dim = numRows
 			ArrayGPU<TP> res(this->_rows, 1);
 
 			const int BLOCK_SIZE = ((GPU_NUM_CUDA_CORE == 64) ? 64 : 128) * 2;
 			dim3 block(BLOCK_SIZE);
 			dim3 grid(std::min<int>(np_ceil(this->_cols, block.x), GPU_NUM_SM * 2));
-
 			TP *tmp_d;
 			CUDA_CALL(cudaMalloc((void **)&tmp_d, sizeof(TP) * this->_rows * grid.x));
-
+			
 			switch (GPU_NUM_CUDA_CORE)
 			{
 			case 64:
-				for (int i = 0; i < this->_rows; ++i)
-				{
-					kernelReduceF<TP, 64 * 2, F><<<grid, block>>>(this->mat + i * this->_cols, tmp_d + i * grid.x, this->_cols);
-				}
-
+				kernelReduceFAxis1<TP, 64 * 2, F><<<grid, block>>>(this->mat, tmp_d, this->_cols, this->_rows);
 				cudaDeviceSynchronize();
 
-				for (int i = 0; i < this->_rows; ++i)
-				{
-					kernelReduceF<TP, 64 * 2, F><<<1, block>>>(tmp_d + i * grid.x, res.mat + i, grid.x);
-				}
-
+				kernelReduceFAxis1<TP, 64 * 2, F><<<1, block>>>(tmp_d, res.mat, grid.x, this->_rows);
 				cudaDeviceSynchronize();
+
 				break;
 			default:
-				for (int i = 0; i < this->_rows; ++i)
-				{
-					kernelReduceF<TP, 128 * 2, F><<<grid, block>>>(this->mat + i * this->_cols, tmp_d + i * grid.x, this->_cols);
-				}
-
+				kernelReduceFAxis1<TP, 256, F><<<grid, block>>>(this->mat, tmp_d, this->_cols, this->_rows);
 				cudaDeviceSynchronize();
 
-				for (int i = 0; i < this->_rows; ++i)
-				{
-					kernelReduceF<TP, 128 * 2, F><<<1, block>>>(tmp_d + i * grid.x, res.mat + i, grid.x);
-				}
-
+				kernelReduceFAxis1<TP, 256, F><<<1, block>>>(tmp_d, res.mat, grid.x, this->_rows);
 				cudaDeviceSynchronize();
 			}
+
+			cudaFree(tmp_d);
 			return res;
 		}
 		else
@@ -2293,29 +2282,20 @@ namespace np
 			switch (GPU_NUM_CUDA_CORE)
 			{
 			case 64:
-				for (int i = 0; i < this->_rows; ++i)
-					kernelReduceArgF<TP, 64 * 2, F><<<grid, block>>>(this->mat + i * this->_cols, tmp_A_d + i * grid.x, tmp_A_Idx_d + i * grid.x, this->_cols);
+				kernelReduceArgFAxis1<TP, 64 * 2, F><<<grid, block>>>(this->mat, tmp_A_d, tmp_A_Idx_d, this->_cols, this->_rows);
 				cudaDeviceSynchronize();
 
-				if (grid.x == 1)
-				{
-					resIdx.mat = tmp_A_Idx_d;
-					return resIdx;
-				}
-				for (int i = 0; i < this->_rows; ++i)
-					kernelReduceArgF<TP, 64 * 2, F><<<1, block>>>(tmp_A_d + i * grid.x, tmp_A_Idx_d + i * grid.x, res.mat + i, resIdx.mat + i, grid.x);
+				kernelReduceArgFAxis1<TP, 64 * 2, F><<<1, block>>>(tmp_A_d, tmp_A_Idx_d, res.mat, resIdx.mat, grid.x, this->_rows);				
 				cudaDeviceSynchronize();
 				break;
 			default:
-				for (int i = 0; i < this->_rows; ++i)
-					kernelReduceArgF<TP, 128 * 2, F><<<grid, block>>>(this->mat + i * this->_cols, tmp_A_d + i * grid.x, tmp_A_Idx_d + i * grid.x, this->_cols);
-
+				kernelReduceArgFAxis1<TP, 128 * 2, F><<<grid, block>>>(this->mat, tmp_A_d, tmp_A_Idx_d, this->_cols, this->_rows);
 				cudaDeviceSynchronize();
-				for (int i = 0; i < this->_rows; ++i)
-					kernelReduceArgF<TP, 128 * 2, F><<<1, block>>>(tmp_A_d + i * grid.x, tmp_A_Idx_d + i * grid.x, res.mat + i, resIdx.mat + i, grid.x);
 
+				kernelReduceArgFAxis1<TP, 128 * 2, F><<<1, block>>>(tmp_A_d, tmp_A_Idx_d, res.mat, resIdx.mat, grid.x, this->_rows);				
 				cudaDeviceSynchronize();
 			}
+
 
 			CUDA_CALL(cudaFree(tmp_A_d));
 			CUDA_CALL(cudaFree(tmp_A_Idx_d));

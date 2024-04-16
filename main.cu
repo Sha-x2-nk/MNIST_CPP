@@ -29,54 +29,48 @@ NeuralNet trainModel(float *x_train, int *y_train, int train_size, float *x_val,
 int main()
 {
     np::getGPUConfig(0);
-    // std::cout << std::endl
-    //           << "----------------------------------------------------" << std::endl;
-    // std::cout << "----------------STARTING DATA FETCH-----------------" << std::endl;
-    // std::cout << "----------------------------------------------------" << std::endl;
+    std::cout << std::endl
+              << "----------------------------------------------------" << std::endl;
+    std::cout << "----------------STARTING DATA FETCH-----------------" << std::endl;
+    std::cout << "----------------------------------------------------" << std::endl;
 
-    // auto imgsNlabels = prepareDataset();
+    auto imgsNlabels = prepareDataset();
 
-    // std::cout << std::endl
-    //           << "----------------------------------------------------" << std::endl;
-    // std::cout << "-------------IMAGES AND LABELS FETCHED--------------" << std::endl;
-    // std::cout << "----------------------------------------------------" << std::endl;
+    std::cout << std::endl
+              << "----------------------------------------------------" << std::endl;
+    std::cout << "-------------IMAGES AND LABELS FETCHED--------------" << std::endl;
+    std::cout << "----------------------------------------------------" << std::endl;
 
-    // std::cout << std::endl
-    //           << "----------------------------------------------------" << std::endl;
-    // std::cout << "-------------Beginning GPU execution----------------" << std::endl;
-    // std::cout << "----------------------------------------------------" << std::endl;
+    std::cout << std::endl
+              << "----------------------------------------------------" << std::endl;
+    std::cout << "-------------Beginning GPU execution----------------" << std::endl;
+    std::cout << "----------------------------------------------------" << std::endl;
 
-    // NeuralNet nn = trainModel(imgsNlabels.first[0], imgsNlabels.second[0], 58000, imgsNlabels.first[1], imgsNlabels.second[1], 2000, imgsNlabels.first[2], imgsNlabels.second[2], 10000, 784);
+    NeuralNet nn = trainModel(imgsNlabels.first[0], imgsNlabels.second[0], 58000, imgsNlabels.first[1], imgsNlabels.second[1], 2000, imgsNlabels.first[2], imgsNlabels.second[2], 10000, 784);
 
-    // // viewing columns where test data was misclassified
-    // nn.eval();
-    // std::vector<int> miss_classified_test_idxs;
-    // for (int i = 0; i < 10000; ++i)
-    // {
-    //     auto x = np::ArrayGPU<float>(imgsNlabels.first[2] + i * 784, 1, 784, "cpu");
+    // viewing columns where test data was misclassified
+    nn.eval();
+    std::vector<int> miss_classified_test_idxs;
+    for (int i = 0; i < 10000; ++i)
+    {
+        auto x = np::ArrayGPU<float>(imgsNlabels.first[2] + i * 784, 1, 784, "cpu");
 
-    //     auto y_label = (imgsNlabels.second[2] + i)[0];
-    //     auto y_pred = nn(x).argmax(1).at(0).cpu()[0];
+        auto y_label = (imgsNlabels.second[2] + i)[0];
+        auto y_pred = nn(x).argmax(1).at(0).cpu()[0];
 
-    //     if (y_pred != y_label)
-    //     {
-    //         showMNIST(imgsNlabels.first[2] + i * 784, 28, 28, std::string(std::string("Test Img. actual: ") + std::to_string(y_label) + std::string(" predicted: ") + std::to_string(y_pred)));
-    //     }
-    // }
+        if (y_pred != y_label)
+        {
+            showMNIST(imgsNlabels.first[2] + i * 784, 28, 28, std::string(std::string("Test Img. actual: ") + std::to_string(y_label) + std::string(" predicted: ") + std::to_string(y_pred)));
+        }
+    }
 
-    // // releasing memory occupied
-    // for (int i = 0; i < 3; ++i)
-    // {
-    //     free(imgsNlabels.first[i]);
-    //     free(imgsNlabels.second[1]);
-    // }
-    auto X = np::Random::randn<float>(8190, 8190);
-    auto Y = np::Random::randn<float>(8190, 8190, time(NULL) + rand());
-    auto st = clock();
-    auto Z = X.T();
-    auto end = clock();
-    std::cout<<"\nTIME TAKEN: "<<((static_cast<double>(end - st)) * 1000)/(static_cast<double>(CLOCKS_PER_SEC))<< " ms.";
-    
+    // releasing memory occupied
+    for (int i = 0; i < 3; ++i)
+    {
+        free(imgsNlabels.first[i]);
+        free(imgsNlabels.second[1]);
+    }
+
     cublasDestroy(np::cbls_handle);
     return 0;
 }
@@ -223,7 +217,7 @@ NeuralNet trainModel(float *x_train, int *y_train, int train_size, float *x_val,
 
     std::cout << std::endl
               << "############### Train Parameters: ###############" << std::endl;
-    std::cout << "## Network Architecture: [" << model.affine_layers[0].W.rows() << ", " << model.affine_layers[0].W.cols() << "], [" << model.affine_layers[1].W.rows() << ", " << model.affine_layers[1].W.cols() << "] ##" << std::endl;
+    std::cout << "# Network Architecture: [" << model.affine_layers[0].W.rows() << ", " << model.affine_layers[0].W.cols() << "], [" << model.affine_layers[1].W.rows() << ", " << model.affine_layers[1].W.cols() << "] #" << std::endl;
     std::cout << "## Initialisation: Xavier Init                 ##" << std::endl;
     std::cout << "## Dropout Probablity: " << model.dropout_layers[0].p_keep << "                  ##" << std::endl;
     std::cout << "## Batch Size: " << batch_size << "                             ##" << std::endl;
@@ -236,8 +230,8 @@ NeuralNet trainModel(float *x_train, int *y_train, int train_size, float *x_val,
     std::cout << "------------Beginning Network Training--------------" << std::endl;
     std::cout << "----------------------------------------------------" << std::endl;
 
-    auto st = clock();
     float val_acc = 0, train_acc = 0;
+    auto st = clock();
     for (int epoch = 0; epoch < num_epochs; ++epoch)
     {
         for (int iter = 0; iter < num_iters; ++iter)
@@ -252,14 +246,14 @@ NeuralNet trainModel(float *x_train, int *y_train, int train_size, float *x_val,
             if ((iter + 1) % 100 == 0)
             {
                 auto predicted_gpu = outNloss.first.argmax(1);
-                train_acc = static_cast<float>(((predicted_gpu == y_train_batches[iter]).sum()).at(0).cpu()[0]) / y_train_batches[iter].rows();
 
+                train_acc = static_cast<float>(((predicted_gpu == y_train_batches[iter]).sum()).get(0)) / y_train_batches[iter].rows();
                 // evaluating on validation set
                 model.eval();
                 auto y_pred_gpu = model(x_val_gpu);
                 predicted_gpu = y_pred_gpu.argmax(1);
 
-                val_acc = static_cast<float>(((predicted_gpu == y_val_gpu).sum()).at(0).cpu()[0]) / val_size;
+                val_acc = static_cast<float>(((predicted_gpu == y_val_gpu).sum()).get(0)) / val_size;
 
                 std::cout << "Epoch: " << epoch + 1 << " iter: " << iter + 1 << " loss: " << outNloss.second << " train_acc: " << train_acc << " val_acc: " << val_acc << std::endl;
             }
@@ -278,7 +272,8 @@ NeuralNet trainModel(float *x_train, int *y_train, int train_size, float *x_val,
         }
     }
     auto end = clock();
-    std::cout<<std::endl<<"TOTAL TIME: "<<static_cast<double>(end - st)/CLOCKS_PER_SEC<<std::endl;
+    std::cout << std::endl
+              << "TOTAL TIME: " << static_cast<double>(end - st) / CLOCKS_PER_SEC << " s" << std::endl;
 
     std::cout << std::endl
               << "[+] Model Training Done." << std::endl;
