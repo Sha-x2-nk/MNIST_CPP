@@ -3,7 +3,7 @@
 
 #include <numC/npGPUArray.cuh>
 #include <numC/customKernels.cuh>
-#include <numC/errorCheckUtils.cuh>
+#include <numC/utils.cuh>
 #include <numC/gpuConfig.cuh>
 
 #include <cuda_runtime.h>
@@ -14,34 +14,6 @@
 
 namespace np
 {
-	#define np_ceil(x, y) ((x + y - 1) / y)
-	#define NP_OP_ADD 1
-	#define NP_OP_SUB 2
-	#define NP_OP_MUL 3
-	#define NP_OP_DIV 4
-	#define NP_OP_LESS_THAN 5
-	#define NP_OP_LESS_THAN_EQ 6
-	#define NP_OP_GREATER_THAN 7
-	#define NP_OP_GREATER_THAN_EQ 8
-	#define NP_OP_EQEQ 9
-	#define NP_OP_NOT_EQ 10
-	#define NP_OP_MINIMUM 11
-	#define NP_OP_MAXIMUM 12
-
-	#define NP_OP_EQ 13
-
-	#define NP_REDUCE_SUM 14
-	#define NP_REDUCE_MIN 15
-	#define NP_REDUCE_MAX 16
-	#define NP_REDUCE_ARGMIN 17
-	#define NP_REDUCE_ARGMAX 18
-
-	#define NP_F_EXP 19
-	#define NP_F_LOG 20
-	#define NP_F_SQAURE 21
-	#define NP_F_SQRT 22
-	#define NP_F_POW 23
-
 	template <typename TP>
 	class ArrayGPU
 	{
@@ -51,14 +23,14 @@ namespace np
 		// _rows and _cols of array.
 		int _rows, _cols;
 
-		template <char OP>
+		template <Operation OP>
 		ArrayGPU<TP> applyOp(const ArrayGPU<TP> &B) const;
-		template <char OP>
+		template <Operation OP>
 		ArrayGPU<TP> applyOp(const TP Scalar) const;
 
-		template <char F>
+		template <Operation OP>
 		ArrayGPU<TP> applyReductionF(const int axis) const;
-		template <char F>
+		template <Operation OP>
 		ArrayGPU<int> applyReductionArgF(const int axis) const;
 
 	public:
@@ -318,7 +290,7 @@ namespace np
 			* Val - Scalar
 			Ex: A.set(0, NP_OP_ADD, 1); // adds one
 		*/
-		void set(const int idx, const char op, const TP operand = 0);
+		void set(const int idx, const Operation op, const TP operand = 0);
 
 		/*
 			modifies element at (r, c)
@@ -329,7 +301,7 @@ namespace np
 			* Val - Scalar
 			Ex: A.set(5, 2, NP_OP_SUB, 2);
 		*/
-		void set(const int r, const int c, const char op, const TP operand = 0);
+		void set(const int r, const int c, const Operation op, const TP operand = 0);
 
 		/*
 			modifies element at a list of indexes
@@ -339,7 +311,7 @@ namespace np
 			* Val - Scalar
 			Ex: A.set(idxs, NP_OP_MUL, 2);
 		*/
-		void set(const ArrayGPU<int> &idxs, const char op, const TP operand = 0);
+		void set(const ArrayGPU<int> &idxs, const Operation op, const TP operand = 0);
 
 		/*
 			modifies element at a list of indexes
@@ -349,7 +321,7 @@ namespace np
 			* Val - Scalar
 			Ex: A.set({1, 2, 3}, NP_OP_MUL, 2);
 		*/
-		void set(const std::vector<int> &idxs, const char op, const TP operand = 0);
+		void set(const std::vector<int> &idxs, const Operation op, const TP operand = 0);
 
 		/*
 			modifies element at a list of indexes
@@ -360,7 +332,7 @@ namespace np
 			* Val - Scalar
 			Ex: A.set(r_idxs, c_idxs, NP_OP_MUL, 2);
 		*/
-		void set(const ArrayGPU<int> &r, const ArrayGPU<int> &c, const char op, const TP operand = 0);
+		void set(const ArrayGPU<int> &r, const ArrayGPU<int> &c, const Operation op, const TP operand = 0);
 
 		/*
 			modifies element at a ArrayGPU<int> of indexes
@@ -371,7 +343,7 @@ namespace np
 			* Val - Scalar
 			Ex: A.set(r_idxs, c_idxs, NP_OP_MUL, 2);
 		*/
-		void set(const std::vector<int> &r, const ArrayGPU<int> &c, char op, TP operand = 0);
+		void set(const std::vector<int> &r, const ArrayGPU<int> &c, Operation op, TP operand = 0);
 
 		/*
 			modifies element at a ArrayGPU<int> of indexes
@@ -382,7 +354,7 @@ namespace np
 			* Val - Scalar
 			Ex: A.set(r_idxs, c_idxs, NP_OP_MUL, 2);
 		*/
-		void set(const ArrayGPU<int> &r, const std::vector<int> &c, char op, TP operand = 0);
+		void set(const ArrayGPU<int> &r, const std::vector<int> &c, Operation op, TP operand = 0);
 
 		/*
 			modifies element at a ArrayGPU<int> of indexes
@@ -393,7 +365,7 @@ namespace np
 			* Val - Scalar
 			Ex: A.set(r_idxs, c_idxs, NP_OP_MUL, 2);
 		*/
-		void set(const std::vector<int> &r, const std::vector<int> &c, char op, TP operand = 0);
+		void set(const std::vector<int> &r, const std::vector<int> &c, Operation op, TP operand = 0);
 
 		/*
 			modifies element at a list of indexes
@@ -403,7 +375,7 @@ namespace np
 			* Val - ArrayGPU
 			Ex: A.set({1, 2, 3}, NP_OP_MUL, ar);
 		*/
-		void set(const std::vector<int> &idxs, char op, const ArrayGPU<TP> & operand);
+		void set(const std::vector<int> &idxs, Operation op, const ArrayGPU<TP> & operand);
 
 		/*
 			modifies element at a list of indexes
@@ -413,7 +385,7 @@ namespace np
 			* Val - ArrayGPU
 			Ex: A.set(idxs, NP_OP_MUL, ar);
 		*/
-		void set(const ArrayGPU<int> &idxs, char op, const ArrayGPU<TP> & operand);
+		void set(const ArrayGPU<int> &idxs, Operation op, const ArrayGPU<TP> & operand);
 
 		/*
 			modifies element at a list of indexes
@@ -424,7 +396,7 @@ namespace np
 			* Val - ArrayGPU
 			Ex: A.set(r_idxs, c_idxs, NP_OP_MUL, ar);
 		*/
-		void set(const ArrayGPU<int> &r, const ArrayGPU<int> &c, char op, const ArrayGPU<TP> & operand);
+		void set(const ArrayGPU<int> &r, const ArrayGPU<int> &c, Operation op, const ArrayGPU<TP> & operand);
 
 		/*
 			modifies element at a ArrayGPU<int> of indexes
@@ -435,7 +407,7 @@ namespace np
 			* Val - ArrayGPU
 			Ex: A.set(r_idxs, c_idxs, NP_OP_MUL, ar);
 		*/
-		void set(const ArrayGPU<int> &r, const std::vector<int> &c, char op, const ArrayGPU<TP> & operand);
+		void set(const ArrayGPU<int> &r, const std::vector<int> &c, Operation op, const ArrayGPU<TP> & operand);
 
 		/*
 			modifies element at a ArrayGPU<int> of indexes
@@ -446,7 +418,7 @@ namespace np
 			* Val - Scalar
 			Ex: A.set(r_idxs, c_idxs, NP_OP_MUL, ar);
 		*/
-		void set(const std::vector<int> &r, const ArrayGPU<int> &c, char op, const ArrayGPU<TP> & operand);
+		void set(const std::vector<int> &r, const ArrayGPU<int> &c, Operation op, const ArrayGPU<TP> & operand);
 
 		/*
 			modifies element at a ArrayGPU<int> of indexes
@@ -457,7 +429,7 @@ namespace np
 			* Val - Scalar
 			Ex: A.set(r_idxs, c_idxs, NP_OP_MUL, ar);
 		*/
-		void set(const std::vector<int> &r, const std::vector<int> &c, char op, const ArrayGPU<TP> & operand);
+		void set(const std::vector<int> &r, const std::vector<int> &c, Operation op, const ArrayGPU<TP> & operand);
 
 		// ####################### DOT PRODUCT ############################
 
@@ -1102,66 +1074,66 @@ namespace np
 		Ex: A.set(0, NP_OP_ADD, 1); // adds one
 	*/
 	template <typename TP>
-	void ArrayGPU<TP>::set(const int idx, const char op, const TP operand){
+	void ArrayGPU<TP>::set(const int idx, const Operation op, const TP operand){
 		ArrayGPU<int> idxs(1, 1, idx);
 		int sz = 1;
 		dim3 block(1);
 		dim3 grid(1);
 
 		switch(op){
-			case 1:
-				kernelSetMat<TP, 1><<<grid, block>>>(this->mat, operand, idxs.mat, sz);
+			case NP_OP_ADD:
+				kernelSetMat<TP, NP_OP_ADD><<<grid, block>>>(this->mat, operand, idxs.mat, sz);
 				break;
-			case 2:
-				kernelSetMat<TP, 2><<<grid, block>>>(this->mat, operand, idxs.mat, sz);
+			case NP_OP_SUB:
+				kernelSetMat<TP, NP_OP_SUB><<<grid, block>>>(this->mat, operand, idxs.mat, sz);
 				break;
-			case 3:
-				kernelSetMat<TP, 3><<<grid, block>>>(this->mat, operand, idxs.mat, sz);
+			case NP_OP_MUL:
+				kernelSetMat<TP, NP_OP_MUL><<<grid, block>>>(this->mat, operand, idxs.mat, sz);
 				break;
-			case 4:
-				kernelSetMat<TP, 4><<<grid, block>>>(this->mat, operand, idxs.mat, sz);
+			case NP_OP_DIV:
+				kernelSetMat<TP, NP_OP_DIV><<<grid, block>>>(this->mat, operand, idxs.mat, sz);
 				break;
-			case 5:
-				kernelSetMat<TP, 5><<<grid, block>>>(this->mat, operand, idxs.mat, sz);
+			case NP_OP_LESS_THAN:
+				kernelSetMat<TP, NP_OP_LESS_THAN><<<grid, block>>>(this->mat, operand, idxs.mat, sz);
 				break;
-			case 6:
-				kernelSetMat<TP, 6><<<grid, block>>>(this->mat, operand, idxs.mat, sz);
+			case NP_OP_LESS_THAN_EQ:
+				kernelSetMat<TP, NP_OP_LESS_THAN_EQ><<<grid, block>>>(this->mat, operand, idxs.mat, sz);
 				break;
-			case 7:
-				kernelSetMat<TP, 7><<<grid, block>>>(this->mat, operand, idxs.mat, sz);
+			case NP_OP_GREATER_THAN:
+				kernelSetMat<TP, NP_OP_GREATER_THAN><<<grid, block>>>(this->mat, operand, idxs.mat, sz);
 				break;
-			case 8:
-				kernelSetMat<TP, 8><<<grid, block>>>(this->mat, operand, idxs.mat, sz);
+			case NP_OP_GREATER_THAN_EQ:
+				kernelSetMat<TP, NP_OP_GREATER_THAN_EQ><<<grid, block>>>(this->mat, operand, idxs.mat, sz);
 				break;
-			case 9:
-				kernelSetMat<TP, 9><<<grid, block>>>(this->mat, operand, idxs.mat, sz);
+			case NP_OP_EQ_EQ :
+				kernelSetMat<TP, NP_OP_EQ_EQ><<<grid, block>>>(this->mat, operand, idxs.mat, sz);
 				break;
-			case 10:
-				kernelSetMat<TP, 10><<<grid, block>>>(this->mat, operand, idxs.mat, sz);
+			case NP_OP_NOT_EQ :
+				kernelSetMat<TP, NP_OP_NOT_EQ><<<grid, block>>>(this->mat, operand, idxs.mat, sz);
 				break;
-			case 11:
-				kernelSetMat<TP, 11><<<grid, block>>>(this->mat, operand, idxs.mat, sz);
+			case NP_OP_MINIMUM:
+				kernelSetMat<TP, NP_OP_MINIMUM><<<grid, block>>>(this->mat, operand, idxs.mat, sz);
 				break;
-			case 12:
-				kernelSetMat<TP, 12><<<grid, block>>>(this->mat, operand, idxs.mat, sz);
+			case NP_OP_MAXIMUM:
+				kernelSetMat<TP, NP_OP_MAXIMUM><<<grid, block>>>(this->mat, operand, idxs.mat, sz);
 				break;
-			case 13:
-				kernelSetMat<TP, 13><<<grid, block>>>(this->mat, operand, idxs.mat, sz);
+			case NP_OP_EQ:
+				kernelSetMat<TP, NP_OP_EQ><<<grid, block>>>(this->mat, operand, idxs.mat, sz);
 				break;
-			case 19:
-				kernelSetMat<TP, 19><<<grid, block>>>(this->mat, operand, idxs.mat, sz);
+			case NP_F_EXP:
+				kernelSetMat<TP, NP_F_EXP><<<grid, block>>>(this->mat, operand, idxs.mat, sz);
 				break;
-			case 20:
-				kernelSetMat<TP, 20><<<grid, block>>>(this->mat, operand, idxs.mat, sz);
+			case NP_F_LOG:
+				kernelSetMat<TP, NP_F_LOG><<<grid, block>>>(this->mat, operand, idxs.mat, sz);
 				break;
-			case 21:
-				kernelSetMat<TP, 21><<<grid, block>>>(this->mat, operand, idxs.mat, sz);
+			case NP_F_SQUARE:
+				kernelSetMat<TP, NP_F_SQUARE><<<grid, block>>>(this->mat, operand, idxs.mat, sz);
 				break;
-			case 22:
-				kernelSetMat<TP, 22><<<grid, block>>>(this->mat, operand, idxs.mat, sz);
+			case NP_F_SQRT:
+				kernelSetMat<TP, NP_F_SQRT><<<grid, block>>>(this->mat, operand, idxs.mat, sz);
 				break;
-			case 23:
-				kernelSetMat<TP, 23><<<grid, block>>>(this->mat, operand, idxs.mat, sz);
+			case NP_F_POW:
+				kernelSetMat<TP, NP_F_POW><<<grid, block>>>(this->mat, operand, idxs.mat, sz);
 				break;
 			default:
 				std::cerr<<"\nINVALID OPERAND PASSED IN SET.";
@@ -1179,7 +1151,7 @@ namespace np
 		Ex: A.set(5, 2, NP_OP_SUB, 2);
 	*/
 	template <typename TP>
-	void ArrayGPU<TP>::set(const int r, const int c, const char op, const TP operand){
+	void ArrayGPU<TP>::set(const int r, const int c, const Operation op, const TP operand){
 		this->set(r * this->_cols + c, op, operand);
 	}
 
@@ -1192,7 +1164,7 @@ namespace np
 		Ex: A.set(idxs, NP_OP_MUL, 2);
 	*/
 	template <typename TP>
-	void ArrayGPU<TP>::set(const ArrayGPU<int> &idxs, const char op, const TP operand){
+	void ArrayGPU<TP>::set(const ArrayGPU<int> &idxs, const Operation op, const TP operand){
 		int sz = std::max<int>(idxs.cols(), idxs.rows());
 
 		const int BLOCK_SIZE = (GPU_NUM_CUDA_CORE == 64) ? 64 : 128;
@@ -1200,59 +1172,59 @@ namespace np
 		dim3 grid(std::min<int>(GPU_NUM_SM * 2, np_ceil(sz, block.x)));
 		std::cout<<"\nBLOCK: "<<block.x<<" GRID: "<<grid.x<<std::endl;
 		switch(op){
-			case 1:
-				kernelSetMat<TP, 1><<<grid, block>>>(this->mat, operand, idxs.mat, sz);
+			case NP_OP_ADD:
+				kernelSetMat<TP, NP_OP_ADD><<<grid, block>>>(this->mat, operand, idxs.mat, sz);
 				break;
-			case 2:
-				kernelSetMat<TP, 2><<<grid, block>>>(this->mat, operand, idxs.mat, sz);
+			case NP_OP_SUB:
+				kernelSetMat<TP, NP_OP_SUB><<<grid, block>>>(this->mat, operand, idxs.mat, sz);
 				break;
-			case 3:
-				kernelSetMat<TP, 3><<<grid, block>>>(this->mat, operand, idxs.mat, sz);
+			case NP_OP_MUL:
+				kernelSetMat<TP, NP_OP_MUL><<<grid, block>>>(this->mat, operand, idxs.mat, sz);
 				break;
-			case 4:
-				kernelSetMat<TP, 4><<<grid, block>>>(this->mat, operand, idxs.mat, sz);
+			case NP_OP_DIV:
+				kernelSetMat<TP, NP_OP_DIV><<<grid, block>>>(this->mat, operand, idxs.mat, sz);
 				break;
-			case 5:
-				kernelSetMat<TP, 5><<<grid, block>>>(this->mat, operand, idxs.mat, sz);
+			case NP_OP_LESS_THAN:
+				kernelSetMat<TP, NP_OP_LESS_THAN><<<grid, block>>>(this->mat, operand, idxs.mat, sz);
 				break;
-			case 6:
-				kernelSetMat<TP, 6><<<grid, block>>>(this->mat, operand, idxs.mat, sz);
+			case NP_OP_LESS_THAN_EQ:
+				kernelSetMat<TP, NP_OP_LESS_THAN_EQ><<<grid, block>>>(this->mat, operand, idxs.mat, sz);
 				break;
-			case 7:
-				kernelSetMat<TP, 7><<<grid, block>>>(this->mat, operand, idxs.mat, sz);
+			case NP_OP_GREATER_THAN:
+				kernelSetMat<TP, NP_OP_GREATER_THAN><<<grid, block>>>(this->mat, operand, idxs.mat, sz);
 				break;
-			case 8:
-				kernelSetMat<TP, 8><<<grid, block>>>(this->mat, operand, idxs.mat, sz);
+			case NP_OP_GREATER_THAN_EQ:
+				kernelSetMat<TP, NP_OP_GREATER_THAN_EQ><<<grid, block>>>(this->mat, operand, idxs.mat, sz);
 				break;
-			case 9:
-				kernelSetMat<TP, 9><<<grid, block>>>(this->mat, operand, idxs.mat, sz);
+			case NP_OP_EQ_EQ :
+				kernelSetMat<TP, NP_OP_EQ_EQ><<<grid, block>>>(this->mat, operand, idxs.mat, sz);
 				break;
-			case 10:
-				kernelSetMat<TP, 10><<<grid, block>>>(this->mat, operand, idxs.mat, sz);
+			case NP_OP_NOT_EQ :
+				kernelSetMat<TP, NP_OP_NOT_EQ><<<grid, block>>>(this->mat, operand, idxs.mat, sz);
 				break;
-			case 11:
-				kernelSetMat<TP, 11><<<grid, block>>>(this->mat, operand, idxs.mat, sz);
+			case NP_OP_MINIMUM:
+				kernelSetMat<TP, NP_OP_MINIMUM><<<grid, block>>>(this->mat, operand, idxs.mat, sz);
 				break;
-			case 12:
-				kernelSetMat<TP, 12><<<grid, block>>>(this->mat, operand, idxs.mat, sz);
+			case NP_OP_MAXIMUM:
+				kernelSetMat<TP, NP_OP_MAXIMUM><<<grid, block>>>(this->mat, operand, idxs.mat, sz);
 				break;
-			case 13:
-				kernelSetMat<TP, 13><<<grid, block>>>(this->mat, operand, idxs.mat, sz);
+			case NP_OP_EQ:
+				kernelSetMat<TP, NP_OP_EQ><<<grid, block>>>(this->mat, operand, idxs.mat, sz);
 				break;
-			case 19:
-				kernelSetMat<TP, 19><<<grid, block>>>(this->mat, operand, idxs.mat, sz);
+			case NP_F_EXP:
+				kernelSetMat<TP, NP_F_EXP><<<grid, block>>>(this->mat, operand, idxs.mat, sz);
 				break;
-			case 20:
-				kernelSetMat<TP, 20><<<grid, block>>>(this->mat, operand, idxs.mat, sz);
+			case NP_F_LOG:
+				kernelSetMat<TP, NP_F_LOG><<<grid, block>>>(this->mat, operand, idxs.mat, sz);
 				break;
-			case 21:
-				kernelSetMat<TP, 21><<<grid, block>>>(this->mat, operand, idxs.mat, sz);
+			case NP_F_SQUARE:
+				kernelSetMat<TP, NP_F_SQUARE><<<grid, block>>>(this->mat, operand, idxs.mat, sz);
 				break;
-			case 22:
-				kernelSetMat<TP, 22><<<grid, block>>>(this->mat, operand, idxs.mat, sz);
+			case NP_F_SQRT:
+				kernelSetMat<TP, NP_F_SQRT><<<grid, block>>>(this->mat, operand, idxs.mat, sz);
 				break;
-			case 23:
-				kernelSetMat<TP, 23><<<grid, block>>>(this->mat, operand, idxs.mat, sz);
+			case NP_F_POW:
+				kernelSetMat<TP, NP_F_POW><<<grid, block>>>(this->mat, operand, idxs.mat, sz);
 				break;
 			default:
 				std::cerr<<"\nINVALID OPERAND PASSED IN SET.";
@@ -1269,7 +1241,7 @@ namespace np
 		Ex: A.set({1, 2, 3}, NP_OP_MUL, 2);
 	*/
 	template <typename TP>
-	void ArrayGPU<TP>::set(const std::vector<int> &idxs, const char op, const TP operand){
+	void ArrayGPU<TP>::set(const std::vector<int> &idxs, const Operation op, const TP operand){
 		this->set(ArrayGPU<int>(idxs), op, operand);
 	}
 
@@ -1283,7 +1255,7 @@ namespace np
 		Ex: A.set(r_idxs, c_idxs, NP_OP_MUL, 2);
 	*/
 	template <typename TP>
-	void ArrayGPU<TP>::set(const ArrayGPU<int> &r, const ArrayGPU<int> &c, const char op, const TP operand){
+	void ArrayGPU<TP>::set(const ArrayGPU<int> &r, const ArrayGPU<int> &c, const Operation op, const TP operand){
 		int sz = std::max<int>(r.cols(), r.rows());
 
 		const int BLOCK_SIZE = (GPU_NUM_CUDA_CORE == 64) ? 64 : 128;
@@ -1291,59 +1263,59 @@ namespace np
 		dim3 grid(std::min<int>(GPU_NUM_SM * 2, np_ceil(sz, block.x)));
 
 		switch(op){
-			case 1:
-				kernelSetMat<TP, 1><<<grid, block>>>(this->mat, this->_cols, operand, r.mat, c.mat, sz);
+			case NP_OP_ADD:
+				kernelSetMat<TP, NP_OP_ADD><<<grid, block>>>(this->mat, this->_cols, operand, r.mat, c.mat, sz);
 				break;
-			case 2:
-				kernelSetMat<TP, 2><<<grid, block>>>(this->mat, this->_cols, operand, r.mat, c.mat, sz);
+			case NP_OP_SUB:
+				kernelSetMat<TP, NP_OP_SUB><<<grid, block>>>(this->mat, this->_cols, operand, r.mat, c.mat, sz);
 				break;
-			case 3:
-				kernelSetMat<TP, 3><<<grid, block>>>(this->mat, this->_cols, operand, r.mat, c.mat, sz);
+			case NP_OP_MUL:
+				kernelSetMat<TP, NP_OP_MUL><<<grid, block>>>(this->mat, this->_cols, operand, r.mat, c.mat, sz);
 				break;
-			case 4:
-				kernelSetMat<TP, 4><<<grid, block>>>(this->mat, this->_cols, operand, r.mat, c.mat, sz);
+			case NP_OP_DIV:
+				kernelSetMat<TP, NP_OP_DIV><<<grid, block>>>(this->mat, this->_cols, operand, r.mat, c.mat, sz);
 				break;
-			case 5:
-				kernelSetMat<TP, 5><<<grid, block>>>(this->mat, this->_cols, operand, r.mat, c.mat, sz);
+			case NP_OP_LESS_THAN:
+				kernelSetMat<TP, NP_OP_LESS_THAN><<<grid, block>>>(this->mat, this->_cols, operand, r.mat, c.mat, sz);
 				break;
-			case 6:
-				kernelSetMat<TP, 6><<<grid, block>>>(this->mat, this->_cols, operand, r.mat, c.mat, sz);
+			case NP_OP_LESS_THAN_EQ:
+				kernelSetMat<TP, NP_OP_LESS_THAN_EQ><<<grid, block>>>(this->mat, this->_cols, operand, r.mat, c.mat, sz);
 				break;
-			case 7:
-				kernelSetMat<TP, 7><<<grid, block>>>(this->mat, this->_cols, operand, r.mat, c.mat, sz);
+			case NP_OP_GREATER_THAN:
+				kernelSetMat<TP, NP_OP_GREATER_THAN><<<grid, block>>>(this->mat, this->_cols, operand, r.mat, c.mat, sz);
 				break;
-			case 8:
-				kernelSetMat<TP, 8><<<grid, block>>>(this->mat, this->_cols, operand, r.mat, c.mat, sz);
+			case NP_OP_GREATER_THAN_EQ:
+				kernelSetMat<TP, NP_OP_GREATER_THAN_EQ><<<grid, block>>>(this->mat, this->_cols, operand, r.mat, c.mat, sz);
 				break;
-			case 9:
-				kernelSetMat<TP, 9><<<grid, block>>>(this->mat, this->_cols, operand, r.mat, c.mat, sz);
+			case NP_OP_EQ_EQ :
+				kernelSetMat<TP, NP_OP_EQ_EQ><<<grid, block>>>(this->mat, this->_cols, operand, r.mat, c.mat, sz);
 				break;
-			case 10:
-				kernelSetMat<TP, 10><<<grid, block>>>(this->mat, this->_cols, operand, r.mat, c.mat, sz);
+			case NP_OP_NOT_EQ :
+				kernelSetMat<TP, NP_OP_NOT_EQ><<<grid, block>>>(this->mat, this->_cols, operand, r.mat, c.mat, sz);
 				break;
-			case 11:
-				kernelSetMat<TP, 11><<<grid, block>>>(this->mat, this->_cols, operand, r.mat, c.mat, sz);
+			case NP_OP_MINIMUM:
+				kernelSetMat<TP, NP_OP_MINIMUM><<<grid, block>>>(this->mat, this->_cols, operand, r.mat, c.mat, sz);
 				break;
-			case 12:
-				kernelSetMat<TP, 12><<<grid, block>>>(this->mat, this->_cols, operand, r.mat, c.mat, sz);
+			case NP_OP_MAXIMUM:
+				kernelSetMat<TP, NP_OP_MAXIMUM><<<grid, block>>>(this->mat, this->_cols, operand, r.mat, c.mat, sz);
 				break;
-			case 13:
-				kernelSetMat<TP, 13><<<grid, block>>>(this->mat, this->_cols, operand, r.mat, c.mat, sz);
+			case NP_OP_EQ:
+				kernelSetMat<TP, NP_OP_EQ><<<grid, block>>>(this->mat, this->_cols, operand, r.mat, c.mat, sz);
 				break;
-			case 19:
-				kernelSetMat<TP, 19><<<grid, block>>>(this->mat, this->_cols, operand, r.mat, c.mat, sz);
+			case NP_F_EXP:
+				kernelSetMat<TP, NP_F_EXP><<<grid, block>>>(this->mat, this->_cols, operand, r.mat, c.mat, sz);
 				break;
-			case 20:
-				kernelSetMat<TP, 20><<<grid, block>>>(this->mat, this->_cols, operand, r.mat, c.mat, sz);
+			case NP_F_LOG:
+				kernelSetMat<TP, NP_F_LOG><<<grid, block>>>(this->mat, this->_cols, operand, r.mat, c.mat, sz);
 				break;
-			case 21:
-				kernelSetMat<TP, 21><<<grid, block>>>(this->mat, this->_cols, operand, r.mat, c.mat, sz);
+			case NP_F_SQUARE:
+				kernelSetMat<TP, NP_F_SQUARE><<<grid, block>>>(this->mat, this->_cols, operand, r.mat, c.mat, sz);
 				break;
-			case 22:
-				kernelSetMat<TP, 22><<<grid, block>>>(this->mat, this->_cols, operand, r.mat, c.mat, sz);
+			case NP_F_SQRT:
+				kernelSetMat<TP, NP_F_SQRT><<<grid, block>>>(this->mat, this->_cols, operand, r.mat, c.mat, sz);
 				break;
-			case 23:
-				kernelSetMat<TP, 23><<<grid, block>>>(this->mat, this->_cols, operand, r.mat, c.mat, sz);
+			case NP_F_POW:
+				kernelSetMat<TP, NP_F_POW><<<grid, block>>>(this->mat, this->_cols, operand, r.mat, c.mat, sz);
 				break;
 			default:
 				std::cerr<<"\nINVALID OPERAND PASSED IN SET.";
@@ -1361,7 +1333,7 @@ namespace np
 		Ex: A.set(r_idxs, c_idxs, NP_OP_MUL, 2);
 	*/
 	template <typename TP>
-	void ArrayGPU<TP>::set(const ArrayGPU<int> &r, const std::vector<int> &c, char op, TP operand){
+	void ArrayGPU<TP>::set(const ArrayGPU<int> &r, const std::vector<int> &c, Operation op, TP operand){
 		this->set(r, ArrayGPU<int>(c), op, operand);
 	}
 
@@ -1375,7 +1347,7 @@ namespace np
 		Ex: A.set(r_idxs, c_idxs, NP_OP_MUL, 2);
 	*/
 	template <typename TP>
-	void ArrayGPU<TP>::set(const std::vector<int> &r, const ArrayGPU<int> &c, char op, TP operand){
+	void ArrayGPU<TP>::set(const std::vector<int> &r, const ArrayGPU<int> &c, Operation op, TP operand){
 		this->set(ArrayGPU<int>(r), c, op, operand);
 	}
 
@@ -1389,7 +1361,7 @@ namespace np
 		Ex: A.set(r_idxs, c_idxs, NP_OP_MUL, 2);
 	*/
 	template <typename TP>
-	void ArrayGPU<TP>::set(const std::vector<int> &r, const std::vector<int> &c, char op, TP operand){
+	void ArrayGPU<TP>::set(const std::vector<int> &r, const std::vector<int> &c, Operation op, TP operand){
 		this->set(ArrayGPU<int>(r), ArrayGPU<int>(c), op, operand);
 	}
 
@@ -1402,7 +1374,7 @@ namespace np
 		Ex: A.set({1, 2, 3}, NP_OP_MUL, ar);
 	*/
 	template <typename TP>
-	void ArrayGPU<TP>::set(const ArrayGPU<int> &idxs, char op, const ArrayGPU<TP> & operand){
+	void ArrayGPU<TP>::set(const ArrayGPU<int> &idxs, Operation op, const ArrayGPU<TP> & operand){
 		if(operand.size() == 1){
 			TP* operand_ = operand.at(0).cpu();
 			this->set(idxs, op, operand_[0]);
@@ -1416,44 +1388,44 @@ namespace np
 		dim3 grid(std::min<int>(GPU_NUM_SM * 2, np_ceil(sz, block.x)));
 		
 		switch(op){
-			case 1:
-				kernelSetMat<TP, 1><<<grid, block>>>(this->mat, operand.mat, idxs, sz);
+			case NP_OP_ADD:
+				kernelSetMat<TP, NP_OP_ADD><<<grid, block>>>(this->mat, operand.mat, idxs, sz);
 				break;
-			case 2:
-				kernelSetMat<TP, 2><<<grid, block>>>(this->mat, operand.mat, idxs, sz);
+			case NP_OP_SUB:
+				kernelSetMat<TP, NP_OP_SUB><<<grid, block>>>(this->mat, operand.mat, idxs, sz);
 				break;
-			case 3:
-				kernelSetMat<TP, 3><<<grid, block>>>(this->mat, operand.mat, idxs, sz);
+			case NP_OP_MUL:
+				kernelSetMat<TP, NP_OP_MUL><<<grid, block>>>(this->mat, operand.mat, idxs, sz);
 				break;
-			case 4:
-				kernelSetMat<TP, 4><<<grid, block>>>(this->mat, operand.mat, idxs, sz);
+			case NP_OP_DIV:
+				kernelSetMat<TP, NP_OP_DIV><<<grid, block>>>(this->mat, operand.mat, idxs, sz);
 				break;
-			case 5:
-				kernelSetMat<TP, 5><<<grid, block>>>(this->mat, operand.mat, idxs, sz);
+			case NP_OP_LESS_THAN:
+				kernelSetMat<TP, NP_OP_LESS_THAN><<<grid, block>>>(this->mat, operand.mat, idxs, sz);
 				break;
-			case 6:
-				kernelSetMat<TP, 6><<<grid, block>>>(this->mat, operand.mat, idxs, sz);
+			case NP_OP_LESS_THAN_EQ:
+				kernelSetMat<TP, NP_OP_LESS_THAN_EQ><<<grid, block>>>(this->mat, operand.mat, idxs, sz);
 				break;
-			case 7:
-				kernelSetMat<TP, 7><<<grid, block>>>(this->mat, operand.mat, idxs, sz);
+			case NP_OP_GREATER_THAN:
+				kernelSetMat<TP, NP_OP_GREATER_THAN><<<grid, block>>>(this->mat, operand.mat, idxs, sz);
 				break;
-			case 8:
-				kernelSetMat<TP, 8><<<grid, block>>>(this->mat, operand.mat, idxs, sz);
+			case NP_OP_GREATER_THAN_EQ:
+				kernelSetMat<TP, NP_OP_GREATER_THAN_EQ><<<grid, block>>>(this->mat, operand.mat, idxs, sz);
 				break;
-			case 9:
-				kernelSetMat<TP, 9><<<grid, block>>>(this->mat, operand.mat, idxs, sz);
+			case NP_OP_EQ_EQ :
+				kernelSetMat<TP, NP_OP_EQ_EQ><<<grid, block>>>(this->mat, operand.mat, idxs, sz);
 				break;
-			case 10:
-				kernelSetMat<TP, 10><<<grid, block>>>(this->mat, operand.mat, idxs, sz);
+			case NP_OP_NOT_EQ :
+				kernelSetMat<TP, NP_OP_NOT_EQ><<<grid, block>>>(this->mat, operand.mat, idxs, sz);
 				break;
-			case 11:
-				kernelSetMat<TP, 11><<<grid, block>>>(this->mat, operand.mat, idxs, sz);
+			case NP_OP_MINIMUM:
+				kernelSetMat<TP, NP_OP_MINIMUM><<<grid, block>>>(this->mat, operand.mat, idxs, sz);
 				break;
-			case 12:
-				kernelSetMat<TP, 12><<<grid, block>>>(this->mat, operand.mat, idxs, sz);
+			case NP_OP_MAXIMUM:
+				kernelSetMat<TP, NP_OP_MAXIMUM><<<grid, block>>>(this->mat, operand.mat, idxs, sz);
 				break;
-			case 13:
-				kernelSetMat<TP, 13><<<grid, block>>>(this->mat, operand.mat, idxs, sz);
+			case NP_OP_EQ:
+				kernelSetMat<TP, NP_OP_EQ><<<grid, block>>>(this->mat, operand.mat, idxs, sz);
 				break;
 			default:
 				std::cerr<<"\nINVALID OPERAND PASSED IN SET.";
@@ -1470,7 +1442,7 @@ namespace np
 		Ex: A.set(idxs, NP_OP_MUL, ar);
 	*/
 	template <typename TP>
-	void ArrayGPU<TP>::set(const std::vector<int> &idxs, char op, const ArrayGPU<TP> & operand){
+	void ArrayGPU<TP>::set(const std::vector<int> &idxs, Operation op, const ArrayGPU<TP> & operand){
 		this->set(ArrayGPU<int>(idxs), op, operand);
 	}
 
@@ -1484,7 +1456,7 @@ namespace np
 		Ex: A.set(r_idxs, c_idxs, NP_OP_MUL, ar);
 	*/
 	template <typename TP>
-	void ArrayGPU<TP>::set(const ArrayGPU<int> &r, const ArrayGPU<int> &c, char op, const ArrayGPU<TP> &operand){
+	void ArrayGPU<TP>::set(const ArrayGPU<int> &r, const ArrayGPU<int> &c, Operation op, const ArrayGPU<TP> &operand){
 		if(operand.size() == 1){
 			TP* operand_ = operand.at(0).cpu();
 			this->set(r, c, op, operand_[0]);
@@ -1500,44 +1472,44 @@ namespace np
 		std::cout<<"\nGRID: "<<grid.x<<" BLOCK: "<<block.x<<std::endl;
 
 		switch(op){
-			case 1:
-				kernelSetMat<TP, 1><<<grid, block>>>(this->mat, this->_cols, operand.mat, r.mat, c.mat, sz);
+			case NP_OP_ADD:
+				kernelSetMat<TP, NP_OP_ADD><<<grid, block>>>(this->mat, this->_cols, operand.mat, r.mat, c.mat, sz);
 				break;
-			case 2:
-				kernelSetMat<TP, 2><<<grid, block>>>(this->mat, this->_cols, operand.mat, r.mat, c.mat, sz);
+			case NP_OP_SUB:
+				kernelSetMat<TP, NP_OP_SUB><<<grid, block>>>(this->mat, this->_cols, operand.mat, r.mat, c.mat, sz);
 				break;
-			case 3:
-				kernelSetMat<TP, 3><<<grid, block>>>(this->mat, this->_cols, operand.mat, r.mat, c.mat, sz);
+			case NP_OP_MUL:
+				kernelSetMat<TP, NP_OP_MUL><<<grid, block>>>(this->mat, this->_cols, operand.mat, r.mat, c.mat, sz);
 				break;
-			case 4:
-				kernelSetMat<TP, 4><<<grid, block>>>(this->mat, this->_cols, operand.mat, r.mat, c.mat, sz);
+			case NP_OP_DIV:
+				kernelSetMat<TP, NP_OP_DIV><<<grid, block>>>(this->mat, this->_cols, operand.mat, r.mat, c.mat, sz);
 				break;
-			case 5:
-				kernelSetMat<TP, 5><<<grid, block>>>(this->mat, this->_cols, operand.mat, r.mat, c.mat, sz);
+			case NP_OP_LESS_THAN:
+				kernelSetMat<TP, NP_OP_LESS_THAN><<<grid, block>>>(this->mat, this->_cols, operand.mat, r.mat, c.mat, sz);
 				break;
-			case 6:
-				kernelSetMat<TP, 6><<<grid, block>>>(this->mat, this->_cols, operand.mat, r.mat, c.mat, sz);
+			case NP_OP_LESS_THAN_EQ:
+				kernelSetMat<TP, NP_OP_LESS_THAN_EQ><<<grid, block>>>(this->mat, this->_cols, operand.mat, r.mat, c.mat, sz);
 				break;
-			case 7:
-				kernelSetMat<TP, 7><<<grid, block>>>(this->mat, this->_cols, operand.mat, r.mat, c.mat, sz);
+			case NP_OP_GREATER_THAN:
+				kernelSetMat<TP, NP_OP_GREATER_THAN><<<grid, block>>>(this->mat, this->_cols, operand.mat, r.mat, c.mat, sz);
 				break;
-			case 8:
-				kernelSetMat<TP, 8><<<grid, block>>>(this->mat, this->_cols, operand.mat, r.mat, c.mat, sz);
+			case NP_OP_GREATER_THAN_EQ:
+				kernelSetMat<TP, NP_OP_GREATER_THAN_EQ><<<grid, block>>>(this->mat, this->_cols, operand.mat, r.mat, c.mat, sz);
 				break;
-			case 9:
-				kernelSetMat<TP, 9><<<grid, block>>>(this->mat, this->_cols, operand.mat, r.mat, c.mat, sz);
+			case NP_OP_EQ_EQ :
+				kernelSetMat<TP, NP_OP_EQ_EQ><<<grid, block>>>(this->mat, this->_cols, operand.mat, r.mat, c.mat, sz);
 				break;
-			case 10:
-				kernelSetMat<TP, 10><<<grid, block>>>(this->mat, this->_cols, operand.mat, r.mat, c.mat, sz);
+			case NP_OP_NOT_EQ :
+				kernelSetMat<TP, NP_OP_NOT_EQ><<<grid, block>>>(this->mat, this->_cols, operand.mat, r.mat, c.mat, sz);
 				break;
-			case 11:
-				kernelSetMat<TP, 11><<<grid, block>>>(this->mat, this->_cols, operand.mat, r.mat, c.mat, sz);
+			case NP_OP_MINIMUM:
+				kernelSetMat<TP, NP_OP_MINIMUM><<<grid, block>>>(this->mat, this->_cols, operand.mat, r.mat, c.mat, sz);
 				break;
-			case 12:
-				kernelSetMat<TP, 12><<<grid, block>>>(this->mat, this->_cols, operand.mat, r.mat, c.mat, sz);
+			case NP_OP_MAXIMUM:
+				kernelSetMat<TP, NP_OP_MAXIMUM><<<grid, block>>>(this->mat, this->_cols, operand.mat, r.mat, c.mat, sz);
 				break;
-			case 13:
-				kernelSetMat<TP, 13><<<grid, block>>>(this->mat, this->_cols, operand.mat, r.mat, c.mat, sz);
+			case NP_OP_EQ:
+				kernelSetMat<TP, NP_OP_EQ><<<grid, block>>>(this->mat, this->_cols, operand.mat, r.mat, c.mat, sz);
 				break;
 			default:
 				std::cerr<<"\nINVALID OPERAND PASSED IN SET.";
@@ -1555,7 +1527,7 @@ namespace np
 		Ex: A.set(r_idxs, c_idxs, NP_OP_MUL, ar);
 	*/
 	template <typename TP>
-	void ArrayGPU<TP>::set(const ArrayGPU<int> &r, const std::vector<int> &c, char op, const ArrayGPU<TP> & operand){
+	void ArrayGPU<TP>::set(const ArrayGPU<int> &r, const std::vector<int> &c, Operation op, const ArrayGPU<TP> & operand){
 		this->set(r, ArrayGPU<int>(c), op, operand);
 	}
 
@@ -1569,7 +1541,7 @@ namespace np
 		Ex: A.set(r_idxs, c_idxs, NP_OP_MUL, ar);
 	*/
 	template <typename TP>
-	void ArrayGPU<TP>::set(const std::vector<int> &r, const ArrayGPU<int> &c, char op, const ArrayGPU<TP> & operand){
+	void ArrayGPU<TP>::set(const std::vector<int> &r, const ArrayGPU<int> &c, Operation op, const ArrayGPU<TP> & operand){
 		this->set(ArrayGPU<int>(r), c, op, operand);
 	}
 
@@ -1583,7 +1555,7 @@ namespace np
 		Ex: A.set(r_idxs, c_idxs, NP_OP_MUL, ar);
 	*/
 	template <typename TP>
-	void ArrayGPU<TP>::set(const std::vector<int> &r, const std::vector<int> &c, char op, const ArrayGPU<TP> & operand){
+	void ArrayGPU<TP>::set(const std::vector<int> &r, const std::vector<int> &c, Operation op, const ArrayGPU<TP> & operand){
 		this->set(ArrayGPU<int>(r), ArrayGPU<int>(c), op, operand);
 	}
 
@@ -1696,7 +1668,7 @@ namespace np
 	}
 
 	template <typename TP>
-	template <char OP>
+	template <Operation OP>
 	ArrayGPU<TP> ArrayGPU<TP>::applyOp(const ArrayGPU<TP> &B) const
 	{
 		if (this->_rows == 1 && this->_cols == 1)
@@ -1800,7 +1772,7 @@ namespace np
 	}
 
 	template <typename TP>
-	template <char OP>
+	template <Operation OP>
 	ArrayGPU<TP> ArrayGPU<TP>::applyOp(const TP Scalar) const
 	{
 		ArrayGPU<TP> res(this->_rows, this->_cols);
@@ -2056,13 +2028,13 @@ namespace np
 	template <typename TP>
 	ArrayGPU<TP> ArrayGPU<TP>::operator==(const ArrayGPU<TP> &B) const
 	{
-		return this->applyOp<NP_OP_EQEQ>(B);
+		return this->applyOp<NP_OP_EQ_EQ>(B);
 	}
 
 	template <typename TP>
 	ArrayGPU<TP> ArrayGPU<TP>::operator==(const TP Scalar) const
 	{
-		return this->applyOp<NP_OP_EQEQ>(Scalar);
+		return this->applyOp<NP_OP_EQ_EQ>(Scalar);
 	}
 
 	template <typename TP>
@@ -2075,7 +2047,7 @@ namespace np
 		dim3 block(BLOCK_SIZE);
 		dim3 grid(std::min<int>(GPU_NUM_SM * 2, np_ceil(res.size(), block.x)));
 
-		kernelScalarOpMat<TP, NP_OP_EQEQ><<<grid, block>>>(Scal, B.mat, res.mat, res.size());
+		kernelScalarOpMat<TP, NP_OP_EQ_EQ><<<grid, block>>>(Scal, B.mat, res.mat, res.size());
 		cudaDeviceSynchronize();
 		return res;
 	}
@@ -2109,7 +2081,7 @@ namespace np
 	}
 
 	template <typename TP>
-	template <char F>
+	template <Operation OP>
 	ArrayGPU<TP> ArrayGPU<TP>::applyReductionF(const int axis) const
 	{
 		if (axis == -1)
@@ -2127,17 +2099,17 @@ namespace np
 			switch (GPU_NUM_CUDA_CORE)
 			{
 			case 64:
-				kernelReduceF<TP, 64 * 2, F><<<grid, block>>>(this->mat, tmp_d, this->size());
+				kernelReduceF<TP, 64 * 2, OP><<<grid, block>>>(this->mat, tmp_d, this->size());
 				cudaDeviceSynchronize();
 				// please guarantee that BLOCK_SIZE > grid.x. otherwise multiple kernel calls will have to be made.
-				kernelReduceF<TP, 64 * 2, F><<<1, block>>>(tmp_d, res.mat, grid.x);
+				kernelReduceF<TP, 64 * 2, OP><<<1, block>>>(tmp_d, res.mat, grid.x);
 				cudaDeviceSynchronize();
 				break;
 			default:
-				kernelReduceF<TP, 128 * 2, F><<<grid, block>>>(this->mat, tmp_d, this->size());
+				kernelReduceF<TP, 128 * 2, OP><<<grid, block>>>(this->mat, tmp_d, this->size());
 				cudaDeviceSynchronize();
 				// please guarantee that BLOCK_SIZE > grid.x. otherwise multiple kernel calls will have to be made.
-				kernelReduceF<TP, 128 * 2, F><<<1, block>>>(tmp_d, res.mat, grid.x);
+				kernelReduceF<TP, 128 * 2, OP><<<1, block>>>(tmp_d, res.mat, grid.x);
 				cudaDeviceSynchronize();
 				break;
 			}
@@ -2147,7 +2119,7 @@ namespace np
 		else if (axis == 0)
 		{
 			// sum along columns. dimension=numCols
-			auto ans = (this->T()).applyReductionF<F>(1);
+			auto ans = (this->T()).applyReductionF<OP>(1);
 			ans.reshape(1, -1);
 			return ans;
 		}
@@ -2165,18 +2137,18 @@ namespace np
 			switch (GPU_NUM_CUDA_CORE)
 			{
 			case 64:
-				kernelReduceFAxis1<TP, 64 * 2, F><<<grid, block>>>(this->mat, tmp_d, this->_cols, this->_rows);
+				kernelReduceFAxis1<TP, 64 * 2, OP><<<grid, block>>>(this->mat, tmp_d, this->_cols, this->_rows);
 				cudaDeviceSynchronize();
 
-				kernelReduceFAxis1<TP, 64 * 2, F><<<1, block>>>(tmp_d, res.mat, grid.x, this->_rows);
+				kernelReduceFAxis1<TP, 64 * 2, OP><<<1, block>>>(tmp_d, res.mat, grid.x, this->_rows);
 				cudaDeviceSynchronize();
 
 				break;
 			default:
-				kernelReduceFAxis1<TP, 256, F><<<grid, block>>>(this->mat, tmp_d, this->_cols, this->_rows);
+				kernelReduceFAxis1<TP, 256, OP><<<grid, block>>>(this->mat, tmp_d, this->_cols, this->_rows);
 				cudaDeviceSynchronize();
 
-				kernelReduceFAxis1<TP, 256, F><<<1, block>>>(tmp_d, res.mat, grid.x, this->_rows);
+				kernelReduceFAxis1<TP, 256, OP><<<1, block>>>(tmp_d, res.mat, grid.x, this->_rows);
 				cudaDeviceSynchronize();
 			}
 
@@ -2212,7 +2184,7 @@ namespace np
 	}
 
 	template <typename TP>
-	template <char F>
+	template <Operation OP>
 	ArrayGPU<int> ArrayGPU<TP>::applyReductionArgF(const int axis) const
 	{
 		if (axis == -1)
@@ -2233,7 +2205,7 @@ namespace np
 			switch (GPU_NUM_CUDA_CORE)
 			{
 			case 64:
-				kernelReduceArgF<TP, 64 * 2, F><<<grid, block>>>(this->mat, tmp_A_d, tmp_A_Idx_d, this->size());
+				kernelReduceArgF<TP, 64 * 2, OP><<<grid, block>>>(this->mat, tmp_A_d, tmp_A_Idx_d, this->size());
 				cudaDeviceSynchronize();
 				// please guarantee that BLOCK_SIZE > grid.x. otherwise multiple kernel calls will have to be made.
 				if (grid.x == 1)
@@ -2241,14 +2213,14 @@ namespace np
 					resIdx.mat = tmp_A_Idx_d;
 					return resIdx;
 				}
-				kernelReduceArgF<TP, 64 * 2, F><<<1, block>>>(tmp_A_d, tmp_A_Idx_d, res.mat, resIdx.mat, grid.x);
+				kernelReduceArgF<TP, 64 * 2, OP><<<1, block>>>(tmp_A_d, tmp_A_Idx_d, res.mat, resIdx.mat, grid.x);
 				cudaDeviceSynchronize();
 				break;
 			default:
-				kernelReduceArgF<TP, 128 * 2, F><<<grid, block>>>(this->mat, tmp_A_d, tmp_A_Idx_d, this->size());
+				kernelReduceArgF<TP, 128 * 2, OP><<<grid, block>>>(this->mat, tmp_A_d, tmp_A_Idx_d, this->size());
 				cudaDeviceSynchronize();
 				// please guarantee that BLOCK_SIZE > grid.x. otherwise multiple kernel calls will have to be made.
-				kernelReduceArgF<TP, 128 * 2, F><<<1, block>>>(tmp_A_d, tmp_A_Idx_d, res.mat, resIdx.mat, grid.x);
+				kernelReduceArgF<TP, 128 * 2, OP><<<1, block>>>(tmp_A_d, tmp_A_Idx_d, res.mat, resIdx.mat, grid.x);
 				cudaDeviceSynchronize();
 			}
 
@@ -2260,7 +2232,7 @@ namespace np
 		else if (axis == 0)
 		{
 			// sum along columns. dimension=numCols
-			auto ans = this->T().applyReductionArgF<F>(1);
+			auto ans = this->T().applyReductionArgF<OP>(1);
 			ans.reshape(1, -1);
 			return ans;
 		}
@@ -2282,17 +2254,17 @@ namespace np
 			switch (GPU_NUM_CUDA_CORE)
 			{
 			case 64:
-				kernelReduceArgFAxis1<TP, 64 * 2, F><<<grid, block>>>(this->mat, tmp_A_d, tmp_A_Idx_d, this->_cols, this->_rows);
+				kernelReduceArgFAxis1<TP, 64 * 2, OP><<<grid, block>>>(this->mat, tmp_A_d, tmp_A_Idx_d, this->_cols, this->_rows);
 				cudaDeviceSynchronize();
 
-				kernelReduceArgFAxis1<TP, 64 * 2, F><<<1, block>>>(tmp_A_d, tmp_A_Idx_d, res.mat, resIdx.mat, grid.x, this->_rows);				
+				kernelReduceArgFAxis1<TP, 64 * 2, OP><<<1, block>>>(tmp_A_d, tmp_A_Idx_d, res.mat, resIdx.mat, grid.x, this->_rows);				
 				cudaDeviceSynchronize();
 				break;
 			default:
-				kernelReduceArgFAxis1<TP, 128 * 2, F><<<grid, block>>>(this->mat, tmp_A_d, tmp_A_Idx_d, this->_cols, this->_rows);
+				kernelReduceArgFAxis1<TP, 128 * 2, OP><<<grid, block>>>(this->mat, tmp_A_d, tmp_A_Idx_d, this->_cols, this->_rows);
 				cudaDeviceSynchronize();
 
-				kernelReduceArgFAxis1<TP, 128 * 2, F><<<1, block>>>(tmp_A_d, tmp_A_Idx_d, res.mat, resIdx.mat, grid.x, this->_rows);				
+				kernelReduceArgFAxis1<TP, 128 * 2, OP><<<1, block>>>(tmp_A_d, tmp_A_Idx_d, res.mat, resIdx.mat, grid.x, this->_rows);				
 				cudaDeviceSynchronize();
 			}
 

@@ -1,6 +1,8 @@
 #ifndef CUSTOMKERNELS_CUH
 #define CUSTOMKERNELS_CUH
 
+#include <numc/utils.cuh> // for Operator types
+
 #include <cuda_runtime.h>
 #include <curand.h>
 #include <curand_kernel.h>
@@ -47,95 +49,77 @@ __global__ void kernelGetMatValues(const TP *in, TP *out, const int *idxs, const
 template <typename TP>
 __global__ void kernelGetMatValues(const TP *in, const int rdin, TP *out, const int *rows, const int *cols, const int size);
 
-// kernel to set values at a range of indexes.
-template <typename TP>
-__global__ void kernelSetMatValues(TP *in, const int rdin, const TP *val, const int *rows, const int *cols, const int size);
+// sets A[i] to A[i] OP B, for i in idxs
+template <typename TP, np::Operation OP>
+__global__ void kernelSetMat(TP *A, const TP B, const int *idxs, const int size);
 
-// kernel to set values at a range of indexes.
-template <typename TP>
-__global__ void kernelSetMatValues(TP *in, const TP *val, const int *idxs, const int size);
+// sets A[i] to A[i] OP B[i], for i in idxs
+template <typename TP, np::Operation OP>
+__global__ void kernelSetMat(TP *A, const TP *B, const int *idxs, const int size);
 
-/* Operator functions
-	#define NP_OP_ADD 1
-	#define NP_OP_SUB 2
-	#define NP_OP_MUL 3
-	#define NP_OP_DIV 4
-	#define NP_OP_LESS_THAN 5
-	#define NP_OP_LESS_THAN_EQ 6
-	#define NP_OP_GREATER_THAN 7
-	#define NP_OP_GREATER_THAN_EQ 8
-	#define NP_OP_EQ 9
-	#define NP_OP_NOT_EQ 10
-*/
+// sets A[r][c] to A[r][c] OP B, for r, c in zip(r_idxs, c_idxs)
+template <typename TP, np::Operation OP>
+__global__ void kernelSetMat(TP *A, const int rdin, const TP B, const int *r_idxs, const int *c_idxs, const int size);
+
+// sets A[r][c] to A[r][c] OP B[r][c], for r, c in zip(r_idxs, c_idxs)
+template <typename TP, np::Operation OP>
+__global__ void kernelSetMat(TP *A, const int rdin, const TP *B, const int *r_idxs, const int *c_idxs, const int size);
 
 // operator functions
 
 // perform operator on corrosponding elements of 2 matrices
 //  C = A op B
-template <typename TP, char OP>
+template <typename TP, np::Operation OP>
 __global__ void kernelMatOpMat(const TP *A, const TP *B, TP *C, const int size);
-template <typename TP, char OP>
+template <typename TP, np::Operation OP>
 __global__ void kernelScalarOpMat(const TP Scal, const TP *A, TP *C, const int size);
 // operator on matrix and a scalar.
 //  C = A op Scal (broadcasting)
 // op scalar to all values of the matrix
-template <typename TP, char OP>
+template <typename TP, np::Operation OP>
 __global__ void kernelMatOpScalar(const TP *A, const TP Scal, TP *C, const int size);
-template <typename TP, char OP>
+template <typename TP, np::Operation OP>
 __global__ void kernelScalarOpMat(const TP Scal, const TP *A, TP *C, const int size);
 
 // op on matrix and vector, mat.rows = vec.dim
 // C = A op V (broadcasting)
 //  shapeA = M x N matrix
-template <typename TP, char OP>
+template <typename TP, np::Operation OP>
 __global__ void kernelMatOpVecAlongCols(const TP *A, const TP *V, TP *C, const int size, const int N);
-template <typename TP, char OP>
+template <typename TP, np::Operation OP>
 __global__ void kernelVecOpMatAlongCols(const TP *V, const TP *A, TP *C, const int size, const int N);
 
 // operator on matrix and vector, mat.cols = vec.dim
 // C = A op V (broadcasting)
 // shapeA = M x N matrix
-template <typename TP, char OP>
+template <typename TP, np::Operation OP>
 __global__ void kernelMatOpVecAlongRows(const TP *A, const TP *V, TP *C, const int size, const int N);
-template <typename TP, char OP>
+template <typename TP, np::Operation OP>
 __global__ void kernelVecOpMatAlongRows(const TP *V, const TP *A, TP *C, const int size, const int N);
 
 // maxmin
-/*
-	F
-	#define NP_OP_MAXIMUM 11
-	#define NP_OP_MINIMUM 12
-*/
 // compare 2 matrix ( element wise ) and put max / min value in result matrix.
 // A = MxN
 // B = MxN
 // Ci = max(Ai, Bi). (elementwise)
-template <typename TP, char F>
+template <typename TP, np::Operation OP>
 __global__ void kernelMatMaxminMat(const TP *A, const TP *B, TP *C, const int size);
 
-template <typename TP, char F>
+template <typename TP, np::Operation OP>
 __global__ void kernelMatMaxminScalar(const TP *A, const TP B, TP *C, const int size);
 
-template <typename TP, char F>
+template <typename TP, np::Operation OP>
 __global__ void kernelMatMaxminVecAlongCols(const TP *A, const TP *V, TP *C, const int size, const int N);
 
-template <typename TP, char F>
+template <typename TP, np::Operation OP>
 __global__ void kernelMatMaxminVecAlongRows(const TP *A, const TP *V, TP *C, const int size, const int N);
 
 // npfunctions
 // functions per element
-/*
-	F
-	#define NP_F_EXP 19
-	#define NP_F_LOG 20
-	#define NP_F_SQAURE 21
-	#define NP_F_SQRT 22
-	#define NP_F_POW 23
-*/
 // A = MxN
 // C = MxN
 // Ci = F(Ai)
-template <typename TP, char F>
+template <typename TP, np::Operation OP>
 __global__ void kernelFMat(const TP *A, TP *C, const int size);
 
 // np.pow
@@ -146,30 +130,22 @@ template <typename TP>
 __global__ void kernelPowMat(const TP *A, const float power, TP *C, const int size);
 
 // REDUCTION
-/*
-	F
-	#define NP_REDUCE_SUM 14
-	#define NP_REDUCE_MIN 15
-	#define NP_REDUCE_MAX 16
-	#define NP_REDUCE_ARGMIN 17
-	#define NP_REDUCE_ARGMAX 18
-*/
 // warp unroll
-template <typename TP, char F>
+template <typename TP, np::Operation OP>
 __device__ void kernelWarpReduceF(volatile TP *s_A, const int tid);
 
-template <typename TP, int BLOCK_SIZE, char F>
+template <typename TP, int BLOCK_SIZE, np::Operation OP>
 __global__ void kernelReduceF(const TP *A, TP *output, const int size);
 
 // warp unroll
-template <typename TP, char F>
+template <typename TP, np::Operation OP>
 __device__ void kernelWarpReduceArgF(volatile TP *s_A, volatile int *s_Idx, const int tid);
 
-template <typename TP, int BLOCK_SIZE, char F>
+template <typename TP, int BLOCK_SIZE, np::Operation OP>
 __global__ void kernelReduceArgF(const TP *A, TP *outputMax, int *outputIdx, const int size);
 
 // second reduction k time p -> idx serial nhi h, to ek idx ka bhi array dena hoga
-template <typename TP, int BLOCK_SIZE, char F>
+template <typename TP, int BLOCK_SIZE, np::Operation OP>
 __global__ void kernelReduceArgF(const TP *A, const int *A_idx, TP *outputMax, int *outputIdx, const int size);
 
 // np.shuffle
@@ -329,46 +305,46 @@ __global__ void kernelGetMat(const TP *A, const int rdin, TP* C, const int *r_id
 	}
 }
 
-// stes A[i] to A[i] OP B[i], just that i random idx
-template <typename TP, char OP>
+// sets A[i] to A[i] OP B, for i in idxs
+template <typename TP, np::Operation OP>
 __global__ void kernelSetMat(TP *A, const TP B, const int *idxs, const int size){
 	int idx = blockIdx.x * blockDim.x + threadIdx.x;
 	int grid_size = blockDim.x * gridDim.x;
 
 	while(idx < size){
-		if constexpr (OP == 1)
+		if constexpr (OP == np::NP_OP_ADD)
 			A[idxs[idx]] += B;
-		else if constexpr (OP == 2)
+		else if constexpr (OP == np::NP_OP_SUB)
 			A[idxs[idx]] -= B;
-		else if constexpr (OP == 3)
+		else if constexpr (OP == np::NP_OP_MUL)
 			A[idxs[idx]] *= B;
-		else if constexpr (OP == 4)
+		else if constexpr (OP == np::NP_OP_DIV)
 			A[idxs[idx]] /= B;
-		else if constexpr (OP == 5)
+		else if constexpr (OP == np::NP_OP_LESS_THAN)
 			A[idxs[idx]] = A[idxs[idx]] < B;
-		else if constexpr (OP == 6)
+		else if constexpr (OP == np::NP_OP_LESS_THAN_EQ)
 			A[idxs[idx]] = A[idxs[idx]] <= B;
-		else if constexpr (OP == 7)
+		else if constexpr (OP == np::NP_OP_GREATER_THAN)
 			A[idxs[idx]] = A[idxs[idx]] > B;
-		else if constexpr (OP == 8)
+		else if constexpr (OP == np::NP_OP_GREATER_THAN_EQ)
 			A[idxs[idx]] = A[idxs[idx]] >= B;
-		else if constexpr (OP == 9)
+		else if constexpr (OP == np::NP_OP_EQ_EQ)
 			A[idxs[idx]] = A[idxs[idx]] == B;
-		else if constexpr (OP == 10)
+		else if constexpr (OP == np::NP_OP_NOT_EQ)
 			A[idxs[idx]] = A[idxs[idx]] != B;
-		else if constexpr (OP == 11)
+		else if constexpr (OP == np::NP_OP_MINIMUM)
 			A[idxs[idx]] = (A[idxs[idx]] < B) ? A[idxs[idx]] : B;
-		else if constexpr (OP == 12)
+		else if constexpr (OP == np::NP_OP_MAXIMUM)
 			A[idxs[idx]] = (A[idxs[idx]] > B) ? A[idxs[idx]] : B;
-		else if constexpr (OP == 13)
+		else if constexpr (OP == np::NP_OP_EQ)
 			A[idxs[idx]] = B;
-		else if constexpr (OP == 19)
+		else if constexpr (OP == np::NP_F_EXP)
 			A[idxs[idx]] = expf(A[idxs[idx]]);
-		else if constexpr (OP == 20)
+		else if constexpr (OP == np::NP_F_LOG)
 			A[idxs[idx]] = logf(A[idxs[idx]]);
-		else if constexpr (OP == 21)
+		else if constexpr (OP == np::NP_F_SQUARE)
 			A[idxs[idx]] *= A[idxs[idx]];
-		else if constexpr (OP == 22)
+		else if constexpr (OP == np::NP_F_SQRT)
 		{
 			if constexpr (std::is_same<TP, int>::value)
 				A[idxs[idx]] = static_cast<int>(sqrtf(A[idxs[idx]]));
@@ -380,7 +356,7 @@ __global__ void kernelSetMat(TP *A, const TP B, const int *idxs, const int size)
 				// Handle other types here
 				printf("Unsupported type in kernelSetMat, where F = 22(sqrt)");
 		}
-		else if constexpr (OP == 23){
+		else if constexpr (OP == np::NP_F_POW){
 			if constexpr (std::is_same<TP, int>::value)
 				A[idxs[idx]] = static_cast<int>(powf(A[idxs[idx]], B));
 			else if constexpr (std::is_same<TP, float>::value)
@@ -397,46 +373,46 @@ __global__ void kernelSetMat(TP *A, const TP B, const int *idxs, const int size)
 	}
 }
 
-// stes A[i] to A[i] OP B[i], just that i random idx
-template <typename TP, char OP>
+// sets A[i] to A[i] OP B[i], for i in idxs
+template <typename TP, np::Operation OP>
 __global__ void kernelSetMat(TP *A, const TP *B, const int *idxs, const int size){
 	int idx = blockIdx.x * blockDim.x + threadIdx.x;
 	int grid_size = blockDim.x * gridDim.x;
 
 	while(idx < size){
-		if constexpr (OP == 1)
+		if constexpr (OP == np::NP_OP_ADD)
 			A[idxs[idx]] += B[idx];
-		else if constexpr (OP == 2)
+		else if constexpr (OP == np::NP_OP_SUB)
 			A[idxs[idx]] -= B[idx];
-		else if constexpr (OP == 3)
+		else if constexpr (OP == np::NP_OP_MUL)
 			A[idxs[idx]] *= B[idx];
-		else if constexpr (OP == 4)
+		else if constexpr (OP == np::NP_OP_DIV)
 			A[idxs[idx]] /= B[idx];
-		else if constexpr (OP == 5)
+		else if constexpr (OP == np::NP_OP_LESS_THAN)
 			A[idxs[idx]] = A[idxs[idx]] < B[idx];
-		else if constexpr (OP == 6)
+		else if constexpr (OP == np::NP_OP_LESS_THAN_EQ)
 			A[idxs[idx]] = A[idxs[idx]] <= B[idx];
-		else if constexpr (OP == 7)
+		else if constexpr (OP == np::NP_OP_GREATER_THAN)
 			A[idxs[idx]] = A[idxs[idx]] > B[idx];
-		else if constexpr (OP == 8)
+		else if constexpr (OP == np::NP_OP_GREATER_THAN_EQ)
 			A[idxs[idx]] = A[idxs[idx]] >= B[idx];
-		else if constexpr (OP == 9)
+		else if constexpr (OP == np::NP_OP_EQ_EQ)
 			A[idxs[idx]] = A[idxs[idx]] == B[idx];
-		else if constexpr (OP == 10)
+		else if constexpr (OP == np::NP_OP_NOT_EQ)
 			A[idxs[idx]] = A[idxs[idx]] != B[idx];
-		else if constexpr (OP == 11)
+		else if constexpr (OP == np::NP_OP_MINIMUM)
 			A[idxs[idx]] = (A[idxs[idx]] < B[idx]) ? A[idxs[idx]] : B[idx];
-		else if constexpr (OP == 12)
+		else if constexpr (OP == np::NP_OP_MAXIMUM)
 			A[idxs[idx]] = (A[idxs[idx]] > B[idx]) ? A[idxs[idx]] : B[idx];
-		else if constexpr (OP == 13)
+		else if constexpr (OP == np::NP_OP_EQ)
 			A[idxs[idx]] = B[idx];
-		else if constexpr (OP == 19)
+		else if constexpr (OP == np::NP_F_EXP)
 			A[idxs[idx]] = expf(A[idxs[idx]]);
-		else if constexpr (OP == 20)
+		else if constexpr (OP == np::NP_F_LOG)
 			A[idxs[idx]] = logf(A[idxs[idx]]);
-		else if constexpr (OP == 21)
+		else if constexpr (OP == np::NP_F_SQUARE)
 			A[idxs[idx]] *= A[idxs[idx]];
-		else if constexpr (OP == 22)
+		else if constexpr (OP == np::NP_F_SQRT)
 		{
 			if constexpr (std::is_same<TP, int>::value)
 				A[idxs[idx]] = static_cast<int>(sqrtf(A[idxs[idx]]));
@@ -448,7 +424,7 @@ __global__ void kernelSetMat(TP *A, const TP *B, const int *idxs, const int size
 				// Handle other types here
 				printf("Unsupported type in kernelSetMat, where F = 22(sqrt)");
 		}
-		else if constexpr (OP == 23){
+		else if constexpr (OP == np::NP_F_POW){
 			if constexpr (std::is_same<TP, int>::value)
 				A[idxs[idx]] = static_cast<int>(powf(A[idxs[idx]], B[idx]));
 			else if constexpr (std::is_same<TP, float>::value)
@@ -465,46 +441,46 @@ __global__ void kernelSetMat(TP *A, const TP *B, const int *idxs, const int size
 	}
 }
 
-// stes A[i] to A[i] OP B[i], just that i random idx
-template <typename TP, char OP>
+// sets A[r][c] to A[r][c] OP B, for r, c in zip(r_idxs, c_idxs)
+template <typename TP, np::Operation OP>
 __global__ void kernelSetMat(TP *A, const int rdin, const TP B, const int *r_idxs, const int *c_idxs, const int size){
 	int idx = blockIdx.x * blockDim.x + threadIdx.x;
 	int grid_size = blockDim.x * gridDim.x;
 
 	while(idx < size){
-		if constexpr (OP == 1)
+		if constexpr (OP == np::NP_OP_ADD)
 			A[r_idxs[idx] * rdin + c_idxs[idx]] += B;
-		else if constexpr (OP == 2)
+		else if constexpr (OP == np::NP_OP_SUB)
 			A[r_idxs[idx] * rdin + c_idxs[idx]] -= B;
-		else if constexpr (OP == 3)
+		else if constexpr (OP == np::NP_OP_MUL)
 			A[r_idxs[idx] * rdin + c_idxs[idx]] *= B;
-		else if constexpr (OP == 4)
+		else if constexpr (OP == np::NP_OP_DIV)
 			A[r_idxs[idx] * rdin + c_idxs[idx]] /= B;
-		else if constexpr (OP == 5)
+		else if constexpr (OP == np::NP_OP_LESS_THAN)
 			A[r_idxs[idx] * rdin + c_idxs[idx]] = A[r_idxs[idx] * rdin + c_idxs[idx]] < B;
-		else if constexpr (OP == 6)
+		else if constexpr (OP == np::NP_OP_LESS_THAN_EQ)
 			A[r_idxs[idx] * rdin + c_idxs[idx]] = A[r_idxs[idx] * rdin + c_idxs[idx]] <= B;
-		else if constexpr (OP == 7)
+		else if constexpr (OP == np::NP_OP_GREATER_THAN)
 			A[r_idxs[idx] * rdin + c_idxs[idx]] = A[r_idxs[idx] * rdin + c_idxs[idx]] > B;
-		else if constexpr (OP == 8)
+		else if constexpr (OP == np::NP_OP_GREATER_THAN_EQ)
 			A[r_idxs[idx] * rdin + c_idxs[idx]] = A[r_idxs[idx] * rdin + c_idxs[idx]] >= B;
-		else if constexpr (OP == 9)
+		else if constexpr (OP == np::NP_OP_EQ_EQ)
 			A[r_idxs[idx] * rdin + c_idxs[idx]] = A[r_idxs[idx] * rdin + c_idxs[idx]] == B;
-		else if constexpr (OP == 10)
+		else if constexpr (OP == np::NP_OP_NOT_EQ)
 			A[r_idxs[idx] * rdin + c_idxs[idx]] = A[r_idxs[idx] * rdin + c_idxs[idx]] != B;
-		else if constexpr (OP == 11)
+		else if constexpr (OP == np::NP_OP_MINIMUM)
 			A[r_idxs[idx] * rdin + c_idxs[idx]] = (A[r_idxs[idx] * rdin + c_idxs[idx]] < B) ? A[r_idxs[idx] * rdin + c_idxs[idx]] : B;
-		else if constexpr (OP == 12)
+		else if constexpr (OP == np::NP_OP_MAXIMUM)
 			A[r_idxs[idx] * rdin + c_idxs[idx]] = (A[r_idxs[idx] * rdin + c_idxs[idx]] > B) ? A[r_idxs[idx] * rdin + c_idxs[idx]] : B;
-		else if constexpr (OP == 13)
+		else if constexpr (OP == np::NP_OP_EQ)
 			A[r_idxs[idx] * rdin + c_idxs[idx]] = B;
-		else if constexpr (OP == 19)
+		else if constexpr (OP == np::NP_F_EXP)
 			A[r_idxs[idx] * rdin + c_idxs[idx]] = expf(A[r_idxs[idx] * rdin + c_idxs[idx]]);
-		else if constexpr (OP == 20)
+		else if constexpr (OP == np::NP_F_LOG)
 			A[r_idxs[idx] * rdin + c_idxs[idx]] = logf(A[r_idxs[idx] * rdin + c_idxs[idx]]);
-		else if constexpr (OP == 21)
+		else if constexpr (OP == np::NP_F_SQUARE)
 			A[r_idxs[idx] * rdin + c_idxs[idx]] *= A[r_idxs[idx] * rdin + c_idxs[idx]];
-		else if constexpr (OP == 22)
+		else if constexpr (OP == np::NP_F_SQRT)
 		{
 			if constexpr (std::is_same<TP, int>::value)
 				A[r_idxs[idx] * rdin + c_idxs[idx]] = static_cast<int>(sqrtf(A[r_idxs[idx] * rdin + c_idxs[idx]]));
@@ -516,7 +492,7 @@ __global__ void kernelSetMat(TP *A, const int rdin, const TP B, const int *r_idx
 				// Handle other types here
 				printf("Unsupported type in kernelSetMat, where F = 22(sqrt)");
 		}
-		else if constexpr (OP == 23){
+		else if constexpr (OP == np::NP_F_POW){
 			if constexpr (std::is_same<TP, int>::value)
 				A[r_idxs[idx] * rdin + c_idxs[idx]] = static_cast<int>(powf(A[r_idxs[idx] * rdin + c_idxs[idx]], B));
 			else if constexpr (std::is_same<TP, float>::value)
@@ -533,46 +509,46 @@ __global__ void kernelSetMat(TP *A, const int rdin, const TP B, const int *r_idx
 	}
 }
 
-// stes A[i] to A[i] OP B[i], just that i random idx
-template <typename TP, char OP>
+// sets A[r][c] to A[r][c] OP B[r][c], for r, c in zip(r_idxs, c_idxs)
+template <typename TP, np::Operation OP>
 __global__ void kernelSetMat(TP *A, const int rdin, const TP *B, const int *r_idxs, const int *c_idxs, const int size){
 	int idx = blockIdx.x * blockDim.x + threadIdx.x;
 	int grid_size = blockDim.x * gridDim.x;
 
 	while(idx < size){
-		if constexpr (OP == 1)
+		if constexpr (OP == np::NP_OP_ADD)
 			A[r_idxs[idx] * rdin + c_idxs[idx]] += B[idx];
-		else if constexpr (OP == 2)
+		else if constexpr (OP == np::NP_OP_SUB)
 			A[r_idxs[idx] * rdin + c_idxs[idx]] -= B[idx];
-		else if constexpr (OP == 3)
+		else if constexpr (OP == np::NP_OP_MUL)
 			A[r_idxs[idx] * rdin + c_idxs[idx]] *= B[idx];
-		else if constexpr (OP == 4)
+		else if constexpr (OP == np::NP_OP_DIV)
 			A[r_idxs[idx] * rdin + c_idxs[idx]] /= B[idx];
-		else if constexpr (OP == 5)
+		else if constexpr (OP == np::NP_OP_LESS_THAN)
 			A[r_idxs[idx] * rdin + c_idxs[idx]] = A[r_idxs[idx] * rdin + c_idxs[idx]] < B[idx];
-		else if constexpr (OP == 6)
+		else if constexpr (OP == np::NP_OP_LESS_THAN_EQ)
 			A[r_idxs[idx] * rdin + c_idxs[idx]] = A[r_idxs[idx] * rdin + c_idxs[idx]] <= B[idx];
-		else if constexpr (OP == 7)
+		else if constexpr (OP == np::NP_OP_GREATER_THAN)
 			A[r_idxs[idx] * rdin + c_idxs[idx]] = A[r_idxs[idx] * rdin + c_idxs[idx]] > B[idx];
-		else if constexpr (OP == 8)
+		else if constexpr (OP == np::NP_OP_GREATER_THAN_EQ)
 			A[r_idxs[idx] * rdin + c_idxs[idx]] = A[r_idxs[idx] * rdin + c_idxs[idx]] >= B[idx];
-		else if constexpr (OP == 9)
+		else if constexpr (OP == np::NP_OP_EQ_EQ)
 			A[r_idxs[idx] * rdin + c_idxs[idx]] = A[r_idxs[idx] * rdin + c_idxs[idx]] == B[idx];
-		else if constexpr (OP == 10)
+		else if constexpr (OP == np::NP_OP_NOT_EQ)
 			A[r_idxs[idx] * rdin + c_idxs[idx]] = A[r_idxs[idx] * rdin + c_idxs[idx]] != B[idx];
-		else if constexpr (OP == 11)
+		else if constexpr (OP == np::NP_OP_MINIMUM)
 			A[r_idxs[idx] * rdin + c_idxs[idx]] = (A[r_idxs[idx] * rdin + c_idxs[idx]] < B[idx]) ? A[r_idxs[idx] * rdin + c_idxs[idx]] : B[idx];
-		else if constexpr (OP == 12)
+		else if constexpr (OP == np::NP_OP_MAXIMUM)
 			A[r_idxs[idx] * rdin + c_idxs[idx]] = (A[r_idxs[idx] * rdin + c_idxs[idx]] > B[idx]) ? A[r_idxs[idx] * rdin + c_idxs[idx]] : B[idx];
-		else if constexpr (OP == 13)
+		else if constexpr (OP == np::NP_OP_EQ)
 			A[r_idxs[idx] * rdin + c_idxs[idx]] = B[idx];
-		else if constexpr (OP == 19)
+		else if constexpr (OP == np::NP_F_EXP)
 			A[r_idxs[idx] * rdin + c_idxs[idx]] = expf(A[r_idxs[idx] * rdin + c_idxs[idx]]);
-		else if constexpr (OP == 20)
+		else if constexpr (OP == np::NP_F_LOG)
 			A[r_idxs[idx] * rdin + c_idxs[idx]] = logf(A[r_idxs[idx] * rdin + c_idxs[idx]]);
-		else if constexpr (OP == 21)
+		else if constexpr (OP == np::NP_F_SQUARE)
 			A[r_idxs[idx] * rdin + c_idxs[idx]] *= A[r_idxs[idx] * rdin + c_idxs[idx]];
-		else if constexpr (OP == 22)
+		else if constexpr (OP == np::NP_F_SQRT)
 		{
 			if constexpr (std::is_same<TP, int>::value)
 				A[r_idxs[idx] * rdin + c_idxs[idx]] = static_cast<int>(sqrtf(A[r_idxs[idx] * rdin + c_idxs[idx]]));
@@ -584,7 +560,7 @@ __global__ void kernelSetMat(TP *A, const int rdin, const TP *B, const int *r_id
 				// Handle other types here
 				printf("Unsupported type in kernelSetMat, where F = 22(sqrt)");
 		}
-		else if constexpr (OP == 23){
+		else if constexpr (OP == np::NP_F_POW){
 			if constexpr (std::is_same<TP, int>::value)
 				A[r_idxs[idx] * rdin + c_idxs[idx]] = static_cast<int>(powf(A[r_idxs[idx] * rdin + c_idxs[idx]], B[idx]));
 			else if constexpr (std::is_same<TP, float>::value)
@@ -600,27 +576,11 @@ __global__ void kernelSetMat(TP *A, const int rdin, const TP *B, const int *r_id
 		idx += grid_size;		
 	}
 }
-
-/* Operator functions
-	#define NP_OP_ADD 1
-	#define NP_OP_SUB 2
-	#define NP_OP_MUL 3
-	#define NP_OP_DIV 4
-	#define NP_OP_LESS_THAN 5
-	#define NP_OP_LESS_THAN_EQ 6
-	#define NP_OP_GREATER_THAN 7
-	#define NP_OP_GREATER_THAN_EQ 8
-	#define NP_OP_EQ 9
-	#define NP_OP_NOT_EQ 10
-	#define NP_OP_MINIMUM 11
-	#define NP_OP_MAXIMUM 12
-*/
-
 // operator functions
 
 // perform operator on corrosponding elements of 2 matrices
 //  C = A op B
-template <typename TP, char OP>
+template <typename TP, np::Operation OP>
 __global__ void kernelMatOpMat(const TP *A, const TP *B, TP *C, const int size)
 {
 	int idx = blockIdx.x * blockDim.x + threadIdx.x;
@@ -628,29 +588,29 @@ __global__ void kernelMatOpMat(const TP *A, const TP *B, TP *C, const int size)
 
 	while (idx < size)
 	{
-		if constexpr (OP == 1)
+		if constexpr (OP == np::NP_OP_ADD)
 			C[idx] = A[idx] + B[idx];
-		else if constexpr (OP == 2)
+		else if constexpr (OP == np::NP_OP_SUB)
 			C[idx] = A[idx] - B[idx];
-		else if constexpr (OP == 3)
+		else if constexpr (OP == np::NP_OP_MUL)
 			C[idx] = A[idx] * B[idx];
-		else if constexpr (OP == 4)
+		else if constexpr (OP == np::NP_OP_DIV)
 			C[idx] = A[idx] / B[idx];
-		else if constexpr (OP == 5)
+		else if constexpr (OP == np::NP_OP_LESS_THAN)
 			C[idx] = A[idx] < B[idx];
-		else if constexpr (OP == 6)
+		else if constexpr (OP == np::NP_OP_LESS_THAN_EQ)
 			C[idx] = A[idx] <= B[idx];
-		else if constexpr (OP == 7)
+		else if constexpr (OP == np::NP_OP_GREATER_THAN)
 			C[idx] = A[idx] > B[idx];
-		else if constexpr (OP == 8)
+		else if constexpr (OP == np::NP_OP_GREATER_THAN_EQ)
 			C[idx] = A[idx] >= B[idx];
-		else if constexpr (OP == 9)
+		else if constexpr (OP == np::NP_OP_EQ_EQ)
 			C[idx] = A[idx] == B[idx];
-		else if constexpr (OP == 10)
+		else if constexpr (OP == np::NP_OP_NOT_EQ)
 			C[idx] = A[idx] != B[idx];
-		else if constexpr (OP == 11)
+		else if constexpr (OP == np::NP_OP_MINIMUM)
 			C[idx] = (A[idx] < B[idx]) ? A[idx] : B[idx];
-		else if constexpr (OP == 12)
+		else if constexpr (OP == np::NP_OP_MAXIMUM)
 			C[idx] = (A[idx] > B[idx]) ? A[idx] : B[idx];
 		else
 			printf("ERROR! INVALID OPERATOR IN kernelMatOPMat.\n");
@@ -661,7 +621,7 @@ __global__ void kernelMatOpMat(const TP *A, const TP *B, TP *C, const int size)
 // operator on matrix and a scalar.
 //  C = A op Scal (broadcasting)
 // op scalar to all values of the matrix
-template <typename TP, char OP>
+template <typename TP, np::Operation OP>
 __global__ void kernelMatOpScalar(const TP *A, const TP Scal, TP *C, const int size)
 {
 	int idx = blockIdx.x * blockDim.x + threadIdx.x;
@@ -669,36 +629,36 @@ __global__ void kernelMatOpScalar(const TP *A, const TP Scal, TP *C, const int s
 
 	while (idx < size)
 	{
-		if constexpr (OP == 1)
+		if constexpr (OP == np::NP_OP_ADD)
 			C[idx] = A[idx] + Scal;
-		else if constexpr (OP == 2)
+		else if constexpr (OP == np::NP_OP_SUB)
 			C[idx] = A[idx] - Scal;
-		else if constexpr (OP == 3)
+		else if constexpr (OP == np::NP_OP_MUL)
 			C[idx] = A[idx] * Scal;
-		else if constexpr (OP == 4)
+		else if constexpr (OP == np::NP_OP_DIV)
 			C[idx] = A[idx] / Scal;
-		else if constexpr (OP == 5)
+		else if constexpr (OP == np::NP_OP_LESS_THAN)
 			C[idx] = A[idx] < Scal;
-		else if constexpr (OP == 6)
+		else if constexpr (OP == np::NP_OP_LESS_THAN_EQ)
 			C[idx] = A[idx] <= Scal;
-		else if constexpr (OP == 7)
+		else if constexpr (OP == np::NP_OP_GREATER_THAN)
 			C[idx] = A[idx] > Scal;
-		else if constexpr (OP == 8)
+		else if constexpr (OP == np::NP_OP_GREATER_THAN_EQ)
 			C[idx] = A[idx] >= Scal;
-		else if constexpr (OP == 9)
+		else if constexpr (OP == np::NP_OP_EQ_EQ)
 			C[idx] = A[idx] == Scal;
-		else if constexpr (OP == 10)
+		else if constexpr (OP == np::NP_OP_NOT_EQ)
 			C[idx] = A[idx] != Scal;
-		else if constexpr (OP == 11)
+		else if constexpr (OP == np::NP_OP_MINIMUM)
 			C[idx] = (A[idx] < Scal) ? A[idx] : Scal;
-		else if constexpr (OP == 12)
+		else if constexpr (OP == np::NP_OP_MAXIMUM)
 			C[idx] = (A[idx] > Scal) ? A[idx] : Scal;
 		else
 			printf("ERROR! INVALID OPERATOR IN kernelMatOPScalar.\n");
 		idx += grid_size;
 	}
 }
-template <typename TP, char OP>
+template <typename TP, np::Operation OP>
 __global__ void kernelMatOpScalar(const TP *A, const TP *Scal_a, TP *C, const int size)
 {
 	int idx = blockIdx.x * blockDim.x + threadIdx.x;
@@ -706,29 +666,29 @@ __global__ void kernelMatOpScalar(const TP *A, const TP *Scal_a, TP *C, const in
 	const TP Scal = Scal_a[0];
 	while (idx < size)
 	{
-		if constexpr (OP == 1)
+		if constexpr (OP == np::NP_OP_ADD)
 			C[idx] = A[idx] + Scal;
-		else if constexpr (OP == 2)
+		else if constexpr (OP == np::NP_OP_SUB)
 			C[idx] = A[idx] - Scal;
-		else if constexpr (OP == 3)
+		else if constexpr (OP == np::NP_OP_MUL)
 			C[idx] = A[idx] * Scal;
-		else if constexpr (OP == 4)
+		else if constexpr (OP == np::NP_OP_DIV)
 			C[idx] = A[idx] / Scal;
-		else if constexpr (OP == 5)
+		else if constexpr (OP == np::NP_OP_LESS_THAN)
 			C[idx] = A[idx] < Scal;
-		else if constexpr (OP == 6)
+		else if constexpr (OP == np::NP_OP_LESS_THAN_EQ)
 			C[idx] = A[idx] <= Scal;
-		else if constexpr (OP == 7)
+		else if constexpr (OP == np::NP_OP_GREATER_THAN)
 			C[idx] = A[idx] > Scal;
-		else if constexpr (OP == 8)
+		else if constexpr (OP == np::NP_OP_GREATER_THAN_EQ)
 			C[idx] = A[idx] >= Scal;
-		else if constexpr (OP == 9)
+		else if constexpr (OP == np::NP_OP_EQ_EQ)
 			C[idx] = A[idx] == Scal;
-		else if constexpr (OP == 10)
+		else if constexpr (OP == np::NP_OP_NOT_EQ)
 			C[idx] = A[idx] != Scal;
-		else if constexpr (OP == 11)
+		else if constexpr (OP == np::NP_OP_MINIMUM)
 			C[idx] = (A[idx] < Scal) ? A[idx] : Scal;
-		else if constexpr (OP == 12)
+		else if constexpr (OP == np::NP_OP_MAXIMUM)
 			C[idx] = (A[idx] > Scal) ? A[idx] : Scal;
 		else
 			printf("ERROR! INVALID OPERATOR IN kernelMatOPScalar.\n");
@@ -736,7 +696,7 @@ __global__ void kernelMatOpScalar(const TP *A, const TP *Scal_a, TP *C, const in
 	}
 }
 
-template <typename TP, char OP>
+template <typename TP, np::Operation OP>
 __global__ void kernelScalarOpMat(const TP Scal, const TP *A, TP *C, const int size)
 {
 	int idx = blockIdx.x * blockDim.x + threadIdx.x;
@@ -744,36 +704,36 @@ __global__ void kernelScalarOpMat(const TP Scal, const TP *A, TP *C, const int s
 
 	while (idx < size)
 	{
-		if constexpr (OP == 1)
+		if constexpr (OP == np::NP_OP_ADD)
 			C[idx] = Scal + A[idx];
-		else if constexpr (OP == 2)
+		else if constexpr (OP == np::NP_OP_SUB)
 			C[idx] = Scal - A[idx];
-		else if constexpr (OP == 3)
+		else if constexpr (OP == np::NP_OP_MUL)
 			C[idx] = Scal * A[idx];
-		else if constexpr (OP == 4)
+		else if constexpr (OP == np::NP_OP_DIV)
 			C[idx] = Scal / A[idx];
-		else if constexpr (OP == 5)
+		else if constexpr (OP == np::NP_OP_LESS_THAN)
 			C[idx] = Scal < A[idx];
-		else if constexpr (OP == 6)
+		else if constexpr (OP == np::NP_OP_LESS_THAN_EQ)
 			C[idx] = Scal <= A[idx];
-		else if constexpr (OP == 7)
+		else if constexpr (OP == np::NP_OP_GREATER_THAN)
 			C[idx] = Scal > A[idx];
-		else if constexpr (OP == 8)
+		else if constexpr (OP == np::NP_OP_GREATER_THAN_EQ)
 			C[idx] = Scal >= A[idx];
-		else if constexpr (OP == 9)
+		else if constexpr (OP == np::NP_OP_EQ_EQ)
 			C[idx] = Scal == A[idx];
-		else if constexpr (OP == 10)
+		else if constexpr (OP == np::NP_OP_NOT_EQ)
 			C[idx] = Scal != A[idx];
-		else if constexpr (OP == 11)
+		else if constexpr (OP == np::NP_OP_MINIMUM)
 			C[idx] = (A[idx] < Scal) ? A[idx] : Scal;
-		else if constexpr (OP == 12)
+		else if constexpr (OP == np::NP_OP_MAXIMUM)
 			C[idx] = (A[idx] > Scal) ? A[idx] : Scal;
 		else
 			printf("ERROR! INVALID OPERATOR IN kernelScalarOpMat.\n");
 		idx += grid_size;
 	}
 }
-template <typename TP, char OP>
+template <typename TP, np::Operation OP>
 __global__ void kernelScalarOpMat(const TP *Scal_a, const TP *A, TP *C, const int size)
 {
 	int idx = blockIdx.x * blockDim.x + threadIdx.x;
@@ -783,29 +743,29 @@ __global__ void kernelScalarOpMat(const TP *Scal_a, const TP *A, TP *C, const in
 
 	while (idx < size)
 	{
-		if constexpr (OP == 1)
+		if constexpr (OP == np::NP_OP_ADD)
 			C[idx] = Scal + A[idx];
-		else if constexpr (OP == 2)
+		else if constexpr (OP == np::NP_OP_SUB)
 			C[idx] = Scal - A[idx];
-		else if constexpr (OP == 3)
+		else if constexpr (OP == np::NP_OP_MUL)
 			C[idx] = Scal * A[idx];
-		else if constexpr (OP == 4)
+		else if constexpr (OP == np::NP_OP_DIV)
 			C[idx] = Scal / A[idx];
-		else if constexpr (OP == 5)
+		else if constexpr (OP == np::NP_OP_LESS_THAN)
 			C[idx] = Scal < A[idx];
-		else if constexpr (OP == 6)
+		else if constexpr (OP == np::NP_OP_LESS_THAN_EQ)
 			C[idx] = Scal <= A[idx];
-		else if constexpr (OP == 7)
+		else if constexpr (OP == np::NP_OP_GREATER_THAN)
 			C[idx] = Scal > A[idx];
-		else if constexpr (OP == 8)
+		else if constexpr (OP == np::NP_OP_GREATER_THAN_EQ)
 			C[idx] = Scal >= A[idx];
-		else if constexpr (OP == 9)
+		else if constexpr (OP == np::NP_OP_EQ_EQ)
 			C[idx] = Scal == A[idx];
-		else if constexpr (OP == 10)
+		else if constexpr (OP == np::NP_OP_NOT_EQ)
 			C[idx] = Scal != A[idx];
-		else if constexpr (OP == 11)
+		else if constexpr (OP == np::NP_OP_MINIMUM)
 			C[idx] = (A[idx] < Scal) ? A[idx] : Scal;
-		else if constexpr (OP == 12)
+		else if constexpr (OP == np::NP_OP_MAXIMUM)
 			C[idx] = (A[idx] > Scal) ? A[idx] : Scal;
 		else
 			printf("ERROR! INVALID OPERATOR IN kernelScalarOpMat.\n");
@@ -816,7 +776,7 @@ __global__ void kernelScalarOpMat(const TP *Scal_a, const TP *A, TP *C, const in
 // op on matrix and vector, mat.rows = vec.dim
 // C = A op V (broadcasting)
 //  shapeA = M x N matrix
-template <typename TP, char OP>
+template <typename TP, np::Operation OP>
 __global__ void kernelMatOpVecAlongCols(const TP *A, const TP *V, TP *C, const int size, const int N)
 {
 	int idx = blockIdx.x * blockDim.x + threadIdx.x;
@@ -826,36 +786,36 @@ __global__ void kernelMatOpVecAlongCols(const TP *A, const TP *V, TP *C, const i
 	{
 		r = idx / N;
 		// int c = idx % N;
-		if constexpr (OP == 1)
+		if constexpr (OP == np::NP_OP_ADD)
 			C[idx] = A[idx] + V[r];
-		else if constexpr (OP == 2)
+		else if constexpr (OP == np::NP_OP_SUB)
 			C[idx] = A[idx] - V[r];
-		else if constexpr (OP == 3)
+		else if constexpr (OP == np::NP_OP_MUL)
 			C[idx] = A[idx] * V[r];
-		else if constexpr (OP == 4)
+		else if constexpr (OP == np::NP_OP_DIV)
 			C[idx] = A[idx] / V[r];
-		else if constexpr (OP == 5)
+		else if constexpr (OP == np::NP_OP_LESS_THAN)
 			C[idx] = A[idx] < V[r];
-		else if constexpr (OP == 6)
+		else if constexpr (OP == np::NP_OP_LESS_THAN_EQ)
 			C[idx] = A[idx] <= V[r];
-		else if constexpr (OP == 7)
+		else if constexpr (OP == np::NP_OP_GREATER_THAN)
 			C[idx] = A[idx] > V[r];
-		else if constexpr (OP == 8)
+		else if constexpr (OP == np::NP_OP_GREATER_THAN_EQ)
 			C[idx] = A[idx] >= V[r];
-		else if constexpr (OP == 9)
+		else if constexpr (OP == np::NP_OP_EQ_EQ)
 			C[idx] = A[idx] == V[r];
-		else if constexpr (OP == 10)
+		else if constexpr (OP == np::NP_OP_NOT_EQ)
 			C[idx] = A[idx] != V[r];
-		else if constexpr (OP == 11)
+		else if constexpr (OP == np::NP_OP_MINIMUM)
 			C[idx] = (A[idx] < V[r]) ? A[idx] : V[r];
-		else if constexpr (OP == 12)
+		else if constexpr (OP == np::NP_OP_MAXIMUM)
 			C[idx] = (A[idx] > V[r]) ? A[idx] : V[r];
 		else
 			printf("ERROR! INVALID OPERATOR IN kernelScalarOpMat.\n");
 		idx += grid_size;
 	}
 }
-template <typename TP, char OP>
+template <typename TP, np::Operation OP>
 __global__ void kernelVecOpMatAlongCols(const TP *V, const TP *A, TP *C, const int size, const int N)
 {
 	int idx = blockIdx.x * blockDim.x + threadIdx.x;
@@ -865,29 +825,29 @@ __global__ void kernelVecOpMatAlongCols(const TP *V, const TP *A, TP *C, const i
 	{
 		r = idx / N;
 		// int c = idx % N;
-		if constexpr (OP == 1)
+		if constexpr (OP == np::NP_OP_ADD)
 			C[idx] = V[r] + A[idx];
-		else if constexpr (OP == 2)
+		else if constexpr (OP == np::NP_OP_SUB)
 			C[idx] = V[r] - A[idx];
-		else if constexpr (OP == 3)
+		else if constexpr (OP == np::NP_OP_MUL)
 			C[idx] = V[r] * A[idx];
-		else if constexpr (OP == 4)
+		else if constexpr (OP == np::NP_OP_DIV)
 			C[idx] = V[r] / A[idx];
-		else if constexpr (OP == 5)
+		else if constexpr (OP == np::NP_OP_LESS_THAN)
 			C[idx] = V[r] < A[idx];
-		else if constexpr (OP == 6)
+		else if constexpr (OP == np::NP_OP_LESS_THAN_EQ)
 			C[idx] = V[r] <= A[idx];
-		else if constexpr (OP == 7)
+		else if constexpr (OP == np::NP_OP_GREATER_THAN)
 			C[idx] = V[r] > A[idx];
-		else if constexpr (OP == 8)
+		else if constexpr (OP == np::NP_OP_GREATER_THAN_EQ)
 			C[idx] = V[r] >= A[idx];
-		else if constexpr (OP == 9)
+		else if constexpr (OP == np::NP_OP_EQ_EQ)
 			C[idx] = V[r] == A[idx];
-		else if constexpr (OP == 10)
+		else if constexpr (OP == np::NP_OP_NOT_EQ)
 			C[idx] = V[r] != A[idx];
-		else if constexpr (OP == 11)
+		else if constexpr (OP == np::NP_OP_MINIMUM)
 			C[idx] = (A[idx] < V[r]) ? A[idx] : V[r];
-		else if constexpr (OP == 12)
+		else if constexpr (OP == np::NP_OP_MAXIMUM)
 			C[idx] = (A[idx] > V[r]) ? A[idx] : V[r];
 		else
 			printf("ERROR! INVALID OPERATOR IN kernelScalarOpMat.\n");
@@ -898,7 +858,7 @@ __global__ void kernelVecOpMatAlongCols(const TP *V, const TP *A, TP *C, const i
 // operator on matrix and vector, mat.cols = vec.dim
 // C = A op V (broadcasting)
 // shapeA = M x N matrix
-template <typename TP, char OP>
+template <typename TP, np::Operation OP>
 __global__ void kernelMatOpVecAlongRows(const TP *A, const TP *V, TP *C, const int size, const int N)
 {
 	int idx = blockIdx.x * blockDim.x + threadIdx.x;
@@ -908,29 +868,29 @@ __global__ void kernelMatOpVecAlongRows(const TP *A, const TP *V, TP *C, const i
 	{
 		// int r = idx / N;
 		c = idx % N;
-		if constexpr (OP == 1)
+		if constexpr (OP == np::NP_OP_ADD)
 			C[idx] = A[idx] + V[c];
-		else if constexpr (OP == 2)
+		else if constexpr (OP == np::NP_OP_SUB)
 			C[idx] = A[idx] - V[c];
-		else if constexpr (OP == 3)
+		else if constexpr (OP == np::NP_OP_MUL)
 			C[idx] = A[idx] * V[c];
-		else if constexpr (OP == 4)
+		else if constexpr (OP == np::NP_OP_DIV)
 			C[idx] = A[idx] / V[c];
-		else if constexpr (OP == 5)
+		else if constexpr (OP == np::NP_OP_LESS_THAN)
 			C[idx] = A[idx] < V[c];
-		else if constexpr (OP == 6)
+		else if constexpr (OP == np::NP_OP_LESS_THAN_EQ)
 			C[idx] = A[idx] <= V[c];
-		else if constexpr (OP == 7)
+		else if constexpr (OP == np::NP_OP_GREATER_THAN)
 			C[idx] = A[idx] > V[c];
-		else if constexpr (OP == 8)
+		else if constexpr (OP == np::NP_OP_GREATER_THAN_EQ)
 			C[idx] = A[idx] >= V[c];
-		else if constexpr (OP == 9)
+		else if constexpr (OP == np::NP_OP_EQ_EQ)
 			C[idx] = A[idx] == V[c];
-		else if constexpr (OP == 10)
+		else if constexpr (OP == np::NP_OP_NOT_EQ)
 			C[idx] = A[idx] != V[c];
-		else if constexpr (OP == 11)
+		else if constexpr (OP == np::NP_OP_MINIMUM)
 			C[idx] = (A[idx] < V[c]) ? A[idx] : V[c];
-		else if constexpr (OP == 12)
+		else if constexpr (OP == np::NP_OP_MAXIMUM)
 			C[idx] = (A[idx] > V[c]) ? A[idx] : V[c];
 		else
 			printf("ERROR! INVALID OPERATOR IN kernelScalarOpMat.\n");
@@ -938,7 +898,7 @@ __global__ void kernelMatOpVecAlongRows(const TP *A, const TP *V, TP *C, const i
 	}
 }
 
-template <typename TP, char OP>
+template <typename TP, np::Operation OP>
 __global__ void kernelVecOpMatAlongRows(const TP *V, const TP *A, TP *C, const int size, const int N)
 {
 	int idx = blockIdx.x * blockDim.x + threadIdx.x;
@@ -948,29 +908,29 @@ __global__ void kernelVecOpMatAlongRows(const TP *V, const TP *A, TP *C, const i
 	{
 		// int r = idx / N;
 		c = idx % N;
-		if constexpr (OP == 1)
+		if constexpr (OP == np::NP_OP_ADD)
 			C[idx] = V[c] + A[idx];
-		else if constexpr (OP == 2)
+		else if constexpr (OP == np::NP_OP_SUB)
 			C[idx] = V[c] - A[idx];
-		else if constexpr (OP == 3)
+		else if constexpr (OP == np::NP_OP_MUL)
 			C[idx] = V[c] * A[idx];
-		else if constexpr (OP == 4)
+		else if constexpr (OP == np::NP_OP_DIV)
 			C[idx] = V[c] / A[idx];
-		else if constexpr (OP == 5)
+		else if constexpr (OP == np::NP_OP_LESS_THAN)
 			C[idx] = V[c] < A[idx];
-		else if constexpr (OP == 6)
+		else if constexpr (OP == np::NP_OP_LESS_THAN_EQ)
 			C[idx] = V[c] <= A[idx];
-		else if constexpr (OP == 7)
+		else if constexpr (OP == np::NP_OP_GREATER_THAN)
 			C[idx] = V[c] > A[idx];
-		else if constexpr (OP == 8)
+		else if constexpr (OP == np::NP_OP_GREATER_THAN_EQ)
 			C[idx] = V[c] >= A[idx];
-		else if constexpr (OP == 9)
+		else if constexpr (OP == np::NP_OP_EQ_EQ)
 			C[idx] = V[c] == A[idx];
-		else if constexpr (OP == 10)
+		else if constexpr (OP == np::NP_OP_NOT_EQ)
 			C[idx] = V[c] != A[idx];
-		else if constexpr (OP == 11)
+		else if constexpr (OP == np::NP_OP_MINIMUM)
 			C[idx] = (A[idx] < V[c]) ? A[idx] : V[c];
-		else if constexpr (OP == 12)
+		else if constexpr (OP == np::NP_OP_MAXIMUM)
 			C[idx] = (A[idx] > V[c]) ? A[idx] : V[c];
 		else
 			printf("ERROR! INVALID OPERATOR IN kernelScalarOpMat.\n");
@@ -978,21 +938,11 @@ __global__ void kernelVecOpMatAlongRows(const TP *V, const TP *A, TP *C, const i
 	}
 }
 
-
 // npfunctions
-// functions per element
-/*
-	F
-	#define NP_F_EXP 19
-	#define NP_F_LOG 20
-	#define NP_F_SQAURE 21
-	#define NP_F_SQRT 22
-	#define NP_F_POW 23
-*/
 // A = MxN
 // C = MxN
 // Ci = F(Ai)
-template <typename TP, char F>
+template <typename TP, np::Operation OP>
 __global__ void kernelFMat(const TP *A, TP *C, const int size)
 {
 	int idx = blockIdx.x * blockDim.x + threadIdx.x;
@@ -1000,13 +950,13 @@ __global__ void kernelFMat(const TP *A, TP *C, const int size)
 
 	while (idx < size)
 	{
-		if constexpr (F == 19)
+		if constexpr (OP == np::NP_F_EXP)
 			C[idx] = expf(A[idx]);
-		else if constexpr (F == 20)
+		else if constexpr (OP == np::NP_F_LOG)
 			C[idx] = logf(A[idx]);
-		else if constexpr (F == 21)
+		else if constexpr (OP == np::NP_F_SQUARE)
 			C[idx] = A[idx] * A[idx];
-		else if constexpr (F == 22)
+		else if constexpr (OP == np::NP_F_SQRT)
 		{
 			if constexpr (std::is_same<TP, int>::value)
 				C[idx] = static_cast<int>(sqrtf(A[idx]));
@@ -1057,20 +1007,10 @@ __global__ void kernelPowMat(const TP *A, const float power, TP *C, const int si
 }
 
 // REDUCTION
-
-// REDUCTION
-/*
-	F
-	#define NP_REDUCE_SUM 14
-	#define NP_REDUCE_MIN 15
-	#define NP_REDUCE_MAX 16
-	#define NP_REDUCE_ARGMIN 17
-	#define NP_REDUCE_ARGMAX 18
-*/
-template <typename TP, char F>
+template <typename TP, np::Operation OP>
 __device__ void kernelWarpReduceF(volatile TP *s_A, const int tid)
 { // warp reduce for kernel
-	if constexpr (F == 14)
+	if constexpr (OP == np::NP_REDUCE_SUM)
 	{
 		s_A[tid] += s_A[tid + 32];
 		s_A[tid] += s_A[tid + 16];
@@ -1079,7 +1019,7 @@ __device__ void kernelWarpReduceF(volatile TP *s_A, const int tid)
 		s_A[tid] += s_A[tid + 2];
 		s_A[tid] += s_A[tid + 1];
 	}
-	else if constexpr (F == 15)
+	else if constexpr (OP == np::NP_REDUCE_MIN)
 	{
 		s_A[tid] = min(s_A[tid], s_A[tid + 32]);
 		s_A[tid] = min(s_A[tid], s_A[tid + 16]);
@@ -1088,7 +1028,7 @@ __device__ void kernelWarpReduceF(volatile TP *s_A, const int tid)
 		s_A[tid] = min(s_A[tid], s_A[tid + 2]);
 		s_A[tid] = min(s_A[tid], s_A[tid + 1]);
 	}
-	else if constexpr (F == 16)
+	else if constexpr (OP == np::NP_REDUCE_MAX)
 	{
 		s_A[tid] = max(s_A[tid], s_A[tid + 32]);
 		s_A[tid] = max(s_A[tid], s_A[tid + 16]);
@@ -1102,10 +1042,10 @@ __device__ void kernelWarpReduceF(volatile TP *s_A, const int tid)
 }
 
 // warp unroll
-template <typename TP, int BLOCK_SIZE, char F>
+template <typename TP, int BLOCK_SIZE, np::Operation OP>
 __global__ void kernelReduceF(const TP *A, TP *output, const int size)
 {
-	if constexpr (F != 14 && F != 15 && F != 16)
+	if constexpr (OP != np::NP_REDUCE_SUM && OP != np::NP_REDUCE_MIN && OP != np::NP_REDUCE_MAX)
 	{
 		printf("INVALID ARGUMENT! in kernelReduceF\n");
 		return;
@@ -1116,24 +1056,24 @@ __global__ void kernelReduceF(const TP *A, TP *output, const int size)
 	const int grid_size = BLOCK_SIZE * 2 * gridDim.x;
 	__shared__ TP s_A[BLOCK_SIZE];
 
-	if constexpr (F == 14)
+	if constexpr (OP == np::NP_REDUCE_SUM)
 		s_A[tx] = 0;
-	else if constexpr (F == 15)
+	else if constexpr (OP == np::NP_REDUCE_MIN)
 		s_A[tx] = INT_MAX;
-	else if constexpr (F == 16)
+	else if constexpr (OP == np::NP_REDUCE_MAX)
 		s_A[tx] = INT_MIN;
 	// assume 1 hi grid launch kr rha h tu
 	while (idx < size)
 	{
-		if constexpr (F == 14)
+		if constexpr (OP == np::NP_REDUCE_SUM)
 			s_A[tx] += (A[idx] + ((idx + BLOCK_SIZE < size) ? A[idx + BLOCK_SIZE] : 0));
-		else if constexpr (F == 15)
+		else if constexpr (OP == np::NP_REDUCE_MIN)
 		{
 			s_A[tx] = min(s_A[tx], A[idx]);
 			if (idx + BLOCK_SIZE < size)
 				s_A[tx] = min(s_A[tx], A[idx + BLOCK_SIZE]);
 		}
-		else if constexpr (F == 16)
+		else if constexpr (OP == np::NP_REDUCE_MAX)
 		{
 			s_A[tx] = max(s_A[tx], A[idx]);
 			if (idx + BLOCK_SIZE < size)
@@ -1148,11 +1088,11 @@ __global__ void kernelReduceF(const TP *A, TP *output, const int size)
 	{
 		if (tx < 256)
 		{
-			if constexpr (F == 14)
+			if constexpr (OP == np::NP_REDUCE_SUM)
 				s_A[tx] += s_A[tx + 256];
-			else if constexpr (F == 15)
+			else if constexpr (OP == np::NP_REDUCE_MIN)
 				s_A[tx] = min(s_A[tx], s_A[tx + 256]);
-			else if constexpr (F == 16)
+			else if constexpr (OP == np::NP_REDUCE_MAX)
 				s_A[tx] = max(s_A[tx], s_A[tx + 256]);
 		}
 		__syncthreads();
@@ -1162,11 +1102,11 @@ __global__ void kernelReduceF(const TP *A, TP *output, const int size)
 	{
 		if (tx < 128)
 		{
-			if constexpr (F == 14)
+			if constexpr (OP == np::NP_REDUCE_SUM)
 				s_A[tx] += s_A[tx + 128];
-			else if constexpr (F == 15)
+			else if constexpr (OP == np::NP_REDUCE_MIN)
 				s_A[tx] = min(s_A[tx], s_A[tx + 128]);
-			else if constexpr (F == 16)
+			else if constexpr (OP == np::NP_REDUCE_MAX)
 				s_A[tx] = max(s_A[tx], s_A[tx + 128]);
 		}
 		__syncthreads();
@@ -1175,28 +1115,28 @@ __global__ void kernelReduceF(const TP *A, TP *output, const int size)
 	{
 		if (tx < 64)
 		{
-			if constexpr (F == 14)
+			if constexpr (OP == np::NP_REDUCE_SUM)
 				s_A[tx] += s_A[tx + 64];
-			else if constexpr (F == 15)
+			else if constexpr (OP == np::NP_REDUCE_MIN)
 				s_A[tx] = min(s_A[tx], s_A[tx + 64]);
-			else if constexpr (F == 16)
+			else if constexpr (OP == np::NP_REDUCE_MAX)
 				s_A[tx] = max(s_A[tx], s_A[tx + 64]);
 		}
 		__syncthreads();
 	}
 
 	if (tx < 32)
-		kernelWarpReduceF<TP, F>(s_A, tx);
+		kernelWarpReduceF<TP, OP>(s_A, tx);
 
 	if (tx == 0)
 		output[bx] = s_A[0];
 }
 
 // warp unroll
-template <typename TP, int BLOCK_SIZE, char F>
+template <typename TP, int BLOCK_SIZE, np::Operation OP>
 __global__ void kernelReduceFAxis1(const TP *A, TP *output, const int size, const int rows)
 {
-	if constexpr (F != 14 && F != 15 && F != 16)
+	if constexpr (OP != np::NP_REDUCE_SUM && OP != np::NP_REDUCE_MIN && OP != np::NP_REDUCE_MAX)
 	{
 		printf("INVALID ARGUMENT! in kernelReduceF\n");
 		return;
@@ -1209,24 +1149,24 @@ __global__ void kernelReduceFAxis1(const TP *A, TP *output, const int size, cons
 
 	for(int r = 0; r < rows; ++r){
 		int idx = _idx;
-		if constexpr (F == 14)
+		if constexpr (OP == np::NP_REDUCE_SUM)
 			s_A[tx] = 0;
-		else if constexpr (F == 15)
+		else if constexpr (OP == np::NP_REDUCE_MIN)
 			s_A[tx] = INT_MAX;
-		else if constexpr (F == 16)
+		else if constexpr (OP == np::NP_REDUCE_MAX)
 			s_A[tx] = INT_MIN;
 		// assume 1 hi grid launch kr rha h tu
 		while (idx < size)
 		{
-			if constexpr (F == 14)
+			if constexpr (OP == np::NP_REDUCE_SUM)
 				s_A[tx] += (A[idx] + ((idx + BLOCK_SIZE < size) ? A[idx + BLOCK_SIZE] : 0));
-			else if constexpr (F == 15)
+			else if constexpr (OP == np::NP_REDUCE_MIN)
 			{
 				s_A[tx] = min(s_A[tx], A[idx]);
 				if (idx + BLOCK_SIZE < size)
 					s_A[tx] = min(s_A[tx], A[idx + BLOCK_SIZE]);
 			}
-			else if constexpr (F == 16)
+			else if constexpr (OP == np::NP_REDUCE_MAX)
 			{
 				s_A[tx] = max(s_A[tx], A[idx]);
 				if (idx + BLOCK_SIZE < size)
@@ -1241,11 +1181,11 @@ __global__ void kernelReduceFAxis1(const TP *A, TP *output, const int size, cons
 		{
 			if (tx < 256)
 			{
-				if constexpr (F == 14)
+				if constexpr (OP == np::NP_REDUCE_SUM)
 					s_A[tx] += s_A[tx + 256];
-				else if constexpr (F == 15)
+				else if constexpr (OP == np::NP_REDUCE_MIN)
 					s_A[tx] = min(s_A[tx], s_A[tx + 256]);
-				else if constexpr (F == 16)
+				else if constexpr (OP == np::NP_REDUCE_MAX)
 					s_A[tx] = max(s_A[tx], s_A[tx + 256]);
 			}
 			__syncthreads();
@@ -1255,11 +1195,11 @@ __global__ void kernelReduceFAxis1(const TP *A, TP *output, const int size, cons
 		{
 			if (tx < 128)
 			{
-				if constexpr (F == 14)
+				if constexpr (OP == np::NP_REDUCE_SUM)
 					s_A[tx] += s_A[tx + 128];
-				else if constexpr (F == 15)
+				else if constexpr (OP == np::NP_REDUCE_MIN)
 					s_A[tx] = min(s_A[tx], s_A[tx + 128]);
-				else if constexpr (F == 16)
+				else if constexpr (OP == np::NP_REDUCE_MAX)
 					s_A[tx] = max(s_A[tx], s_A[tx + 128]);
 			}
 			__syncthreads();
@@ -1268,18 +1208,18 @@ __global__ void kernelReduceFAxis1(const TP *A, TP *output, const int size, cons
 		{
 			if (tx < 64)
 			{
-				if constexpr (F == 14)
+				if constexpr (OP == np::NP_REDUCE_SUM)
 					s_A[tx] += s_A[tx + 64];
-				else if constexpr (F == 15)
+				else if constexpr (OP == np::NP_REDUCE_MIN)
 					s_A[tx] = min(s_A[tx], s_A[tx + 64]);
-				else if constexpr (F == 16)
+				else if constexpr (OP == np::NP_REDUCE_MAX)
 					s_A[tx] = max(s_A[tx], s_A[tx + 64]);
 			}
 			__syncthreads();
 		}
 
 		if (tx < 32)
-			kernelWarpReduceF<TP, F>(s_A, tx);
+			kernelWarpReduceF<TP, OP>(s_A, tx);
 
 		if (tx == 0)
 			output[bx] = s_A[0];
@@ -1290,10 +1230,10 @@ __global__ void kernelReduceFAxis1(const TP *A, TP *output, const int size, cons
 }
 
 
-template <typename TP, char F>
+template <typename TP, np::Operation OP>
 __device__ void kernelWarpReduceArgF(volatile TP *s_A, volatile int *s_Idx, const int tid)
 { // warp reduce for kernel
-	if constexpr (F == 17)
+	if constexpr (OP == np::NP_REDUCE_ARGMIN)
 	{
 		if (s_A[tid] > s_A[tid + 32])
 		{
@@ -1331,7 +1271,7 @@ __device__ void kernelWarpReduceArgF(volatile TP *s_A, volatile int *s_Idx, cons
 			s_Idx[tid] = s_Idx[tid + 1];
 		}
 	}
-	else if constexpr (F == 18)
+	else if constexpr (OP == np::NP_REDUCE_ARGMAX)
 	{
 		if (s_A[tid] < s_A[tid + 32])
 		{
@@ -1372,10 +1312,10 @@ __device__ void kernelWarpReduceArgF(volatile TP *s_A, volatile int *s_Idx, cons
 }
 
 // warp unroll
-template <typename TP, int BLOCK_SIZE, char F>
+template <typename TP, int BLOCK_SIZE, np::Operation OP>
 __global__ void kernelReduceArgF(const TP *A, TP *outputMax, int *outputIdx, const int size)
 {
-	if constexpr (F != 17 && F != 18)
+	if constexpr (OP != np::NP_REDUCE_ARGMIN && OP != np::NP_REDUCE_ARGMAX)
 	{
 		printf("INVALID ARGUMENT! in kernelReduceArgF\n");
 		return;
@@ -1387,15 +1327,15 @@ __global__ void kernelReduceArgF(const TP *A, TP *outputMax, int *outputIdx, con
 	__shared__ TP s_A[BLOCK_SIZE];
 	__shared__ int s_Idx[BLOCK_SIZE];
 
-	if constexpr (F == 17)
+	if constexpr (OP == np::NP_REDUCE_ARGMIN)
 		s_A[tx] = INT_MAX;
-	else if constexpr (F == 18)
+	else if constexpr (OP == np::NP_REDUCE_ARGMAX)
 		s_A[tx] = INT_MIN;
 	s_Idx[tx] = -1;
 	// assume 1 hi grid launch kr rha h tu
 	while (idx < size)
 	{
-		if constexpr (F == 17)
+		if constexpr (OP == np::NP_REDUCE_ARGMIN)
 		{
 			if (s_A[tx] > A[idx])
 			{
@@ -1411,7 +1351,7 @@ __global__ void kernelReduceArgF(const TP *A, TP *outputMax, int *outputIdx, con
 				}
 			}
 		}
-		else if constexpr (F == 18)
+		else if constexpr (OP == np::NP_REDUCE_ARGMAX)
 		{
 			if (s_A[tx] < A[idx])
 			{
@@ -1436,7 +1376,7 @@ __global__ void kernelReduceArgF(const TP *A, TP *outputMax, int *outputIdx, con
 	{
 		if (tx < 256)
 		{
-			if constexpr (F == 17)
+			if constexpr (OP == np::NP_REDUCE_ARGMIN)
 			{
 				if (s_A[tx] > s_A[tx + 256])
 				{
@@ -1444,7 +1384,7 @@ __global__ void kernelReduceArgF(const TP *A, TP *outputMax, int *outputIdx, con
 					s_Idx[tx] = s_Idx[tx + 256];
 				}
 			}
-			else if constexpr (F == 18)
+			else if constexpr (OP == np::NP_REDUCE_ARGMAX)
 			{
 				if (s_A[tx] < s_A[tx + 256])
 				{
@@ -1461,7 +1401,7 @@ __global__ void kernelReduceArgF(const TP *A, TP *outputMax, int *outputIdx, con
 	{
 		if (tx < 128)
 		{
-			if constexpr (F == 17)
+			if constexpr (OP == np::NP_REDUCE_ARGMIN)
 			{
 				if (s_A[tx] > s_A[tx + 128])
 				{
@@ -1469,7 +1409,7 @@ __global__ void kernelReduceArgF(const TP *A, TP *outputMax, int *outputIdx, con
 					s_Idx[tx] = s_Idx[tx + 128];
 				}
 			}
-			else if constexpr (F == 18)
+			else if constexpr (OP == np::NP_REDUCE_ARGMAX)
 			{
 				if (s_A[tx] < s_A[tx + 128])
 				{
@@ -1485,7 +1425,7 @@ __global__ void kernelReduceArgF(const TP *A, TP *outputMax, int *outputIdx, con
 	{
 		if (tx < 64)
 		{
-			if constexpr (F == 17)
+			if constexpr (OP == np::NP_REDUCE_ARGMIN)
 			{
 				if (s_A[tx] > s_A[tx + 64])
 				{
@@ -1493,7 +1433,7 @@ __global__ void kernelReduceArgF(const TP *A, TP *outputMax, int *outputIdx, con
 					s_Idx[tx] = s_Idx[tx + 64];
 				}
 			}
-			else if constexpr (F == 18)
+			else if constexpr (OP == np::NP_REDUCE_ARGMAX)
 			{
 				if (s_A[tx] < s_A[tx + 64])
 				{
@@ -1506,7 +1446,7 @@ __global__ void kernelReduceArgF(const TP *A, TP *outputMax, int *outputIdx, con
 	}
 
 	if (tx < 32)
-		kernelWarpReduceArgF<TP, F>(s_A, s_Idx, tx);
+		kernelWarpReduceArgF<TP, OP>(s_A, s_Idx, tx);
 
 	if (tx == 0)
 	{
@@ -1515,9 +1455,9 @@ __global__ void kernelReduceArgF(const TP *A, TP *outputMax, int *outputIdx, con
 	}
 }
 
-template <typename TP, int BLOCK_SIZE, char F>
+template <typename TP, int BLOCK_SIZE, np::Operation OP>
 __global__ void kernelReduceArgFAxis1(const TP *A, TP *outputMax, int *outputIdx, const int size, const int rows){
-	if constexpr (F != 17 && F != 18)
+	if constexpr (OP != np::NP_REDUCE_ARGMIN && OP != np::NP_REDUCE_ARGMAX)
 	{
 		printf("INVALID ARGUMENT! in kernelReduceArgF\n");
 		return;
@@ -1531,15 +1471,15 @@ __global__ void kernelReduceArgFAxis1(const TP *A, TP *outputMax, int *outputIdx
 
 	for(int r = 0; r < rows; ++r){
 		int idx = _idx;
-		if constexpr (F == 17)
+		if constexpr (OP == np::NP_REDUCE_ARGMIN)
 			s_A[tx] = INT_MAX;
-		else if constexpr (F == 18)
+		else if constexpr (OP == np::NP_REDUCE_ARGMAX)
 			s_A[tx] = INT_MIN;
 		s_Idx[tx] = -1;
 		// assume 1 hi grid launch kr rha h tu
 		while (idx < size)
 		{
-			if constexpr (F == 17)
+			if constexpr (OP == np::NP_REDUCE_ARGMIN)
 			{
 				if (s_A[tx] > A[idx])
 				{
@@ -1555,7 +1495,7 @@ __global__ void kernelReduceArgFAxis1(const TP *A, TP *outputMax, int *outputIdx
 					}
 				}
 			}
-			else if constexpr (F == 18)
+			else if constexpr (OP == np::NP_REDUCE_ARGMAX)
 			{
 				if (s_A[tx] < A[idx])
 				{
@@ -1580,7 +1520,7 @@ __global__ void kernelReduceArgFAxis1(const TP *A, TP *outputMax, int *outputIdx
 		{
 			if (tx < 256)
 			{
-				if constexpr (F == 17)
+				if constexpr (OP == np::NP_REDUCE_ARGMIN)
 				{
 					if (s_A[tx] > s_A[tx + 256])
 					{
@@ -1588,7 +1528,7 @@ __global__ void kernelReduceArgFAxis1(const TP *A, TP *outputMax, int *outputIdx
 						s_Idx[tx] = s_Idx[tx + 256];
 					}
 				}
-				else if constexpr (F == 18)
+				else if constexpr (OP == np::NP_REDUCE_ARGMAX)
 				{
 					if (s_A[tx] < s_A[tx + 256])
 					{
@@ -1605,7 +1545,7 @@ __global__ void kernelReduceArgFAxis1(const TP *A, TP *outputMax, int *outputIdx
 		{
 			if (tx < 128)
 			{
-				if constexpr (F == 17)
+				if constexpr (OP == np::NP_REDUCE_ARGMIN)
 				{
 					if (s_A[tx] > s_A[tx + 128])
 					{
@@ -1613,7 +1553,7 @@ __global__ void kernelReduceArgFAxis1(const TP *A, TP *outputMax, int *outputIdx
 						s_Idx[tx] = s_Idx[tx + 128];
 					}
 				}
-				else if constexpr (F == 18)
+				else if constexpr (OP == np::NP_REDUCE_ARGMAX)
 				{
 					if (s_A[tx] < s_A[tx + 128])
 					{
@@ -1629,7 +1569,7 @@ __global__ void kernelReduceArgFAxis1(const TP *A, TP *outputMax, int *outputIdx
 		{
 			if (tx < 64)
 			{
-				if constexpr (F == 17)
+				if constexpr (OP == np::NP_REDUCE_ARGMIN)
 				{
 					if (s_A[tx] > s_A[tx + 64])
 					{
@@ -1637,7 +1577,7 @@ __global__ void kernelReduceArgFAxis1(const TP *A, TP *outputMax, int *outputIdx
 						s_Idx[tx] = s_Idx[tx + 64];
 					}
 				}
-				else if constexpr (F == 18)
+				else if constexpr (OP == np::NP_REDUCE_ARGMAX)
 				{
 					if (s_A[tx] < s_A[tx + 64])
 					{
@@ -1650,7 +1590,7 @@ __global__ void kernelReduceArgFAxis1(const TP *A, TP *outputMax, int *outputIdx
 		}
 
 		if (tx < 32)
-			kernelWarpReduceArgF<TP, F>(s_A, s_Idx, tx);
+			kernelWarpReduceArgF<TP, OP>(s_A, s_Idx, tx);
 
 		if (tx == 0)
 		{
@@ -1664,10 +1604,10 @@ __global__ void kernelReduceArgFAxis1(const TP *A, TP *outputMax, int *outputIdx
 }
 
 // second reduction k time p -> idx serial nhi h, to ek idx ka bhi array dena hoga
-template <typename TP, int BLOCK_SIZE, char F>
+template <typename TP, int BLOCK_SIZE, np::Operation OP>
 __global__ void kernelReduceArgF(const TP *A, const int *A_idx, TP *outputMax, int *outputIdx, const int size)
 {
-	if constexpr (F != 17 && F != 18)
+	if constexpr (OP != np::NP_REDUCE_ARGMIN && OP != np::NP_REDUCE_ARGMAX)
 	{
 		printf("INVALID ARGUMENT! in kernelReduceArgF\n");
 		return;
@@ -1679,16 +1619,16 @@ __global__ void kernelReduceArgF(const TP *A, const int *A_idx, TP *outputMax, i
 	__shared__ TP s_A[BLOCK_SIZE];
 	__shared__ int s_Idx[BLOCK_SIZE];
 
-	if constexpr (F == 17)
+	if constexpr (OP == np::NP_REDUCE_ARGMIN)
 		s_A[tx] = INT_MAX;
-	else if constexpr (F == 18)
+	else if constexpr (OP == np::NP_REDUCE_ARGMAX)
 		s_A[tx] = INT_MIN;
 	s_Idx[tx] = -1;
 
 	// assume 1 hi grid launch kr rha h tu
 	while (idx < size)
 	{
-		if constexpr (F == 17)
+		if constexpr (OP == np::NP_REDUCE_ARGMIN)
 		{
 			if (s_A[tx] > A[idx])
 			{
@@ -1701,7 +1641,7 @@ __global__ void kernelReduceArgF(const TP *A, const int *A_idx, TP *outputMax, i
 				s_Idx[tx] = A_idx[idx + BLOCK_SIZE];
 			}
 		}
-		else if constexpr (F == 18)
+		else if constexpr (OP == np::NP_REDUCE_ARGMAX)
 		{
 			if (s_A[tx] < A[idx])
 			{
@@ -1726,7 +1666,7 @@ __global__ void kernelReduceArgF(const TP *A, const int *A_idx, TP *outputMax, i
 	{
 		if (tx < 256)
 		{
-			if constexpr (F == 17)
+			if constexpr (OP == np::NP_REDUCE_ARGMIN)
 			{
 				if (s_A[tx] > s_A[tx + 256])
 				{
@@ -1734,7 +1674,7 @@ __global__ void kernelReduceArgF(const TP *A, const int *A_idx, TP *outputMax, i
 					s_Idx[tx] = s_Idx[tx + 256];
 				}
 			}
-			else if constexpr (F == 18)
+			else if constexpr (OP == np::NP_REDUCE_ARGMAX)
 			{
 				if (s_A[tx] < s_A[tx + 256])
 				{
@@ -1750,7 +1690,7 @@ __global__ void kernelReduceArgF(const TP *A, const int *A_idx, TP *outputMax, i
 	{
 		if (tx < 128)
 		{
-			if constexpr (F == 17)
+			if constexpr (OP == np::NP_REDUCE_ARGMIN)
 			{
 				if (s_A[tx] > s_A[tx + 128])
 				{
@@ -1758,7 +1698,7 @@ __global__ void kernelReduceArgF(const TP *A, const int *A_idx, TP *outputMax, i
 					s_Idx[tx] = s_Idx[tx + 128];
 				}
 			}
-			else if constexpr (F == 18)
+			else if constexpr (OP == np::NP_REDUCE_ARGMAX)
 			{
 				if (s_A[tx] < s_A[tx + 128])
 				{
@@ -1773,7 +1713,7 @@ __global__ void kernelReduceArgF(const TP *A, const int *A_idx, TP *outputMax, i
 	{
 		if (tx < 64)
 		{
-			if constexpr (F == 17)
+			if constexpr (OP == np::NP_REDUCE_ARGMIN)
 			{
 				if (s_A[tx] > s_A[tx + 64])
 				{
@@ -1781,7 +1721,7 @@ __global__ void kernelReduceArgF(const TP *A, const int *A_idx, TP *outputMax, i
 					s_Idx[tx] = s_A[tx + 64];
 				}
 			}
-			else if constexpr (F == 18)
+			else if constexpr (OP == np::NP_REDUCE_ARGMAX)
 			{
 				if (s_A[tx] < s_A[tx + 64])
 				{
@@ -1794,7 +1734,7 @@ __global__ void kernelReduceArgF(const TP *A, const int *A_idx, TP *outputMax, i
 	}
 
 	if (tx < 32)
-		kernelWarpReduceArgF<TP, F>(s_A, s_Idx, tx);
+		kernelWarpReduceArgF<TP, OP>(s_A, s_Idx, tx);
 
 	if (tx == 0)
 	{
@@ -1805,10 +1745,10 @@ __global__ void kernelReduceArgF(const TP *A, const int *A_idx, TP *outputMax, i
 
 
 // second reduction k time p -> idx serial nhi h, to ek idx ka bhi array dena hoga
-template <typename TP, int BLOCK_SIZE, char F>
+template <typename TP, int BLOCK_SIZE, np::Operation OP>
 __global__ void kernelReduceArgFAxis1(const TP *A, const int *A_idx, TP *outputMax, int *outputIdx, const int size, const int rows)
 {
-	if constexpr (F != 17 && F != 18)
+	if constexpr (OP != np::NP_REDUCE_ARGMIN && OP != np::NP_REDUCE_ARGMAX)
 	{
 		printf("INVALID ARGUMENT! in kernelReduceArgF\n");
 		return;
@@ -1823,16 +1763,16 @@ __global__ void kernelReduceArgFAxis1(const TP *A, const int *A_idx, TP *outputM
 
 	for(int r = 0; r < rows; ++r){
 		int idx = _idx;
-		if constexpr (F == 17)
+		if constexpr (OP == np::NP_REDUCE_ARGMIN)
 			s_A[tx] = INT_MAX;
-		else if constexpr (F == 18)
+		else if constexpr (OP == np::NP_REDUCE_ARGMAX)
 			s_A[tx] = INT_MIN;
 		s_Idx[tx] = -1;
 
 		// assume 1 hi grid launch kr rha h tu
 		while (idx < size)
 		{
-			if constexpr (F == 17)
+			if constexpr (OP == np::NP_REDUCE_ARGMIN)
 			{
 				if (s_A[tx] > A[idx])
 				{
@@ -1845,7 +1785,7 @@ __global__ void kernelReduceArgFAxis1(const TP *A, const int *A_idx, TP *outputM
 					s_Idx[tx] = A_idx[idx + BLOCK_SIZE];
 				}
 			}
-			else if constexpr (F == 18)
+			else if constexpr (OP == np::NP_REDUCE_ARGMAX)
 			{
 				if (s_A[tx] < A[idx])
 				{
@@ -1870,7 +1810,7 @@ __global__ void kernelReduceArgFAxis1(const TP *A, const int *A_idx, TP *outputM
 		{
 			if (tx < 256)
 			{
-				if constexpr (F == 17)
+				if constexpr (OP == np::NP_REDUCE_ARGMIN)
 				{
 					if (s_A[tx] > s_A[tx + 256])
 					{
@@ -1878,7 +1818,7 @@ __global__ void kernelReduceArgFAxis1(const TP *A, const int *A_idx, TP *outputM
 						s_Idx[tx] = s_Idx[tx + 256];
 					}
 				}
-				else if constexpr (F == 18)
+				else if constexpr (OP == np::NP_REDUCE_ARGMAX)
 				{
 					if (s_A[tx] < s_A[tx + 256])
 					{
@@ -1894,7 +1834,7 @@ __global__ void kernelReduceArgFAxis1(const TP *A, const int *A_idx, TP *outputM
 		{
 			if (tx < 128)
 			{
-				if constexpr (F == 17)
+				if constexpr (OP == np::NP_REDUCE_ARGMIN)
 				{
 					if (s_A[tx] > s_A[tx + 128])
 					{
@@ -1902,7 +1842,7 @@ __global__ void kernelReduceArgFAxis1(const TP *A, const int *A_idx, TP *outputM
 						s_Idx[tx] = s_Idx[tx + 128];
 					}
 				}
-				else if constexpr (F == 18)
+				else if constexpr (OP == np::NP_REDUCE_ARGMAX)
 				{
 					if (s_A[tx] < s_A[tx + 128])
 					{
@@ -1917,7 +1857,7 @@ __global__ void kernelReduceArgFAxis1(const TP *A, const int *A_idx, TP *outputM
 		{
 			if (tx < 64)
 			{
-				if constexpr (F == 17)
+				if constexpr (OP == np::NP_REDUCE_ARGMIN)
 				{
 					if (s_A[tx] > s_A[tx + 64])
 					{
@@ -1925,7 +1865,7 @@ __global__ void kernelReduceArgFAxis1(const TP *A, const int *A_idx, TP *outputM
 						s_Idx[tx] = s_A[tx + 64];
 					}
 				}
-				else if constexpr (F == 18)
+				else if constexpr (OP == np::NP_REDUCE_ARGMAX)
 				{
 					if (s_A[tx] < s_A[tx + 64])
 					{
@@ -1938,7 +1878,7 @@ __global__ void kernelReduceArgFAxis1(const TP *A, const int *A_idx, TP *outputM
 		}
 
 		if (tx < 32)
-			kernelWarpReduceArgF<TP, F>(s_A, s_Idx, tx);
+			kernelWarpReduceArgF<TP, OP>(s_A, s_Idx, tx);
 
 		if (tx == 0)
 		{

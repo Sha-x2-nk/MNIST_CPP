@@ -4,7 +4,7 @@
 #include <numC/npRandom.cuh>
 #include <numC/customKernels.cuh>
 #include <numC/npGPUArray.cuh>
-#include <numC/errorCheckUtils.cuh>
+#include <numC/utils.cuh>
 #include <numC/gpuConfig.cuh>
 
 #include <cuda_runtime.h>
