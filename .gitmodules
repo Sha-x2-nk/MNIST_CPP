@@ -1,0 +1,4 @@
+[submodule "modules/numC"]
+	path = modules/numC
+	url = https://github.com/Sha-x2-nk/numC.git
+	branch = master
