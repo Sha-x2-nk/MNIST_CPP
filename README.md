@@ -1,4 +1,4 @@
-# MNIST_C++ Project
+# MNIST C++ Project
 
 This project implements a 2-layer neural network trained on the MNIST dataset in C++, using numC++ for numerical computations. The project includes functionalities for defining neural network layers, implementing loss functions, using optimizers, and training the model.
 
