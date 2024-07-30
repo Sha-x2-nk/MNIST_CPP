@@ -73,10 +73,10 @@ These cases demonstrate the challenges in accurately classifying certain digits,
 * To use the neural network implementation in your projects, include the `neuralNet.cuh` header file and utilize the provided functions for training, evaluation, and prediction.
 
 ## Acknowledgements
-* This project draws inspiration from deep learning frameworks and concepts taught in various courses, including CS231n (Convolutional Neural Networks for Visual Recognition) by Stanford University.
-* The MNIST dataset used in this project is made available by Yann LeCun, Corinna Cortes, and Christopher J.C. Burges. 
+* CS231n (Convolutional Neural Networks for Visual Recognition) by Stanford University.
+* MNIST dataset by Yann LeCun, Corinna Cortes, and Christopher J.C. Burges. 
 * Book - Programming Massively Parallel Processors by Wen-mei W. Hwu, David B. Kirk, Izzar El Hajj.
-* Online resources such as Stack Overflow, GitHub Discussions, and forums like Reddit's r/MachineLearning and r/cpp_questions for helpful discussions, solutions to challenges, and shared knowledge.
+* Online resources such as Stack Overflow, GitHub Discussions, and forums.
 ---
 
 **Note**: The above information is a general overview of the "MNIST_numC++" project. For detailed documentation of submodules, refer to the respective README files within each section.
