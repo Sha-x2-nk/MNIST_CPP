@@ -8,7 +8,7 @@ The Adam Optimizer implements the Adam algorithm, which combines elements of the
 
 ## Installation
 To use this library, you need to have the following dependencies installed:
-* [numC](https://github.com/Sha-x2-nk/numC/tree/master): A C++ library for numerical computing.
+* [numC++](https://github.com/Sha-x2-nk/numC++/tree/master): A C++ library for numerical computing.
 * Include headers and link with files in src/ during compilation.
 
 ## Usage
@@ -47,10 +47,10 @@ The `AdamOptimiser` class provides the following functionality:
 #include "optimisers/adam.cuh"
 
 
-#include "numC/gpuConfig.cuh"
-#include "numC/npArrayGPU.cuh"
-#include "numC/npFunctions.cuh"
-#include "numC/npRandom.cuh"
+#include "numC++/gpuConfig.cuh"
+#include "numC++/npArrayGPU.cuh"
+#include "numC++/npFunctions.cuh"
+#include "numC++/npRandom.cuh"
 
 #include <iostream>
 

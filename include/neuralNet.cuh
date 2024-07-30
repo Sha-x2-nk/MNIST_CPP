@@ -12,8 +12,8 @@
 // optimisers
 #include <optimisers/adam.cuh>
 
-// numC
-#include <numC/npGPUArray.cuh>
+// numC++
+#include <numC++/npGPUArray.cuh>
 
 // std headers
 #include <string>

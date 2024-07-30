@@ -2,9 +2,9 @@
 #include <layers/layer.cuh>
 #include <layers/dropoutLayer.cuh>
 
-// numC
-#include <numC/npGPUArray.cuh>
-#include <numC/npRandom.cuh>
+// numC++
+#include <numC++/npGPUArray.cuh>
+#include <numC++/npRandom.cuh>
 
 // cuda runtime
 #include <cuda_runtime.h>

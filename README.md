@@ -1,6 +1,6 @@
-# MNIST_NUMC Project
+# MNIST_numC++ Project
 
-This project implements a 2-layer neural network trained on the MNIST dataset using NumC for numerical computations. The project includes functionalities for defining neural network layers, implementing loss functions, using optimizers, and training the model.
+This project implements a 2-layer neural network trained on the MNIST dataset using numC++ for numerical computations. The project includes functionalities for defining neural network layers, implementing loss functions, using optimizers, and training the model.
 
 ## Contents
 
@@ -56,9 +56,9 @@ After splitting validation set randomly,
 
 the following results were obtained:
 
-- <b>Training Accuracy</b>: 100 %
-- <b>Validation Accuracy</b>: 100 %
-- <b>Test Accuracy</b>: 96.0 %
+- <b>Training Accuracy</b>: 99 %
+- <b>Validation Accuracy</b>: 97.5 %
+- <b>Test Accuracy</b>: 97 %
 
 ## Failed Cases
 
@@ -79,4 +79,4 @@ These cases demonstrate the challenges in accurately classifying certain digits,
 * Online resources such as Stack Overflow, GitHub Discussions, and forums like Reddit's r/MachineLearning and r/cpp_questions for helpful discussions, solutions to challenges, and shared knowledge.
 ---
 
-**Note**: The above information is a general overview of the "MNIST_NUMC" project. For detailed documentation of submodules, refer to the respective README files within each section.
+**Note**: The above information is a general overview of the "MNIST_numC++" project. For detailed documentation of submodules, refer to the respective README files within each section.

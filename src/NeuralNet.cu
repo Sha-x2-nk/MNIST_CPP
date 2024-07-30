@@ -8,7 +8,7 @@
 
 #include <neuralNet.cuh>
 
-#include <numC/npGPUArray.cuh>
+#include <numC++/npGPUArray.cuh>
 
 #include <iostream>
 #include <string>

@@ -9,7 +9,7 @@ find_package(OpenCV REQUIRED)
 set(SOURCES 
     main.cu
     src/neuralNet.cu
-    modules/numC/src/gpuConfig.cu
+    modules/numC++/src/gpuConfig.cu
     modules/layers/src/affineLayer.cu
     modules/layers/src/dropoutLayer.cu
     modules/layers/src/layer.cu
@@ -22,7 +22,7 @@ set(SOURCES
 
 include_directories(include
                     modules/layers/include
-                    modules/numC/include                    
+                    modules/numC++/include                    
                     modules/lossFunctions/include                    
                     modules/optimisers/include                    
                     modules/MNIST/include                    

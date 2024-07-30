@@ -1,8 +1,8 @@
 // layers
 #include <layers/layer.cuh>
 
-// numC files
-#include <numC/npGPUArray.cuh>
+// numC++ files
+#include <numC++/npGPUArray.cuh>
 
 // ################################# forward pass ##############################################
 // virtual because our child classes will override it.

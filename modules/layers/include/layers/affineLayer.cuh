@@ -4,8 +4,8 @@
 // layers
 #include <layers/layer.cuh>
 
-// numC
-#include <numC/npGPUArray.cuh>
+// numC++
+#include <numC++/npGPUArray.cuh>
 
 // inherit from Layer class
 class AffineLayer : public Layer

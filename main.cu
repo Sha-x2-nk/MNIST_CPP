@@ -3,10 +3,10 @@
 #include <MNIST/readMNIST.hpp>
 #include <MNIST/showMNIST.hpp>
 
-#include <numC/gpuConfig.cuh>
-#include <numC/npFunctions.cuh>
-#include <numC/npGPUArray.cuh>
-#include <numC/npRandom.cuh>
+#include <numC++/gpuConfig.cuh>
+#include <numC++/npFunctions.cuh>
+#include <numC++/npGPUArray.cuh>
+#include <numC++/npRandom.cuh>
 
 #include <iostream>
 #include <iomanip>
@@ -49,20 +49,6 @@ int main()
     NeuralNet nn = trainModel(imgsNlabels.first[0], imgsNlabels.second[0], 58000, imgsNlabels.first[1], imgsNlabels.second[1], 2000, imgsNlabels.first[2], imgsNlabels.second[2], 10000, 784);
 
     // viewing columns where test data was misclassified
-    nn.eval();
-    std::vector<int> miss_classified_test_idxs;
-    for (int i = 0; i < 10000; ++i)
-    {
-        auto x = np::ArrayGPU<float>(imgsNlabels.first[2] + i * 784, 1, 784, "cpu");
-
-        auto y_label = (imgsNlabels.second[2] + i)[0];
-        auto y_pred = nn(x).argmax(1).at(0).cpu()[0];
-
-        if (y_pred != y_label)
-        {
-            showMNIST(imgsNlabels.first[2] + i * 784, 28, 28, std::string(std::string("Test Img. actual: ") + std::to_string(y_label) + std::string(" predicted: ") + std::to_string(y_pred)));
-        }
-    }
 
     // releasing memory occupied
     for (int i = 0; i < 3; ++i)

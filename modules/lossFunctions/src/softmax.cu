@@ -1,6 +1,6 @@
-// numC
-#include <numC/npGPUArray.cuh>
-#include <numC/npFunctions.cuh>
+// numC++
+#include <numC++/npGPUArray.cuh>
+#include <numC++/npFunctions.cuh>
 
 // loss function
 #include <lossFunctions/softmax.cuh>

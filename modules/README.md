@@ -5,7 +5,7 @@ This folder contains various C++ header files for implementing different modules
 ## Contents
 
 1. [Layers Project](#layers-project)
-2. [NumC Library](#numc-library)
+2. [numC++ Library](#numC++-library)
 3. [Loss Functions](#loss-functions)
 4. [MNIST](#mnist)
 5. [Optimisers](#optimisers)
@@ -21,14 +21,14 @@ The "layers" project within this folder consists of C++ header files that define
 
 For more details about the layers project, refer to the [Layers Project README](./layers/README.md).
 
-## NumC Library
+## numC++ Library
 
-The "numC" library provides C++ header files for numerical computing, including array operations, linear algebra functions, and GPU acceleration support, all while maintaining numPy-like syntax.
+The "numC++" library provides C++ header files for numerical computing, including array operations, linear algebra functions, and GPU acceleration support, all while maintaining numPy-like syntax.
 
 - `npGPUArray.cuh`: Header file for GPU-accelerated numerical arrays.
 - Other headers for matrix operations, element-wise operations, and more.
 
-For more details about the NumC library, refer to the [NumC Library README](./numC/README.md).
+For more details about the numC++ library, refer to the [numC++ Library README](./numC++/README.md).
 
 ## Loss Functions
 

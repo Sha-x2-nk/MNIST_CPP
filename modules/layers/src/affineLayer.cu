@@ -2,10 +2,10 @@
 #include <layers/affineLayer.cuh>
 #include <layers/layer.cuh>
 
-// numC
-#include <numC/npGPUArray.cuh>
-#include <numC/npRandom.cuh>
-#include <numC/npFunctions.cuh>
+// numC++
+#include <numC++/npGPUArray.cuh>
+#include <numC++/npRandom.cuh>
+#include <numC++/npFunctions.cuh>
 
 // std headers
 #include <cmath>

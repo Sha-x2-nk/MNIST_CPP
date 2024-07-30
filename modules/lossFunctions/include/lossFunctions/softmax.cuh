@@ -1,8 +1,8 @@
 #ifndef SOFTMAX_CUH
 #define SOFTMAX_CUH
 
-// numC
-#include <numC/npGPUArray.cuh>
+// numC++
+#include <numC++/npGPUArray.cuh>
 
 // std
 #include <vector>

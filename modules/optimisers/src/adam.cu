@@ -1,7 +1,7 @@
 #include <optimisers/Adam.cuh>
 
-#include <numC/npGPUArray.cuh>
-#include <numC/npFunctions.cuh>
+#include <numC++/npGPUArray.cuh>
+#include <numC++/npFunctions.cuh>
 
 #include <cmath>
 

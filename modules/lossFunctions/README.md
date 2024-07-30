@@ -1,4 +1,4 @@
-# Loss Functions defined using numC
+# Loss Functions defined using numC++
 This repository contains a C++ implementation of the Softmax Loss function, which is commonly used in machine learning for classification tasks.
 
 More loss functions can/may be added in future.
@@ -9,7 +9,7 @@ The Softmax Loss function computes both the loss and gradient for softmax classi
 ## Installation
 To use this library, ensure you have the following dependencies installed:
 
-* [numC](https://github.com/Sha-x2-nk/numC/tree/master): A C++ library for numerical computing.
+* [numC++](https://github.com/Sha-x2-nk/numC++/tree/master): A C++ library for numerical computing.
 * Include headers and link with files in src/ during compilation.
 
 ## Usage
@@ -50,10 +50,10 @@ The SoftmaxLoss class provides the following methods:
 ```cpp
 #include "lossFunctions/softmax.cuh"
 
-#include "numC/gpuConfig.cuh"
-#include "numC/npArrayGPU.cuh"
-#include "numC/npFunctions.cuh"
-#include "numC/npRandom.cuh"
+#include "numC++/gpuConfig.cuh"
+#include "numC++/npArrayGPU.cuh"
+#include "numC++/npFunctions.cuh"
+#include "numC++/npRandom.cuh"
 
 #include <iostream>
 

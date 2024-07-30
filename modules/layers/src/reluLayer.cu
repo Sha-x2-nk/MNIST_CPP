@@ -2,11 +2,11 @@
 #include <layers/layer.cuh>
 #include <layers/reluLayer.cuh>
 
-// numC
-#include <numC/npGPUArray.cuh>
-#include <numC/gpuConfig.cuh>
-#include <numC/npFunctions.cuh>
-#include <numC/customKernels.cuh>
+// numC++
+#include <numC++/npGPUArray.cuh>
+#include <numC++/gpuConfig.cuh>
+#include <numC++/npFunctions.cuh>
+#include <numC++/customKernels.cuh>
 
 // relu layer definiton
 
